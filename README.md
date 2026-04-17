@@ -25,6 +25,22 @@ Esta etapa materializa a especificacao em um scaffold tecnico inicial:
 - endpoints minimos de health para os containers
 - documentacao de setup e backlog inicial
 
+## Workflow de especificacao
+
+Este repositorio passa a seguir o fluxo do `github/spec-kit`.
+
+- Constituicao do projeto: [.specify/memory/constitution.md](/files/intradebas/.specify/memory/constitution.md)
+- Feature MVP atual: [specs/001-mvp-core-portal/spec.md](/files/intradebas/specs/001-mvp-core-portal/spec.md)
+- Plano: [specs/001-mvp-core-portal/plan.md](/files/intradebas/specs/001-mvp-core-portal/plan.md)
+- Tarefas: [specs/001-mvp-core-portal/tasks.md](/files/intradebas/specs/001-mvp-core-portal/tasks.md)
+
+Fluxo esperado para proximas entregas:
+
+1. atualizar ou criar `spec.md`
+2. derivar `plan.md`
+3. derivar `tasks.md`
+4. implementar em incrementos pequenos e validaveis
+
 ## Setup rapido
 
 1. Copie `.env.example` para `.env`.
@@ -37,4 +53,3 @@ Esta etapa materializa a especificacao em um scaffold tecnico inicial:
 2. Implementar modulos de autenticacao, atletas e equipes no backend.
 3. Conectar o frontend aos contratos `/api/v1`.
 4. Adicionar migrations, seed e testes de contrato.
-
