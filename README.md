@@ -49,7 +49,8 @@ Fluxo esperado para proximas entregas:
 3. Gere o client Prisma em `backend/` com `npm run prisma:generate`.
 4. Aplique schema localmente com `npm run prisma:push`.
 5. Popule dados-base com `npm run prisma:seed`.
-6. Rode `docker compose -f docker-compose.dev.yml up --build`.
+6. Rode os testes automatizados do backend com `cd backend && npm test`.
+7. Rode `docker compose -f docker-compose.dev.yml up --build`.
 
 ## Credenciais admin locais
 
