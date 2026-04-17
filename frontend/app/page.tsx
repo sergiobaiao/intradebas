@@ -31,11 +31,11 @@ export default function HomePage() {
                 atletas, patrocinadores, resultados ao vivo e operacao centralizada.
               </p>
               <div className="cta-row">
-                <a className="button primary" href="/api/health">
-                  Health frontend
+                <a className="button primary" href="/inscricao">
+                  Fazer inscricao
                 </a>
-                <a className="button secondary" href={process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1/health'}>
-                  Health backend
+                <a className="button secondary" href="/resultados">
+                  Ver resultados
                 </a>
               </div>
             </div>
@@ -66,9 +66,16 @@ export default function HomePage() {
               </article>
             ))}
           </div>
+          <div className="cta-row" style={{ marginTop: '24px' }}>
+            <a className="button secondary" href="/admin/dashboard">
+              Abrir dashboard inicial
+            </a>
+            <a className="button secondary" href="/api/health">
+              Health frontend
+            </a>
+          </div>
         </div>
       </section>
     </main>
   );
 }
-

@@ -129,6 +129,76 @@ main {
   margin-top: 20px;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.form-grid label,
+.form-grid fieldset {
+  display: grid;
+  gap: 8px;
+}
+
+.form-grid input,
+.form-grid select {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(22, 33, 62, 0.14);
+  padding: 0 14px;
+  background: white;
+  font: inherit;
+}
+
+.form-grid fieldset {
+  border: 1px solid rgba(22, 33, 62, 0.14);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.field-span {
+  grid-column: 1 / -1;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  min-height: unset;
+  margin-top: 3px;
+}
+
+.ranking-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(22, 33, 62, 0.1);
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -151,8 +221,9 @@ main {
 
 @media (max-width: 880px) {
   .hero-grid,
-  .grid-3 {
+  .grid-3,
+  .form-grid,
+  .checkbox-grid {
     grid-template-columns: 1fr;
   }
 }
-
