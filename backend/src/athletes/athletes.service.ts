@@ -4,32 +4,45 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { athleteSeed, sportSeed, teamSeed } from '../shared/fixtures';
-import type { AthleteRecord } from '../shared/types';
+import { AthleteStatus, AthleteType, Prisma, ShirtSize } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 
 @Injectable()
 export class AthletesService {
-  private readonly athletes = new Map<string, AthleteRecord>(
-    athleteSeed.map((athlete) => [
-      athlete.id,
-      {
-        ...athlete,
-        sports: [...athlete.sports],
-        createdAt: new Date().toISOString(),
-      },
-    ]),
-  );
+  constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return Array.from(this.athletes.values()).map((athlete) =>
-      this.toResponse(athlete),
-    );
+  async findAll() {
+    const athletes = await this.prisma.athlete.findMany({
+      include: {
+        team: true,
+        registrations: {
+          include: {
+            sport: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return athletes.map((athlete) => this.toResponse(athlete));
   }
 
-  findOne(id: string) {
-    const athlete = this.athletes.get(id);
+  async findOne(id: string) {
+    const athlete = await this.prisma.athlete.findUnique({
+      where: { id },
+      include: {
+        team: true,
+        registrations: {
+          include: {
+            sport: true,
+          },
+        },
+      },
+    });
 
     if (!athlete) {
       throw new NotFoundException('Atleta nao encontrado');
@@ -38,79 +51,148 @@ export class AthletesService {
     return this.toResponse(athlete);
   }
 
-  create(dto: CreateAthleteDto) {
+  async create(dto: CreateAthleteDto) {
     if (!dto.lgpdConsent) {
       throw new BadRequestException('Aceite LGPD e obrigatorio');
     }
 
-    if (
-      Array.from(this.athletes.values()).some(
-        (athlete) => athlete.cpf === dto.cpf,
-      )
-    ) {
+    const duplicate = await this.prisma.athlete.findUnique({
+      where: { cpf: dto.cpf },
+      select: { id: true },
+    });
+
+    if (duplicate) {
       throw new ConflictException('CPF ja cadastrado no sistema');
     }
 
-    if (!teamSeed.some((team) => team.id === dto.teamId)) {
+    const team = await this.prisma.team.findUnique({
+      where: { id: dto.teamId },
+      select: { id: true },
+    });
+
+    if (!team) {
       throw new BadRequestException('Equipe informada e invalida');
     }
 
-    if (dto.type !== 'titular' && !dto.titularId) {
-      throw new BadRequestException(
-        'Familiares e convidados devem informar um titular',
-      );
+    let titularId: string | undefined;
+    if (dto.type !== 'titular') {
+      if (!dto.titularId) {
+        throw new BadRequestException(
+          'Familiares e convidados devem informar um titular',
+        );
+      }
+
+      const titular = await this.prisma.athlete.findUnique({
+        where: { id: dto.titularId },
+        select: { id: true, type: true },
+      });
+
+      if (!titular || titular.type !== AthleteType.titular) {
+        throw new BadRequestException('Titular informado e invalido');
+      }
+
+      titularId = titular.id;
     }
 
-    if (
-      dto.sports.some(
-        (sportId) => !sportSeed.some((sport) => sport.id === sportId),
-      )
-    ) {
+    const sports = await this.prisma.sport.findMany({
+      where: {
+        id: {
+          in: dto.sports,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (sports.length !== dto.sports.length) {
       throw new BadRequestException('Existe modalidade invalida na inscricao');
     }
 
-    const id = `athlete-${this.athletes.size + 1}`;
-    const record: AthleteRecord = {
-      id,
-      name: dto.name,
-      cpf: dto.cpf,
-      email: dto.email,
-      phone: dto.phone,
-      birthDate: dto.birthDate,
-      unit: dto.unit,
-      type: dto.type,
-      titularId: dto.titularId,
-      teamId: dto.teamId,
-      shirtSize: dto.shirtSize,
-      status: dto.type === 'convidado' ? 'pending' : 'active',
-      lgpdConsent: dto.lgpdConsent,
-      sports: dto.sports,
-      createdAt: new Date().toISOString(),
-    };
+    const athlete = await this.prisma.$transaction(async (tx) => {
+      const createdAthlete = await tx.athlete.create({
+        data: {
+          name: dto.name,
+          cpf: dto.cpf,
+          email: dto.email,
+          phone: dto.phone,
+          birthDate: new Date(dto.birthDate),
+          unit: dto.unit,
+          type: dto.type as AthleteType,
+          titularId,
+          teamId: dto.teamId,
+          shirtSize: dto.shirtSize as ShirtSize,
+          status:
+            dto.type === 'convidado' ? AthleteStatus.pending : AthleteStatus.active,
+          lgpdConsent: dto.lgpdConsent,
+          lgpdConsentAt: new Date(),
+        },
+      });
 
-    this.athletes.set(id, record);
+      await tx.registration.createMany({
+        data: dto.sports.map((sportId) => ({
+          athleteId: createdAthlete.id,
+          sportId,
+        })),
+      });
 
-    return this.toResponse(record);
+      return tx.athlete.findUniqueOrThrow({
+        where: { id: createdAthlete.id },
+        include: {
+          team: true,
+          registrations: {
+            include: {
+              sport: true,
+            },
+          },
+        },
+      });
+    });
+
+    return this.toResponse(athlete);
   }
 
-  updateStatus(id: string, dto: UpdateAthleteStatusDto) {
-    const athlete = this.athletes.get(id);
+  async updateStatus(id: string, dto: UpdateAthleteStatusDto) {
+    const athlete = await this.prisma.athlete.findUnique({
+      where: { id },
+      select: { id: true },
+    });
 
     if (!athlete) {
       throw new NotFoundException('Atleta nao encontrado');
     }
 
-    const updated = { ...athlete, status: dto.status };
-    this.athletes.set(id, updated);
+    const updated = await this.prisma.athlete.update({
+      where: { id },
+      data: {
+        status: dto.status as AthleteStatus,
+      },
+      include: {
+        team: true,
+        registrations: {
+          include: {
+            sport: true,
+          },
+        },
+      },
+    });
 
     return this.toResponse(updated);
   }
 
-  private toResponse(athlete: AthleteRecord) {
-    const team = teamSeed.find((item) => item.id === athlete.teamId);
-    const sports = athlete.sports
-      .map((sportId) => sportSeed.find((item) => item.id === sportId))
-      .filter((item): item is (typeof sportSeed)[number] => Boolean(item));
+  private toResponse(
+    athlete: Prisma.AthleteGetPayload<{
+      include: {
+        team: true;
+        registrations: {
+          include: {
+            sport: true;
+          };
+        };
+      };
+    }>,
+  ) {
+    const sports = athlete.registrations.map((registration) => registration.sport);
 
     return {
       id: athlete.id,
@@ -124,7 +206,7 @@ export class AthletesService {
       unit: athlete.unit,
       shirtSize: athlete.shirtSize,
       createdAt: athlete.createdAt,
-      team,
+      team: athlete.team,
       sports,
     };
   }

@@ -24,6 +24,7 @@ Esta etapa materializa a especificacao em um scaffold tecnico inicial:
 - schema Prisma inicial com as principais entidades do documento
 - endpoints minimos de health para os containers
 - documentacao de setup e backlog inicial
+- persistencia real de `teams` e `athletes` via Prisma/PostgreSQL no backend
 
 ## Workflow de especificacao
 
@@ -45,7 +46,10 @@ Fluxo esperado para proximas entregas:
 
 1. Copie `.env.example` para `.env`.
 2. Ajuste segredos e URLs conforme seu ambiente.
-3. Rode `docker compose -f docker-compose.dev.yml up --build`.
+3. Gere o client Prisma em `backend/` com `npm run prisma:generate`.
+4. Aplique schema localmente com `npm run prisma:push`.
+5. Popule dados-base com `npm run prisma:seed`.
+6. Rode `docker compose -f docker-compose.dev.yml up --build`.
 
 ## Proximos passos recomendados
 

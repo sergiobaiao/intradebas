@@ -1,17 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { athleteSeed, teamSeed } from '../shared/fixtures';
-import type { TeamSummary } from '../shared/types';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TeamsService {
-  private readonly teams: TeamSummary[] = teamSeed.map((team) => ({ ...team }));
+  constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.teams;
+  async findAll() {
+    return this.prisma.team.findMany({
+      orderBy: [{ totalScore: 'desc' }, { name: 'asc' }],
+    });
   }
 
-  findOne(id: string) {
-    const team = this.teams.find((item) => item.id === id);
+  async findOne(id: string) {
+    const team = await this.prisma.team.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            athletes: true,
+          },
+        },
+      },
+    });
 
     if (!team) {
       throw new NotFoundException('Equipe nao encontrada');
@@ -19,14 +29,42 @@ export class TeamsService {
 
     return {
       ...team,
-      athletesCount: athleteSeed.filter((athlete) => athlete.teamId === id).length,
+      athletesCount: team._count.athletes,
     };
   }
 
-  findAthletes(id: string) {
-    this.findOne(id);
+  async findAthletes(id: string) {
+    await this.findOne(id);
 
-    return athleteSeed.filter((athlete) => athlete.teamId === id);
+    const athletes = await this.prisma.athlete.findMany({
+      where: { teamId: id },
+      include: {
+        team: true,
+        registrations: {
+          include: {
+            sport: true,
+          },
+        },
+      },
+      orderBy: [{ status: 'asc' }, { name: 'asc' }],
+    });
+
+    return athletes.map((athlete) => ({
+      id: athlete.id,
+      name: athlete.name,
+      cpf: athlete.cpf,
+      email: athlete.email,
+      phone: athlete.phone,
+      birthDate: athlete.birthDate,
+      type: athlete.type,
+      status: athlete.status,
+      unit: athlete.unit,
+      shirtSize: athlete.shirtSize,
+      createdAt: athlete.createdAt,
+      team: athlete.team,
+      sports: athletes.length
+        ? athlete.registrations.map((registration) => registration.sport)
+        : [],
+    }));
   }
 }
-

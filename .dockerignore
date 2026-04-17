@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+.git/
+.specify/
+.agents/
+coverage/
+*.log
+.env
+.env.*
+Dockerfile*
