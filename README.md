@@ -57,6 +57,12 @@ Depois de `npm run prisma:seed`, o backend cria credenciais locais de desenvolvi
 
 Consulte `credentials.md` no ambiente local.
 
+## Rotas admin iniciais
+
+- `/login`
+- `/admin/dashboard`
+- `/admin/atletas`
+
 ## Proximos passos recomendados
 
 1. Clonar/adaptar o template `next-shadcn-admin-dashboard` dentro de `frontend/`.

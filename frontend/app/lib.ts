@@ -16,6 +16,18 @@ export type AthleteSummary = {
   sports: { id: string; name: string; category: string }[];
 };
 
+function getAdminTokenFromCookie() {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const entry = document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith('intradebas_admin_token='));
+
+  return entry ? decodeURIComponent(entry.split('=').slice(1).join('=')) : null;
+}
+
 const fallbackTeams: TeamSummary[] = [
   { id: 'team-mucura', name: 'Mucura', color: '#E63946', totalScore: 18 },
   { id: 'team-jacare', name: 'Jacare', color: '#2D6A4F', totalScore: 14 },
@@ -81,3 +93,51 @@ export function getAthletes() {
   return fetchJson<AthleteSummary[]>('/athletes', fallbackAthletes);
 }
 
+export async function adminFetchJson<T>(path: string): Promise<T> {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  const response = await fetch(`${apiBase}${path}`, {
+    cache: 'no-store',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+    throw new Error(body?.message ?? `Erro na requisicao admin para ${path}`);
+  }
+
+  return (await response.json()) as T;
+}
+
+export function adminUpdateAthleteStatus(
+  athleteId: string,
+  status: 'active' | 'rejected',
+) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/athletes/${athleteId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ status }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+      throw new Error(body?.message ?? 'Falha ao atualizar status do atleta');
+    }
+
+    return (await response.json()) as AthleteSummary;
+  });
+}

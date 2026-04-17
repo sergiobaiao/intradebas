@@ -26,8 +26,12 @@ export default async function AdminDashboardPage() {
             <span>Mucura, Jacare e Capivara prontas para score ao vivo.</span>
           </article>
         </div>
+        <div className="cta-row" style={{ marginTop: '24px' }}>
+          <a className="button secondary" href="/admin/atletas">
+            Revisar atletas
+          </a>
+        </div>
       </div>
     </main>
   );
 }
-

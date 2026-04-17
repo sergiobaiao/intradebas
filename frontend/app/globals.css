@@ -210,6 +210,53 @@ main {
   font-weight: 700;
 }
 
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.review-card h3 {
+  margin: 0 0 6px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pill.pending {
+  background: rgba(201, 168, 76, 0.2);
+}
+
+.status-pill.active {
+  background: rgba(45, 106, 79, 0.2);
+}
+
+.status-pill.rejected {
+  background: rgba(230, 57, 70, 0.2);
+}
+
+.empty-state {
+  display: grid;
+  gap: 6px;
+  margin-top: 24px;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -234,7 +281,8 @@ main {
   .hero-grid,
   .grid-3,
   .form-grid,
-  .checkbox-grid {
+  .checkbox-grid,
+  .review-grid {
     grid-template-columns: 1fr;
   }
 }

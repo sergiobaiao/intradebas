@@ -8,6 +8,12 @@ import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 export class AthletesController {
   constructor(private readonly athletesService: AthletesService) {}
 
+  @Get('admin/review')
+  @UseGuards(JwtAuthGuard)
+  findReviewList() {
+    return this.athletesService.findAll();
+  }
+
   @Get()
   findAll() {
     return this.athletesService.findAll();
