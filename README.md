@@ -1,0 +1,40 @@
+# INTRADEBAS 2026
+
+Base inicial do portal `INTRADEBAS 2026 + ALDEBARUN`, derivada da especificacao tecnica em [INTRADEBAS_2026_Especificacao_Tecnica.md](/files/intradebas/INTRADEBAS_2026_Especificacao_Tecnica.md).
+
+## Estrutura
+
+```text
+.
+├── backend/                  # API NestJS + Prisma
+├── docs/                     # Documentacao derivada da especificacao
+├── frontend/                 # App Next.js 15 (App Router)
+├── nginx/                    # Reverse proxy local/producao
+├── docker-compose.dev.yml
+├── docker-compose.prod.yml
+└── .env.example
+```
+
+## Objetivo desta base
+
+Esta etapa materializa a especificacao em um scaffold tecnico inicial:
+
+- monorepo simples com `frontend` e `backend`
+- `docker-compose` para dev e prod
+- schema Prisma inicial com as principais entidades do documento
+- endpoints minimos de health para os containers
+- documentacao de setup e backlog inicial
+
+## Setup rapido
+
+1. Copie `.env.example` para `.env`.
+2. Ajuste segredos e URLs conforme seu ambiente.
+3. Rode `docker compose -f docker-compose.dev.yml up --build`.
+
+## Proximos passos recomendados
+
+1. Clonar/adaptar o template `next-shadcn-admin-dashboard` dentro de `frontend/`.
+2. Implementar modulos de autenticacao, atletas e equipes no backend.
+3. Conectar o frontend aos contratos `/api/v1`.
+4. Adicionar migrations, seed e testes de contrato.
+

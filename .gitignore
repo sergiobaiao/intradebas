@@ -1,0 +1,13 @@
+node_modules
+.next
+dist
+.codex
+.env
+.env.*
+!.env.example
+coverage
+*.log
+.DS_Store
+postgres-data
+redis-data
+minio-data

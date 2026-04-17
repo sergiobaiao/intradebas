@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: intradebas-nginx
+    restart: always
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/nginx/certs:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - intradebas-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: intradebas-frontend
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - intradebas-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: intradebas-backend
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - intradebas-net
+
+  db:
+    image: postgres:16-alpine
+    container_name: intradebas-db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intradebas-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: intradebas-redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - intradebas-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: intradebas-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks:
+      - intradebas-net
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
+  nginx_logs:
+
+networks:
+  intradebas-net:
+    driver: bridge
+

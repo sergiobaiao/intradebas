@@ -1,0 +1,310 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  superadmin
+  admin
+}
+
+enum AthleteType {
+  titular
+  familiar
+  convidado
+}
+
+enum AthleteStatus {
+  pending
+  active
+  rejected
+}
+
+enum ShirtSize {
+  PP
+  P
+  M
+  G
+  GG
+  XGG
+}
+
+enum SportCategory {
+  coletiva
+  individual
+  dupla
+  fitness
+}
+
+enum RegistrationStatus {
+  registered
+  confirmed
+  disqualified
+}
+
+enum SponsorStatus {
+  pending
+  active
+  inactive
+}
+
+enum CouponStatus {
+  active
+  used
+  expired
+}
+
+enum MediaType {
+  photo
+  video
+}
+
+enum MediaProvider {
+  local
+  youtube
+  vimeo
+}
+
+enum SponsorshipLevel {
+  bronze
+  prata
+  ouro
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  role          UserRole
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  recordedResults Result[]          @relation("recorded_results")
+  resultChanges   ResultAuditLog[]  @relation("audit_changed_by")
+  scoringConfigs  ScoringConfig[]
+  uploadedMedia   Media[]
+
+  @@map("users")
+}
+
+model Team {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  color       String?
+  mascotImage String?   @map("mascot_image")
+  totalScore  Int       @default(0) @map("total_score")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  athletes Athlete[]
+  results  Result[]
+
+  @@map("teams")
+}
+
+model Athlete {
+  id            String        @id @default(uuid())
+  cpf           String        @unique
+  name          String
+  email         String?
+  phone         String?
+  birthDate     DateTime      @map("birth_date")
+  unit          String?
+  type          AthleteType
+  titularId     String?       @map("titular_id")
+  teamId        String        @map("team_id")
+  shirtSize     ShirtSize     @map("shirt_size")
+  status        AthleteStatus @default(pending)
+  lgpdConsent   Boolean       @default(false) @map("lgpd_consent")
+  lgpdConsentAt DateTime?     @map("lgpd_consent_at")
+  lgpdConsentIp String?       @map("lgpd_consent_ip")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  titular       Athlete?      @relation("athlete_dependents", fields: [titularId], references: [id])
+  dependents    Athlete[]     @relation("athlete_dependents")
+  team          Team          @relation(fields: [teamId], references: [id])
+  registrations Registration[] @relation("athlete_registrations")
+  partneredIn   Registration[] @relation("registration_partner")
+  results       Result[]
+  redeemedCoupons Coupon[]    @relation("coupon_redeemed_by")
+
+  @@map("athletes")
+}
+
+model Sport {
+  id              String        @id @default(uuid())
+  name            String
+  category        SportCategory
+  description     String?
+  minParticipants Int           @default(1) @map("min_participants")
+  maxParticipants Int?          @map("max_participants")
+  isAldebarun     Boolean       @default(false) @map("is_aldebarun")
+  isActive        Boolean       @default(true) @map("is_active")
+  scheduleDate    DateTime?     @map("schedule_date")
+  scheduleNotes   String?       @map("schedule_notes")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  registrations Registration[]
+  results       Result[]
+
+  @@map("sports")
+}
+
+model Registration {
+  id           String             @id @default(uuid())
+  athleteId    String             @map("athlete_id")
+  sportId      String             @map("sport_id")
+  partnerId    String?            @map("partner_id")
+  status       RegistrationStatus @default(registered)
+  registeredAt DateTime           @default(now()) @map("registered_at")
+  notes        String?
+
+  athlete Athlete  @relation("athlete_registrations", fields: [athleteId], references: [id])
+  sport   Sport    @relation(fields: [sportId], references: [id])
+  partner Athlete? @relation("registration_partner", fields: [partnerId], references: [id])
+
+  @@unique([athleteId, sportId])
+  @@map("registrations")
+}
+
+model Result {
+  id               String    @id @default(uuid())
+  sportId          String    @map("sport_id")
+  athleteId        String?   @map("athlete_id")
+  teamId           String?   @map("team_id")
+  position         Int?
+  rawScore         Decimal?  @db.Decimal(10, 3) @map("raw_score")
+  calculatedPoints Int?      @map("calculated_points")
+  resultDate       DateTime  @map("result_date")
+  notes            String?
+  recordedBy       String    @map("recorded_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  sport    Sport            @relation(fields: [sportId], references: [id])
+  athlete  Athlete?         @relation(fields: [athleteId], references: [id])
+  team     Team?            @relation(fields: [teamId], references: [id])
+  recorder User             @relation("recorded_results", fields: [recordedBy], references: [id])
+  audits   ResultAuditLog[]
+
+  @@map("results")
+}
+
+model ResultAuditLog {
+  id           String   @id @default(uuid())
+  resultId     String   @map("result_id")
+  changedBy    String   @map("changed_by")
+  fieldChanged String   @map("field_changed")
+  oldValue     String?  @map("old_value")
+  newValue     String?  @map("new_value")
+  changedAt    DateTime @default(now()) @map("changed_at")
+
+  result  Result @relation(fields: [resultId], references: [id])
+  changer User   @relation("audit_changed_by", fields: [changedBy], references: [id])
+
+  @@map("result_audit_log")
+}
+
+model ScoringConfig {
+  id        String        @id @default(uuid())
+  category  SportCategory
+  position  Int
+  points    Int
+  updatedBy String        @map("updated_by")
+  updatedAt DateTime      @default(now()) @map("updated_at")
+
+  updatedByUser User @relation(fields: [updatedBy], references: [id])
+
+  @@map("scoring_config")
+}
+
+model SponsorshipQuota {
+  id               String           @id @default(uuid())
+  level            SponsorshipLevel @unique
+  price            Decimal          @db.Decimal(10, 2)
+  maxSlots         Int              @map("max_slots")
+  usedSlots        Int              @default(0) @map("used_slots")
+  courtesyCount    Int              @map("courtesy_count")
+  benefits         String?
+  backdropPriority Int              @map("backdrop_priority")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  sponsors Sponsor[]
+
+  @@map("sponsorship_quotas")
+}
+
+model Sponsor {
+  id           String        @id @default(uuid())
+  companyName  String        @map("company_name")
+  contactName  String        @map("contact_name")
+  email        String
+  phone        String?
+  quotaId      String        @map("quota_id")
+  logoUrl      String?       @map("logo_url")
+  status       SponsorStatus @default(pending)
+  paymentDate  DateTime?     @map("payment_date")
+  paymentNotes String?       @map("payment_notes")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  quota   SponsorshipQuota @relation(fields: [quotaId], references: [id])
+  coupons Coupon[]
+
+  @@map("sponsors")
+}
+
+model Coupon {
+  id         String       @id @default(uuid())
+  code       String       @unique
+  sponsorId  String       @map("sponsor_id")
+  status     CouponStatus @default(active)
+  redeemedBy String?      @map("redeemed_by")
+  redeemedAt DateTime?    @map("redeemed_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  sponsor  Sponsor  @relation(fields: [sponsorId], references: [id])
+  athlete  Athlete? @relation("coupon_redeemed_by", fields: [redeemedBy], references: [id])
+
+  @@map("coupons")
+}
+
+model Media {
+  id           String        @id @default(uuid())
+  type         MediaType
+  title        String?
+  url          String
+  thumbnailUrl String?       @map("thumbnail_url")
+  provider     MediaProvider @default(local)
+  isFeatured   Boolean       @default(false) @map("is_featured")
+  sortOrder    Int           @default(0) @map("sort_order")
+  uploadedBy   String        @map("uploaded_by")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  uploader User @relation(fields: [uploadedBy], references: [id])
+
+  @@map("media")
+}
+
+model LgpdConsentLog {
+  id           String   @id @default(uuid())
+  athleteCpf   String   @map("athlete_cpf")
+  athleteName  String?  @map("athlete_name")
+  consentedAt  DateTime @map("consented_at")
+  ipAddress    String   @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  policyVersion String  @default("v1.0") @map("policy_version")
+
+  @@map("lgpd_consent_log")
+}
+
