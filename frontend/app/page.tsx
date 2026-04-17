@@ -70,6 +70,9 @@ export default function HomePage() {
             <a className="button secondary" href="/admin/dashboard">
               Abrir dashboard inicial
             </a>
+            <a className="button secondary" href="/login">
+              Login admin
+            </a>
             <a className="button secondary" href="/api/health">
               Health frontend
             </a>

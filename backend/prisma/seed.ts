@@ -1,8 +1,11 @@
-import { PrismaClient, SponsorshipLevel, SportCategory } from '@prisma/client';
+import { PrismaClient, SponsorshipLevel, SportCategory, UserRole } from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminPasswordHash = await hash('admin123', 10);
+
   await prisma.team.createMany({
     data: [
       { name: 'Mucura', color: '#E63946', totalScore: 0 },
@@ -50,6 +53,25 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
+  await prisma.user.upsert({
+    where: {
+      email: 'admin@intradebas.local',
+    },
+    update: {
+      name: 'Administrador INTRADEBAS',
+      role: UserRole.superadmin,
+      isActive: true,
+      passwordHash: adminPasswordHash,
+    },
+    create: {
+      email: 'admin@intradebas.local',
+      name: 'Administrador INTRADEBAS',
+      role: UserRole.superadmin,
+      isActive: true,
+      passwordHash: adminPasswordHash,
+    },
+  });
 }
 
 main()
@@ -61,4 +83,3 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
-

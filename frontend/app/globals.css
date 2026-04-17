@@ -199,6 +199,17 @@ main {
   border: 1px solid rgba(22, 33, 62, 0.1);
 }
 
+.auth-card {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.error-text {
+  margin: 0;
+  color: #b42318;
+  font-weight: 700;
+}
+
 .button {
   display: inline-flex;
   align-items: center;

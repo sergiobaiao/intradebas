@@ -5,6 +5,7 @@ dist
 .env
 .env.*
 !.env.example
+credentials.md
 coverage
 *.log
 .DS_Store

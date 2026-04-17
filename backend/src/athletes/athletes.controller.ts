@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AthletesService } from './athletes.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
@@ -23,8 +24,8 @@ export class AthletesController {
   }
 
   @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
   updateStatus(@Param('id') id: string, @Body() dto: UpdateAthleteStatusDto) {
     return this.athletesService.updateStatus(id, dto);
   }
 }
-

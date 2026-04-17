@@ -51,6 +51,12 @@ Fluxo esperado para proximas entregas:
 5. Popule dados-base com `npm run prisma:seed`.
 6. Rode `docker compose -f docker-compose.dev.yml up --build`.
 
+## Credenciais admin locais
+
+Depois de `npm run prisma:seed`, o backend cria credenciais locais de desenvolvimento.
+
+Consulte `credentials.md` no ambiente local.
+
 ## Proximos passos recomendados
 
 1. Clonar/adaptar o template `next-shadcn-admin-dashboard` dentro de `frontend/`.
