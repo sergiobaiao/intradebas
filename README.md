@@ -71,6 +71,15 @@ Consulte `credentials.md` no ambiente local.
 - `/resultados`
 - `/patrocinio`
 
+## APIs publicas implementadas
+
+- `GET /api/v1/teams`
+- `GET /api/v1/athletes`
+- `GET /api/v1/results`
+- `GET /api/v1/results/ranking`
+- `GET /api/v1/sponsorship/quotas`
+- `POST /api/v1/sponsors`
+
 ## Proximos passos recomendados
 
 1. Clonar/adaptar o template `next-shadcn-admin-dashboard` dentro de `frontend/`.

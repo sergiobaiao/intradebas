@@ -24,6 +24,28 @@ async function main() {
     skipDuplicates: true,
   });
 
+  const sports = await prisma.sport.findMany({
+    select: {
+      id: true,
+      category: true,
+    },
+  });
+
+  const scoringRows = [
+    ['coletiva', 1, 5],
+    ['coletiva', 2, 3],
+    ['coletiva', 3, 1],
+    ['individual', 1, 3],
+    ['individual', 2, 2],
+    ['individual', 3, 1],
+    ['dupla', 1, 3],
+    ['dupla', 2, 2],
+    ['dupla', 3, 1],
+    ['fitness', 1, 2],
+    ['fitness', 2, 1],
+    ['fitness', 3, 0],
+  ] as const;
+
   await prisma.sponsorshipQuota.createMany({
     data: [
       {
@@ -72,6 +94,30 @@ async function main() {
       passwordHash: adminPasswordHash,
     },
   });
+
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: { email: 'admin@intradebas.local' },
+    select: { id: true },
+  });
+
+  for (const [category, position, points] of scoringRows) {
+    await prisma.scoringConfig.upsert({
+      where: {
+        id: `${category}-${position}`,
+      },
+      update: {
+        points,
+        updatedBy: admin.id,
+      },
+      create: {
+        id: `${category}-${position}`,
+        category,
+        position,
+        points,
+        updatedBy: admin.id,
+      },
+    });
+  }
 }
 
 main()

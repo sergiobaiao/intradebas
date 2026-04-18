@@ -1,8 +1,7 @@
-import { getTeams } from '../lib';
+import { getRanking } from '../lib';
 
 export default async function ResultadosPage() {
-  const teams = await getTeams();
-  const ranking = [...teams].sort((left, right) => right.totalScore - left.totalScore);
+  const ranking = await getRanking();
 
   return (
     <main className="section">
@@ -11,8 +10,8 @@ export default async function ResultadosPage() {
           <span className="eyebrow">Live score</span>
           <h1>Central de resultados</h1>
           <p>
-            Leitura inicial do ranking consolidado por equipe. O contrato publico
-            ja esta preparado no backend em `/api/v1/teams`.
+            Ranking consolidado por equipe com base nos resultados gravados no
+            backend.
           </p>
           <div className="ranking-list">
             {ranking.map((team, index) => (
@@ -30,4 +29,3 @@ export default async function ResultadosPage() {
     </main>
   );
 }
-

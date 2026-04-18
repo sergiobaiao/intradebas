@@ -28,6 +28,13 @@ export type SponsorshipQuotaSummary = {
   backdropPriority: number;
 };
 
+export type RankingRow = {
+  id: string;
+  name: string;
+  color?: string | null;
+  totalScore: number;
+};
+
 function getAdminTokenFromCookie() {
   if (typeof document === 'undefined') {
     return null;
@@ -99,6 +106,20 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
 
 export function getTeams() {
   return fetchJson<TeamSummary[]>('/teams', fallbackTeams);
+}
+
+export function getRanking() {
+  return fetchJson<RankingRow[]>(
+    '/results/ranking',
+    fallbackTeams
+      .map((team) => ({
+        id: team.id,
+        name: team.name,
+        color: team.color,
+        totalScore: team.totalScore,
+      }))
+      .sort((left, right) => right.totalScore - left.totalScore),
+  );
 }
 
 export function getAthletes() {

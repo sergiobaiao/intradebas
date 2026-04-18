@@ -14,6 +14,13 @@ export function createPrismaMock() {
       findMany: jest.fn(),
       findUnique: jest.fn(),
     },
+    result: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+    },
+    scoringConfig: {
+      findFirst: jest.fn(),
+    },
     sponsorshipQuota: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -23,6 +30,7 @@ export function createPrismaMock() {
     },
     sport: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
     registration: {
       createMany: jest.fn(),
