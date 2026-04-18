@@ -88,6 +88,51 @@ describe('SponsorshipService', () => {
     expect(result.email).toBe('joao@acme.com');
   });
 
+  it('lists only active sponsors for the public backdrop ordered by priority', async () => {
+    prisma.sponsor = {
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'sponsor-ouro',
+          companyName: 'Acme Ouro',
+          logoUrl: 'https://example.com/ouro.png',
+          quota: {
+            level: SponsorshipLevel.ouro,
+            backdropPriority: 3,
+          },
+        },
+        {
+          id: 'sponsor-prata',
+          companyName: 'Acme Prata',
+          logoUrl: null,
+          quota: {
+            level: SponsorshipLevel.prata,
+            backdropPriority: 2,
+          },
+        },
+      ]),
+    } as any;
+
+    const result = await service.listBackdropSponsors();
+
+    expect(prisma.sponsor.findMany).toHaveBeenCalledWith({
+      where: {
+        status: SponsorStatus.active,
+      },
+      include: {
+        quota: {
+          select: {
+            level: true,
+            backdropPriority: true,
+          },
+        },
+      },
+      orderBy: [{ quota: { backdropPriority: 'desc' } }, { companyName: 'asc' }],
+    });
+    expect(result).toHaveLength(2);
+    expect(result[0].level).toBe('ouro');
+    expect(result[1].level).toBe('prata');
+  });
+
   it('activates sponsor and generates missing courtesy coupons', async () => {
     prisma.sponsor = {
       findUnique: jest.fn().mockResolvedValue({

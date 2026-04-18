@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { SponsorStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -103,6 +104,31 @@ export class SponsorshipService {
         price: Number(sponsor.quota.price),
       },
     };
+  }
+
+  async listBackdropSponsors() {
+    const sponsors = await this.prisma.sponsor.findMany({
+      where: {
+        status: SponsorStatus.active,
+      },
+      include: {
+        quota: {
+          select: {
+            level: true,
+            backdropPriority: true,
+          },
+        },
+      },
+      orderBy: [{ quota: { backdropPriority: 'desc' } }, { companyName: 'asc' }],
+    });
+
+    return sponsors.map((sponsor) => ({
+      id: sponsor.id,
+      companyName: sponsor.companyName,
+      logoUrl: sponsor.logoUrl,
+      level: sponsor.quota.level,
+      backdropPriority: sponsor.quota.backdropPriority,
+    }));
   }
 
   async activateSponsor(sponsorId: string) {

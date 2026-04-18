@@ -17,6 +17,11 @@ export class SponsorshipController {
     return this.sponsorshipService.createSponsorInterest(dto);
   }
 
+  @Get('backdrop')
+  listBackdropSponsors() {
+    return this.sponsorshipService.listBackdropSponsors();
+  }
+
   @Patch('sponsors/:id/activate')
   @UseGuards(JwtAuthGuard)
   activateSponsor(@Param('id') id: string) {

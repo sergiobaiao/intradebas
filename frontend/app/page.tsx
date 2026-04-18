@@ -40,6 +40,9 @@ export default function HomePage() {
                 <a className="button secondary" href="/patrocinio">
                   Ver patrocinio
                 </a>
+                <a className="button secondary" href="/backdrop">
+                  Ver backdrop
+                </a>
               </div>
             </div>
 

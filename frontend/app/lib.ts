@@ -44,6 +44,14 @@ export type SponsorshipQuotaSummary = {
   backdropPriority: number;
 };
 
+export type BackdropSponsorSummary = {
+  id: string;
+  companyName: string;
+  logoUrl?: string | null;
+  level: 'bronze' | 'prata' | 'ouro';
+  backdropPriority: number;
+};
+
 export type RankingRow = {
   id: string;
   name: string;
@@ -166,6 +174,10 @@ export function getSponsorshipQuotas() {
 
 export function getSports() {
   return fetchJson<SportSummary[]>('/sports', fallbackSports);
+}
+
+export function getBackdropSponsors() {
+  return fetchJson<BackdropSponsorSummary[]>('/backdrop', []);
 }
 
 export async function createSponsorInterest(input: {
