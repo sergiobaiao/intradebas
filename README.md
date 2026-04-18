@@ -80,6 +80,12 @@ Consulte `credentials.md` no ambiente local.
 - `GET /api/v1/sponsorship/quotas`
 - `POST /api/v1/sponsors`
 
+## APIs admin protegidas implementadas
+
+- `PATCH /api/v1/athletes/:id/status`
+- `POST /api/v1/results`
+- `PATCH /api/v1/sponsors/:id/activate`
+
 ## Proximos passos recomendados
 
 1. Clonar/adaptar o template `next-shadcn-admin-dashboard` dentro de `frontend/`.

@@ -27,6 +27,9 @@ export function createPrismaMock() {
     },
     sponsor: {
       create: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
     },
     sport: {
       findMany: jest.fn(),
@@ -34,6 +37,10 @@ export function createPrismaMock() {
     },
     registration: {
       createMany: jest.fn(),
+    },
+    coupon: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
     },
     $transaction: jest.fn(),
   };

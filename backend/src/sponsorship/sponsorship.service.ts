@@ -5,6 +5,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SponsorshipService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private generateCouponCode(level: string) {
+    const randomPart = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    return `${level.toUpperCase()}-${randomPart}`;
+  }
+
   async listQuotas() {
     const quotas = await this.prisma.sponsorshipQuota.findMany({
       include: {
@@ -99,5 +104,71 @@ export class SponsorshipService {
       },
     };
   }
-}
 
+  async activateSponsor(sponsorId: string) {
+    const sponsor = await this.prisma.sponsor.findUnique({
+      where: { id: sponsorId },
+      include: {
+        quota: true,
+        coupons: true,
+      },
+    });
+
+    if (!sponsor) {
+      throw new BadRequestException('Patrocinador invalido');
+    }
+
+    if (sponsor.status === 'active') {
+      return {
+        id: sponsor.id,
+        status: sponsor.status,
+        couponsGenerated: sponsor.coupons.length,
+      };
+    }
+
+    const existingCouponCount = sponsor.coupons.length;
+    const missingCoupons = Math.max(sponsor.quota.courtesyCount - existingCouponCount, 0);
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const updatedSponsor = await tx.sponsor.update({
+        where: { id: sponsor.id },
+        data: {
+          status: 'active',
+          paymentDate: new Date(),
+        },
+        include: {
+          quota: true,
+          coupons: true,
+        },
+      });
+
+      for (let index = 0; index < missingCoupons; index += 1) {
+        let code = this.generateCouponCode(updatedSponsor.quota.level);
+
+        while (await tx.coupon.findUnique({ where: { code }, select: { id: true } })) {
+          code = this.generateCouponCode(updatedSponsor.quota.level);
+        }
+
+        await tx.coupon.create({
+          data: {
+            code,
+            sponsorId: updatedSponsor.id,
+          },
+        });
+      }
+
+      return tx.sponsor.findUniqueOrThrow({
+        where: { id: sponsor.id },
+        include: {
+          coupons: true,
+        },
+      });
+    });
+
+    return {
+      id: created.id,
+      status: created.status,
+      couponsGenerated: created.coupons.length,
+    };
+  }
+}

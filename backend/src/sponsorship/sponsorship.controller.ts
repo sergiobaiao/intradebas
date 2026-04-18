@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateSponsorInterestDto } from './dto/create-sponsor-interest.dto';
 import { SponsorshipService } from './sponsorship.service';
 
@@ -15,5 +16,10 @@ export class SponsorshipController {
   createSponsorInterest(@Body() dto: CreateSponsorInterestDto) {
     return this.sponsorshipService.createSponsorInterest(dto);
   }
-}
 
+  @Patch('sponsors/:id/activate')
+  @UseGuards(JwtAuthGuard)
+  activateSponsor(@Param('id') id: string) {
+    return this.sponsorshipService.activateSponsor(id);
+  }
+}

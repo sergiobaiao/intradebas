@@ -87,5 +87,65 @@ describe('SponsorshipService', () => {
     expect(result.status).toBe('pending');
     expect(result.email).toBe('joao@acme.com');
   });
-});
 
+  it('activates sponsor and generates missing courtesy coupons', async () => {
+    prisma.sponsor = {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        status: SponsorStatus.pending,
+        quota: {
+          level: SponsorshipLevel.ouro,
+          courtesyCount: 2,
+        },
+        coupons: [],
+      }),
+    } as any;
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        sponsor: {
+          update: jest.fn().mockResolvedValue({
+            id: 'sponsor-1',
+            quota: {
+              level: SponsorshipLevel.ouro,
+            },
+            coupons: [],
+          }),
+          findUniqueOrThrow: jest.fn().mockResolvedValue({
+            id: 'sponsor-1',
+            status: SponsorStatus.active,
+            coupons: [{ id: 'c1' }, { id: 'c2' }],
+          }),
+        },
+        coupon: {
+          findUnique: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockResolvedValue({}),
+        },
+      }),
+    );
+
+    const result = await service.activateSponsor('sponsor-1');
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(result.status).toBe('active');
+    expect(result.couponsGenerated).toBe(2);
+  });
+
+  it('does not generate duplicate coupons when sponsor is already active', async () => {
+    prisma.sponsor = {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        status: SponsorStatus.active,
+        quota: {
+          level: SponsorshipLevel.prata,
+          courtesyCount: 3,
+        },
+        coupons: [{ id: 'c1' }, { id: 'c2' }],
+      }),
+    } as any;
+
+    const result = await service.activateSponsor('sponsor-1');
+
+    expect(result.couponsGenerated).toBe(2);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+});
