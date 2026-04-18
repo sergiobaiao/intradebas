@@ -257,6 +257,22 @@ main {
   margin-top: 24px;
 }
 
+.sponsorship-grid {
+  margin-top: 24px;
+}
+
+.sponsorship-card strong {
+  display: block;
+  margin: 12px 0;
+  font-size: 1.6rem;
+}
+
+.success-text {
+  margin: 0;
+  color: #166534;
+  font-weight: 700;
+}
+
 .button {
   display: inline-flex;
   align-items: center;

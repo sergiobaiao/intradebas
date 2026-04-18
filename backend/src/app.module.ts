@@ -3,9 +3,17 @@ import { AthletesModule } from './athletes/athletes.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SponsorshipModule } from './sponsorship/sponsorship.module';
 import { TeamsModule } from './teams/teams.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, HealthModule, TeamsModule, AthletesModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    HealthModule,
+    TeamsModule,
+    AthletesModule,
+    SponsorshipModule,
+  ],
 })
 export class AppModule {}

@@ -16,6 +16,18 @@ export type AthleteSummary = {
   sports: { id: string; name: string; category: string }[];
 };
 
+export type SponsorshipQuotaSummary = {
+  id: string;
+  level: 'bronze' | 'prata' | 'ouro';
+  price: number;
+  maxSlots: number;
+  usedSlots: number;
+  remainingSlots: number;
+  courtesyCount: number;
+  benefits?: string | null;
+  backdropPriority: number;
+};
+
 function getAdminTokenFromCookie() {
   if (typeof document === 'undefined') {
     return null;
@@ -91,6 +103,38 @@ export function getTeams() {
 
 export function getAthletes() {
   return fetchJson<AthleteSummary[]>('/athletes', fallbackAthletes);
+}
+
+export function getSponsorshipQuotas() {
+  return fetchJson<SponsorshipQuotaSummary[]>('/sponsorship/quotas', []);
+}
+
+export async function createSponsorInterest(input: {
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone?: string;
+  quotaId: string;
+  logoUrl?: string;
+}) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/sponsors`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+    throw new Error(body?.message ?? 'Falha ao registrar interesse de patrocinio');
+  }
+
+  return response.json();
 }
 
 export async function adminFetchJson<T>(path: string): Promise<T> {

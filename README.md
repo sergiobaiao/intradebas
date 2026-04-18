@@ -64,6 +64,13 @@ Consulte `credentials.md` no ambiente local.
 - `/admin/dashboard`
 - `/admin/atletas`
 
+## Rotas publicas atuais
+
+- `/`
+- `/inscricao`
+- `/resultados`
+- `/patrocinio`
+
 ## Proximos passos recomendados
 
 1. Clonar/adaptar o template `next-shadcn-admin-dashboard` dentro de `frontend/`.
