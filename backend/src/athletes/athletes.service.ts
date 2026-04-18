@@ -4,7 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AthleteStatus, AthleteType, Prisma, ShirtSize } from '@prisma/client';
+import {
+  AthleteStatus,
+  AthleteType,
+  CouponStatus,
+  Prisma,
+  ShirtSize,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
@@ -109,7 +115,24 @@ export class AthletesService {
       throw new BadRequestException('Existe modalidade invalida na inscricao');
     }
 
+    const couponCode = dto.couponCode?.trim().toUpperCase();
+
     const athlete = await this.prisma.$transaction(async (tx) => {
+      let couponId: string | null = null;
+
+      if (couponCode) {
+        const coupon = await tx.coupon.findUnique({
+          where: { code: couponCode },
+          select: { id: true, status: true },
+        });
+
+        if (!coupon || coupon.status !== CouponStatus.active) {
+          throw new BadRequestException('Cupom invalido ou indisponivel');
+        }
+
+        couponId = coupon.id;
+      }
+
       const createdAthlete = await tx.athlete.create({
         data: {
           name: dto.name,
@@ -123,7 +146,9 @@ export class AthletesService {
           teamId: dto.teamId,
           shirtSize: dto.shirtSize as ShirtSize,
           status:
-            dto.type === 'convidado' ? AthleteStatus.pending : AthleteStatus.active,
+            dto.type === 'convidado' && !couponCode
+              ? AthleteStatus.pending
+              : AthleteStatus.active,
           lgpdConsent: dto.lgpdConsent,
           lgpdConsentAt: new Date(),
         },
@@ -135,6 +160,24 @@ export class AthletesService {
           sportId,
         })),
       });
+
+      if (couponId) {
+        const redeemedCoupon = await tx.coupon.updateMany({
+          where: {
+            id: couponId,
+            status: CouponStatus.active,
+          },
+          data: {
+            status: CouponStatus.used,
+            redeemedBy: createdAthlete.id,
+            redeemedAt: new Date(),
+          },
+        });
+
+        if (redeemedCoupon.count !== 1) {
+          throw new BadRequestException('Cupom invalido ou indisponivel');
+        }
+      }
 
       return tx.athlete.findUniqueOrThrow({
         where: { id: createdAthlete.id },

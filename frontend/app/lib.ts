@@ -16,6 +16,22 @@ export type AthleteSummary = {
   sports: { id: string; name: string; category: string }[];
 };
 
+export type CreateAthleteInput = {
+  name: string;
+  cpf: string;
+  email?: string;
+  phone?: string;
+  birthDate: string;
+  unit?: string;
+  type: 'titular' | 'familiar' | 'convidado';
+  titularId?: string;
+  teamId: string;
+  shirtSize: 'PP' | 'P' | 'M' | 'G' | 'GG' | 'XGG';
+  sports: string[];
+  lgpdConsent: boolean;
+  couponCode?: string;
+};
+
 export type SponsorshipQuotaSummary = {
   id: string;
   level: 'bronze' | 'prata' | 'ouro';
@@ -33,6 +49,13 @@ export type RankingRow = {
   name: string;
   color?: string | null;
   totalScore: number;
+};
+
+export type SportSummary = {
+  id: string;
+  name: string;
+  category: string;
+  isAldebarun: boolean;
 };
 
 function getAdminTokenFromCookie() {
@@ -86,6 +109,17 @@ const fallbackAthletes: AthleteSummary[] = [
   },
 ];
 
+const fallbackSports: SportSummary[] = [
+  { id: 'sport-futsal', name: 'Futsal', category: 'coletiva', isAldebarun: false },
+  {
+    id: 'sport-aldebarun-5k',
+    name: 'ALDEBARUN 5K',
+    category: 'individual',
+    isAldebarun: true,
+  },
+  { id: 'sport-futevolei', name: 'Futevolei', category: 'dupla', isAldebarun: false },
+];
+
 async function fetchJson<T>(path: string, fallback: T): Promise<T> {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
@@ -130,6 +164,10 @@ export function getSponsorshipQuotas() {
   return fetchJson<SponsorshipQuotaSummary[]>('/sponsorship/quotas', []);
 }
 
+export function getSports() {
+  return fetchJson<SportSummary[]>('/sports', fallbackSports);
+}
+
 export async function createSponsorInterest(input: {
   companyName: string;
   contactName: string;
@@ -156,6 +194,30 @@ export async function createSponsorInterest(input: {
   }
 
   return response.json();
+}
+
+export async function createAthleteRegistration(input: CreateAthleteInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/athletes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message)
+      ? body?.message[0]
+      : body?.message;
+    throw new Error(message ?? 'Falha ao concluir inscricao');
+  }
+
+  return (await response.json()) as AthleteSummary;
 }
 
 export async function adminFetchJson<T>(path: string): Promise<T> {

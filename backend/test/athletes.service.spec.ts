@@ -70,6 +70,10 @@ describe('AthletesService', () => {
         registration: {
           createMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
+        coupon: {
+          findUnique: jest.fn(),
+          updateMany: jest.fn(),
+        },
       }),
     );
 
@@ -82,6 +86,96 @@ describe('AthletesService', () => {
 
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.status).toBe('pending');
+  });
+
+  it('redeems an active coupon during guest registration', async () => {
+    prisma.athlete.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'titular-1', type: AthleteType.titular });
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.sport.findMany.mockResolvedValue([{ id: 'sport-1' }]);
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        athlete: {
+          create: jest.fn().mockResolvedValue({ id: 'athlete-2' }),
+          findUniqueOrThrow: jest.fn().mockResolvedValue({
+            id: 'athlete-2',
+            name: 'Convidado Cupom',
+            cpf: '123.456.789-00',
+            email: null,
+            phone: null,
+            birthDate: new Date('1990-01-01'),
+            type: AthleteType.convidado,
+            status: AthleteStatus.active,
+            unit: null,
+            shirtSize: ShirtSize.M,
+            createdAt: new Date('2026-04-18T00:00:00Z'),
+            team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
+            registrations: [
+              {
+                sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+              },
+            ],
+          }),
+        },
+        registration: {
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        coupon: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'coupon-1',
+            status: 'active',
+          }),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      }),
+    );
+
+    const result = await service.create({
+      ...validDto,
+      name: 'Convidado Cupom',
+      type: 'convidado',
+      titularId: 'titular-1',
+      couponCode: ' cortesia-2026 ',
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(result.status).toBe('active');
+  });
+
+  it('rejects registration with an invalid or used coupon', async () => {
+    prisma.athlete.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'titular-1', type: AthleteType.titular });
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.sport.findMany.mockResolvedValue([{ id: 'sport-1' }]);
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        athlete: {
+          create: jest.fn(),
+          findUniqueOrThrow: jest.fn(),
+        },
+        registration: {
+          createMany: jest.fn(),
+        },
+        coupon: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'coupon-1',
+            status: 'used',
+          }),
+          updateMany: jest.fn(),
+        },
+      }),
+    );
+
+    await expect(
+      service.create({
+        ...validDto,
+        type: 'convidado',
+        titularId: 'titular-1',
+        couponCode: 'JA-USADO',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects create without LGPD consent', async () => {
@@ -101,4 +195,3 @@ describe('AthletesService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
-

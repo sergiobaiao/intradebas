@@ -62,5 +62,9 @@ export class CreateAthleteDto {
 
   @IsBoolean()
   lgpdConsent!: boolean;
-}
 
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  couponCode?: string;
+}

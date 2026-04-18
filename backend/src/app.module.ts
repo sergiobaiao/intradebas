@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ResultsModule } from './results/results.module';
+import { SportsModule } from './sports/sports.module';
 import { SponsorshipModule } from './sponsorship/sponsorship.module';
 import { TeamsModule } from './teams/teams.module';
 
@@ -13,6 +14,7 @@ import { TeamsModule } from './teams/teams.module';
     AuthModule,
     HealthModule,
     ResultsModule,
+    SportsModule,
     TeamsModule,
     AthletesModule,
     SponsorshipModule,
