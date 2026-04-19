@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateResultDto } from './dto/create-result.dto';
+import { UpdateResultDto } from './dto/update-result.dto';
 
 @Injectable()
 export class ResultsService {
@@ -50,36 +52,7 @@ export class ResultsService {
   }
 
   async createResult(dto: CreateResultDto, recordedBy: string) {
-    const sport = await this.prisma.sport.findUnique({
-      where: { id: dto.sportId },
-      select: {
-        id: true,
-        category: true,
-      },
-    });
-
-    if (!sport) {
-      throw new BadRequestException('Modalidade invalida');
-    }
-
-    const team = await this.prisma.team.findUnique({
-      where: { id: dto.teamId },
-      select: { id: true },
-    });
-
-    if (!team) {
-      throw new BadRequestException('Equipe invalida');
-    }
-
-    const scoring = await this.prisma.scoringConfig.findFirst({
-      where: {
-        category: sport.category,
-        position: dto.position,
-      },
-      select: {
-        points: true,
-      },
-    });
+    const scoring = await this.resolveScoring(dto.sportId, dto.teamId, dto.position);
 
     const result = await this.prisma.result.create({
       data: {
@@ -100,5 +73,85 @@ export class ResultsService {
 
     return result;
   }
-}
 
+  async updateResult(id: string, dto: UpdateResultDto, recordedBy: string) {
+    const existing = await this.prisma.result.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        sportId: true,
+        teamId: true,
+        position: true,
+      },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Resultado nao encontrado');
+    }
+
+    const sportId = dto.sportId ?? existing.sportId;
+    const teamId = dto.teamId ?? existing.teamId;
+    const position = dto.position ?? existing.position;
+
+    if (!teamId) {
+      throw new BadRequestException('Equipe invalida');
+    }
+
+    if (!position) {
+      throw new BadRequestException('Posicao invalida');
+    }
+
+    const scoring = await this.resolveScoring(sportId, teamId, position);
+
+    return this.prisma.result.update({
+      where: { id },
+      data: {
+        sportId,
+        teamId,
+        position,
+        rawScore: dto.rawScore,
+        calculatedPoints: scoring?.points ?? 0,
+        resultDate: dto.resultDate ? new Date(dto.resultDate) : undefined,
+        notes: dto.notes,
+        recordedBy,
+      },
+      include: {
+        sport: true,
+        team: true,
+      },
+    });
+  }
+
+  private async resolveScoring(sportId: string, teamId: string, position: number) {
+    const sport = await this.prisma.sport.findUnique({
+      where: { id: sportId },
+      select: {
+        id: true,
+        category: true,
+      },
+    });
+
+    if (!sport) {
+      throw new BadRequestException('Modalidade invalida');
+    }
+
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      select: { id: true },
+    });
+
+    if (!team) {
+      throw new BadRequestException('Equipe invalida');
+    }
+
+    return this.prisma.scoringConfig.findFirst({
+      where: {
+        category: sport.category,
+        position,
+      },
+      select: {
+        points: true,
+      },
+    });
+  }
+}

@@ -66,6 +66,26 @@ export type SportSummary = {
   isAldebarun: boolean;
 };
 
+export type ResultSummary = {
+  id: string;
+  position: number;
+  rawScore?: number | null;
+  calculatedPoints?: number | null;
+  resultDate: string;
+  notes?: string | null;
+  sport: { id: string; name: string; category: string };
+  team: { id: string; name: string; color: string; totalScore: number };
+};
+
+export type ResultInput = {
+  sportId: string;
+  teamId: string;
+  position: number;
+  rawScore?: number;
+  resultDate: string;
+  notes?: string;
+};
+
 function getAdminTokenFromCookie() {
   if (typeof document === 'undefined') {
     return null;
@@ -162,6 +182,10 @@ export function getRanking() {
       }))
       .sort((left, right) => right.totalScore - left.totalScore),
   );
+}
+
+export function getResults() {
+  return fetchJson<ResultSummary[]>('/results', []);
 }
 
 export function getAthletes() {
@@ -278,5 +302,53 @@ export function adminUpdateAthleteStatus(
     }
 
     return (await response.json()) as AthleteSummary;
+  });
+}
+
+export function adminCreateResult(input: ResultInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/results`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao lancar resultado');
+    }
+
+    return (await response.json()) as ResultSummary;
+  });
+}
+
+export function adminUpdateResult(resultId: string, input: Partial<ResultInput>) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/results/${resultId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao corrigir resultado');
+    }
+
+    return (await response.json()) as ResultSummary;
   });
 }
