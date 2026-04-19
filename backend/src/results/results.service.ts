@@ -68,16 +68,17 @@ export class ResultsService {
     });
 
     return teams
-      .map((team) => ({
+      .map((team: RankingTeam) => ({
         id: team.id,
         name: team.name,
         color: team.color,
         totalScore: team.results.reduce(
-          (sum, result) => sum + (result.calculatedPoints ?? 0),
+          (sum: number, result: RankingTeam['results'][number]) =>
+            sum + (result.calculatedPoints ?? 0),
           0,
         ),
       }))
-      .sort((left, right) => {
+      .sort((left: RankingRow, right: RankingRow) => {
         if (right.totalScore !== left.totalScore) {
           return right.totalScore - left.totalScore;
         }
@@ -153,7 +154,7 @@ export class ResultsService {
       notes: nextNotes,
     });
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.result.update({
         where: { id },
         data: {
@@ -282,3 +283,20 @@ export class ResultsService {
     return String(value);
   }
 }
+
+type RankingTeam = Prisma.TeamGetPayload<{
+  include: {
+    results: {
+      select: {
+        calculatedPoints: true;
+      };
+    };
+  };
+}>;
+
+type RankingRow = {
+  id: string;
+  name: string;
+  color: string | null;
+  totalScore: number;
+};

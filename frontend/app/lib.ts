@@ -1,7 +1,7 @@
 export type TeamSummary = {
   id: string;
   name: string;
-  color: string;
+  color?: string | null;
   totalScore: number;
 };
 
@@ -98,6 +98,9 @@ export type SportSummary = {
   name: string;
   category: string;
   isAldebarun: boolean;
+  isActive?: boolean;
+  scheduleDate?: string | null;
+  scheduleNotes?: string | null;
 };
 
 export type ResultSummary = {
@@ -141,6 +144,35 @@ export type ResultAuditLogSummary = {
       id: string;
       name: string;
     } | null;
+  };
+};
+
+export type MediaAdminSummary = {
+  id: string;
+  type: 'photo' | 'video';
+  title?: string | null;
+  url: string;
+  thumbnailUrl?: string | null;
+  provider: 'local' | 'youtube' | 'vimeo';
+  isFeatured: boolean;
+  sortOrder: number;
+  createdAt: string;
+  uploader: {
+    id: string;
+    name: string;
+    email: string;
+  };
+};
+
+export type ScoringConfigSummary = {
+  id: string;
+  category: string;
+  position: number;
+  points: number;
+  updatedByUser: {
+    id: string;
+    name: string;
+    email: string;
   };
 };
 
@@ -425,4 +457,12 @@ export function adminGetCoupons() {
 
 export function adminGetSponsorCoupons(sponsorId: string) {
   return adminFetchJson<CouponAdminSummary[]>(`/sponsors/${sponsorId}/coupons`);
+}
+
+export function adminGetMedia() {
+  return adminFetchJson<MediaAdminSummary[]>('/media');
+}
+
+export function adminGetScoringConfig() {
+  return adminFetchJson<ScoringConfigSummary[]>('/settings/scoring');
 }

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { SponsorStatus } from '@prisma/client';
+import { Prisma, SponsorStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -26,8 +26,8 @@ export class SponsorshipService {
       },
     });
 
-    return quotas.map((quota) => {
-      const usedSlots = quota.sponsors.filter((sponsor) =>
+    return quotas.map((quota: QuotaWithSponsors) => {
+      const usedSlots = quota.sponsors.filter((sponsor: QuotaSponsorStatus) =>
         ['pending', 'active'].includes(sponsor.status),
       ).length;
 
@@ -69,7 +69,7 @@ export class SponsorshipService {
       throw new BadRequestException('Cota de patrocinio invalida');
     }
 
-    const usedSlots = quota.sponsors.filter((sponsor) =>
+    const usedSlots = quota.sponsors.filter((sponsor: QuotaSponsorStatus) =>
       ['pending', 'active'].includes(sponsor.status),
     ).length;
 
@@ -122,7 +122,7 @@ export class SponsorshipService {
       orderBy: [{ quota: { backdropPriority: 'desc' } }, { companyName: 'asc' }],
     });
 
-    return sponsors.map((sponsor) => ({
+    return sponsors.map((sponsor: BackdropSponsor) => ({
       id: sponsor.id,
       companyName: sponsor.companyName,
       logoUrl: sponsor.logoUrl,
@@ -151,7 +151,7 @@ export class SponsorshipService {
       orderBy: [{ createdAt: 'desc' }, { companyName: 'asc' }],
     });
 
-    return sponsors.map((sponsor) => ({
+    return sponsors.map((sponsor: AdminSponsor) => ({
       id: sponsor.id,
       companyName: sponsor.companyName,
       contactName: sponsor.contactName,
@@ -189,7 +189,7 @@ export class SponsorshipService {
       orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
     });
 
-    return coupons.map((coupon) => ({
+    return coupons.map((coupon: AdminCoupon) => ({
       id: coupon.id,
       code: coupon.code,
       status: coupon.status,
@@ -232,7 +232,7 @@ export class SponsorshipService {
       orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
     });
 
-    return coupons.map((coupon) => ({
+    return coupons.map((coupon: AdminCoupon) => ({
       id: coupon.id,
       code: coupon.code,
       status: coupon.status,
@@ -267,7 +267,7 @@ export class SponsorshipService {
     const existingCouponCount = sponsor.coupons.length;
     const missingCoupons = Math.max(sponsor.quota.courtesyCount - existingCouponCount, 0);
 
-    const created = await this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updatedSponsor = await tx.sponsor.update({
         where: { id: sponsor.id },
         data: {
@@ -310,3 +310,66 @@ export class SponsorshipService {
     };
   }
 }
+
+type QuotaSponsorStatus = {
+  id: string;
+  status: string;
+};
+
+type QuotaWithSponsors = Prisma.SponsorshipQuotaGetPayload<{
+  include: {
+    sponsors: {
+      select: {
+        id: true;
+        status: true;
+      };
+    };
+  };
+}>;
+
+type BackdropSponsor = Prisma.SponsorGetPayload<{
+  include: {
+    quota: {
+      select: {
+        level: true;
+        backdropPriority: true;
+      };
+    };
+  };
+}>;
+
+type AdminSponsor = Prisma.SponsorGetPayload<{
+  include: {
+    quota: {
+      select: {
+        id: true;
+        level: true;
+        price: true;
+        courtesyCount: true;
+      };
+    };
+    coupons: {
+      select: {
+        id: true;
+      };
+    };
+  };
+}>;
+
+type AdminCoupon = Prisma.CouponGetPayload<{
+  include: {
+    sponsor: {
+      select: {
+        id: true;
+        companyName: true;
+      };
+    };
+    athlete: {
+      select: {
+        id: true;
+        name: true;
+        cpf: true;
+      };
+    };
+  };
+}>;

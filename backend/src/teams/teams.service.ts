@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -49,7 +50,7 @@ export class TeamsService {
       orderBy: [{ status: 'asc' }, { name: 'asc' }],
     });
 
-    return athletes.map((athlete) => ({
+    return athletes.map((athlete: TeamAthleteWithRelations) => ({
       id: athlete.id,
       name: athlete.name,
       cpf: athlete.cpf,
@@ -63,8 +64,22 @@ export class TeamsService {
       createdAt: athlete.createdAt,
       team: athlete.team,
       sports: athletes.length
-        ? athlete.registrations.map((registration) => registration.sport)
+        ? athlete.registrations.map(
+            (registration: TeamAthleteWithRelations['registrations'][number]) =>
+              registration.sport,
+          )
         : [],
     }));
   }
 }
+
+type TeamAthleteWithRelations = Prisma.AthleteGetPayload<{
+  include: {
+    team: true;
+    registrations: {
+      include: {
+        sport: true;
+      };
+    };
+  };
+}>;

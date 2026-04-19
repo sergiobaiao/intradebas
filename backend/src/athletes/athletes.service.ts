@@ -19,6 +19,29 @@ import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 export class AthletesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private toResponse(athlete: AthleteWithRelations) {
+    const sports = athlete.registrations.map(
+      (registration: AthleteWithRelations['registrations'][number]) =>
+        registration.sport,
+    );
+
+    return {
+      id: athlete.id,
+      name: athlete.name,
+      cpf: athlete.cpf,
+      email: athlete.email,
+      phone: athlete.phone,
+      birthDate: athlete.birthDate,
+      type: athlete.type,
+      status: athlete.status,
+      unit: athlete.unit,
+      shirtSize: athlete.shirtSize,
+      createdAt: athlete.createdAt,
+      team: athlete.team,
+      sports,
+    };
+  }
+
   async findAll() {
     const athletes = await this.prisma.athlete.findMany({
       include: {
@@ -34,7 +57,7 @@ export class AthletesService {
       },
     });
 
-    return athletes.map((athlete) => this.toResponse(athlete));
+    return athletes.map((athlete: AthleteWithRelations) => this.toResponse(athlete));
   }
 
   async findOne(id: string) {
@@ -117,7 +140,7 @@ export class AthletesService {
 
     const couponCode = dto.couponCode?.trim().toUpperCase();
 
-    const athlete = await this.prisma.$transaction(async (tx) => {
+    const athlete = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       let couponId: string | null = null;
 
       if (couponCode) {
@@ -223,34 +246,15 @@ export class AthletesService {
     return this.toResponse(updated);
   }
 
-  private toResponse(
-    athlete: Prisma.AthleteGetPayload<{
-      include: {
-        team: true;
-        registrations: {
-          include: {
-            sport: true;
-          };
-        };
-      };
-    }>,
-  ) {
-    const sports = athlete.registrations.map((registration) => registration.sport);
-
-    return {
-      id: athlete.id,
-      name: athlete.name,
-      cpf: athlete.cpf,
-      email: athlete.email,
-      phone: athlete.phone,
-      birthDate: athlete.birthDate,
-      type: athlete.type,
-      status: athlete.status,
-      unit: athlete.unit,
-      shirtSize: athlete.shirtSize,
-      createdAt: athlete.createdAt,
-      team: athlete.team,
-      sports,
-    };
-  }
 }
+
+type AthleteWithRelations = Prisma.AthleteGetPayload<{
+  include: {
+    team: true;
+    registrations: {
+      include: {
+        sport: true;
+      };
+    };
+  };
+}>;

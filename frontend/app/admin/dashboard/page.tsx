@@ -27,14 +27,35 @@ export default async function AdminDashboardPage() {
           </article>
         </div>
         <div className="cta-row" style={{ marginTop: '24px' }}>
+          <a className="button secondary" href="/admin/equipes">
+            Equipes
+          </a>
           <a className="button secondary" href="/admin/atletas">
             Revisar atletas
+          </a>
+          <a className="button secondary" href="/admin/modalidades">
+            Modalidades
           </a>
           <a className="button secondary" href="/admin/patrocinio">
             Gerenciar patrocinio
           </a>
           <a className="button secondary" href="/admin/resultados">
             Gerenciar resultados
+          </a>
+          <a className="button secondary" href="/admin/ranking">
+            Ranking
+          </a>
+          <a className="button secondary" href="/admin/auditoria">
+            Auditoria
+          </a>
+          <a className="button secondary" href="/admin/backdrop">
+            Backdrop
+          </a>
+          <a className="button secondary" href="/admin/midia">
+            Midia
+          </a>
+          <a className="button secondary" href="/admin/configuracoes">
+            Configuracoes
           </a>
         </div>
       </div>
