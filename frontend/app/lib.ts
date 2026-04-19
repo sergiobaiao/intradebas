@@ -86,6 +86,30 @@ export type ResultInput = {
   notes?: string;
 };
 
+export type ResultAuditLogSummary = {
+  id: string;
+  fieldChanged: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  changedAt: string;
+  changer: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  result: {
+    id: string;
+    sport: {
+      id: string;
+      name: string;
+    };
+    team?: {
+      id: string;
+      name: string;
+    } | null;
+  };
+};
+
 function getAdminTokenFromCookie() {
   if (typeof document === 'undefined') {
     return null;
@@ -351,4 +375,8 @@ export function adminUpdateResult(resultId: string, input: Partial<ResultInput>)
 
     return (await response.json()) as ResultSummary;
   });
+}
+
+export function adminGetResultAuditLogs() {
+  return adminFetchJson<ResultAuditLogSummary[]>('/results/audit');
 }

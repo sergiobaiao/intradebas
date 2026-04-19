@@ -18,6 +18,12 @@ export class ResultsController {
     return this.resultsService.getRanking();
   }
 
+  @Get('audit')
+  @UseGuards(JwtAuthGuard)
+  listAuditLogs() {
+    return this.resultsService.listAuditLogs();
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   createResult(@Body() dto: CreateResultDto, @Req() request: { user: { sub: string } }) {

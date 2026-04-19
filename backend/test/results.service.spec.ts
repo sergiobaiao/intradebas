@@ -86,6 +86,9 @@ describe('ResultsService', () => {
       sportId: 'sport-1',
       teamId: 'team-1',
       position: 3,
+      rawScore: 10,
+      resultDate: new Date('2026-04-18T00:00:00Z'),
+      notes: 'Antes',
     });
     prisma.sport.findUnique.mockResolvedValue({
       id: 'sport-1',
@@ -93,16 +96,25 @@ describe('ResultsService', () => {
     });
     prisma.team.findUnique.mockResolvedValue({ id: 'team-2' });
     prisma.scoringConfig.findFirst.mockResolvedValue({ points: 3 });
-    prisma.result.update.mockResolvedValue({
-      id: 'result-1',
-      sportId: 'sport-1',
-      teamId: 'team-2',
-      position: 2,
-      calculatedPoints: 3,
-      resultDate: new Date('2026-04-19T00:00:00Z'),
-      sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
-      team: { id: 'team-2', name: 'Jacare', color: '#2D6A4F', totalScore: 0 },
-    });
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        result: {
+          update: jest.fn().mockResolvedValue({
+            id: 'result-1',
+            sportId: 'sport-1',
+            teamId: 'team-2',
+            position: 2,
+            calculatedPoints: 3,
+            resultDate: new Date('2026-04-19T00:00:00Z'),
+            sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+            team: { id: 'team-2', name: 'Jacare', color: '#2D6A4F', totalScore: 0 },
+          }),
+        },
+        resultAuditLog: {
+          createMany: jest.fn().mockResolvedValue({ count: 4 }),
+        },
+      }),
+    );
 
     const result = await service.updateResult(
       'result-1',
@@ -114,7 +126,7 @@ describe('ResultsService', () => {
       'admin-1',
     );
 
-    expect(prisma.result.update).toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.calculatedPoints).toBe(3);
   });
 
@@ -130,5 +142,116 @@ describe('ResultsService', () => {
         'admin-1',
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('does not create audit rows when an update keeps the same values', async () => {
+    prisma.result.findUnique.mockResolvedValue({
+      id: 'result-1',
+      sportId: 'sport-1',
+      teamId: 'team-1',
+      position: 1,
+      rawScore: 12,
+      resultDate: new Date('2026-04-19T00:00:00Z'),
+      notes: 'Sem mudanca',
+    });
+    prisma.sport.findUnique.mockResolvedValue({
+      id: 'sport-1',
+      category: 'coletiva',
+    });
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.scoringConfig.findFirst.mockResolvedValue({ points: 5 });
+
+    const auditCreateMany = jest.fn();
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        result: {
+          update: jest.fn().mockResolvedValue({
+            id: 'result-1',
+            sportId: 'sport-1',
+            teamId: 'team-1',
+            position: 1,
+            calculatedPoints: 5,
+            resultDate: new Date('2026-04-19T00:00:00Z'),
+            sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+            team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
+          }),
+        },
+        resultAuditLog: {
+          createMany: auditCreateMany,
+        },
+      }),
+    );
+
+    await service.updateResult(
+      'result-1',
+      {
+        teamId: 'team-1',
+        position: 1,
+        resultDate: '2026-04-19T00:00:00Z',
+        rawScore: 12,
+        notes: 'Sem mudanca',
+      },
+      'admin-1',
+    );
+
+    expect(auditCreateMany).not.toHaveBeenCalled();
+  });
+
+  it('lists recent audit logs in reverse chronological order', async () => {
+    prisma.resultAuditLog.findMany.mockResolvedValue([
+      {
+        id: 'audit-1',
+        fieldChanged: 'position',
+        oldValue: '3',
+        newValue: '2',
+        changedAt: new Date('2026-04-19T12:00:00Z'),
+        changer: {
+          id: 'admin-1',
+          name: 'Administrador',
+          email: 'admin@intradebas.local',
+        },
+        result: {
+          id: 'result-1',
+          sport: { id: 'sport-1', name: 'Futsal' },
+          team: { id: 'team-1', name: 'Mucura' },
+        },
+      },
+    ]);
+
+    const auditLogs = await service.listAuditLogs();
+
+    expect(prisma.resultAuditLog.findMany).toHaveBeenCalledWith({
+      include: {
+        changer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        result: {
+          select: {
+            id: true,
+            sport: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        changedAt: 'desc',
+      },
+      take: 20,
+    });
+    expect(auditLogs).toHaveLength(1);
   });
 });

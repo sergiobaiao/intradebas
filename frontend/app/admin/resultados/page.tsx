@@ -3,11 +3,13 @@
 import { FormEvent, useEffect, useState } from 'react';
 import {
   ResultInput,
+  ResultAuditLogSummary,
   ResultSummary,
   SportSummary,
   TeamSummary,
   adminCreateResult,
   adminFetchJson,
+  adminGetResultAuditLogs,
   adminUpdateResult,
 } from '../../lib';
 
@@ -19,6 +21,7 @@ export default function AdminResultadosPage() {
   const [results, setResults] = useState<ResultSummary[]>([]);
   const [teams, setTeams] = useState<TeamSummary[]>([]);
   const [sports, setSports] = useState<SportSummary[]>([]);
+  const [auditLogs, setAuditLogs] = useState<ResultAuditLogSummary[]>([]);
   const [sportId, setSportId] = useState('');
   const [teamId, setTeamId] = useState('');
   const [position, setPosition] = useState(1);
@@ -45,10 +48,12 @@ export default function AdminResultadosPage() {
         adminFetchJson<TeamSummary[]>('/teams'),
         adminFetchJson<SportSummary[]>('/sports'),
       ]);
+      const loadedAuditLogs = await adminGetResultAuditLogs();
 
       setResults(loadedResults);
       setTeams(loadedTeams);
       setSports(loadedSports);
+      setAuditLogs(loadedAuditLogs);
       setSportId((current) => current || loadedSports[0]?.id || '');
       setTeamId((current) => current || loadedTeams[0]?.id || '');
     } catch (loadError) {
@@ -89,6 +94,7 @@ export default function AdminResultadosPage() {
         setResults((current) =>
           current.map((result) => (result.id === editingId ? updated : result)),
         );
+        setAuditLogs(await adminGetResultAuditLogs());
         setMessage('Resultado corrigido com sucesso.');
       } else {
         const created = await adminCreateResult(payload);
@@ -211,30 +217,66 @@ export default function AdminResultadosPage() {
         {loading ? <p>Carregando resultados...</p> : null}
 
         {!loading ? (
-          <div className="review-grid" style={{ marginTop: '24px' }}>
-            {results.map((result) => (
-              <article key={result.id} className="card review-card">
-                <div className="review-header">
-                  <div>
-                    <h3>{result.sport.name}</h3>
-                    <small>{result.team.name}</small>
+          <>
+            <div className="review-grid" style={{ marginTop: '24px' }}>
+              {results.map((result) => (
+                <article key={result.id} className="card review-card">
+                  <div className="review-header">
+                    <div>
+                      <h3>{result.sport.name}</h3>
+                      <small>{result.team.name}</small>
+                    </div>
+                    <span className="status-pill active">{result.calculatedPoints ?? 0} pts</span>
                   </div>
-                  <span className="status-pill active">{result.calculatedPoints ?? 0} pts</span>
-                </div>
 
-                <p>Posicao: {result.position}</p>
-                <p>Data: {new Date(result.resultDate).toLocaleString('pt-BR')}</p>
-                <p>Score bruto: {result.rawScore ?? 'Nao informado'}</p>
-                <p>Observacoes: {result.notes ?? 'Sem observacoes'}</p>
+                  <p>Posicao: {result.position}</p>
+                  <p>Data: {new Date(result.resultDate).toLocaleString('pt-BR')}</p>
+                  <p>Score bruto: {result.rawScore ?? 'Nao informado'}</p>
+                  <p>Observacoes: {result.notes ?? 'Sem observacoes'}</p>
 
-                <div className="cta-row">
-                  <button className="button secondary" type="button" onClick={() => startEdit(result)}>
-                    Corrigir
-                  </button>
+                  <div className="cta-row">
+                    <button className="button secondary" type="button" onClick={() => startEdit(result)}>
+                      Corrigir
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="card" style={{ marginTop: '24px' }}>
+              <h2>Auditoria recente</h2>
+              {auditLogs.length === 0 ? (
+                <p>Nenhuma alteracao de resultado foi auditada ainda.</p>
+              ) : (
+                <div className="review-grid">
+                  {auditLogs.map((audit) => (
+                    <article key={audit.id} className="card review-card">
+                      <div className="review-header">
+                        <div>
+                          <h3>{audit.result.sport.name}</h3>
+                          <small>{audit.result.team?.name ?? 'Sem equipe'}</small>
+                        </div>
+                        <span className="status-pill active">{audit.fieldChanged}</span>
+                      </div>
+                      <p>
+                        <strong>Antes:</strong> {audit.oldValue ?? 'vazio'}
+                      </p>
+                      <p>
+                        <strong>Depois:</strong> {audit.newValue ?? 'vazio'}
+                      </p>
+                      <p>
+                        <strong>Por:</strong> {audit.changer.name}
+                      </p>
+                      <p>
+                        <strong>Quando:</strong>{' '}
+                        {new Date(audit.changedAt).toLocaleString('pt-BR')}
+                      </p>
+                    </article>
+                  ))}
                 </div>
-              </article>
-            ))}
-          </div>
+              )}
+            </div>
+          </>
         ) : null}
       </div>
     </main>

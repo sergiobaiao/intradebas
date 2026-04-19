@@ -18,6 +18,41 @@ export class ResultsService {
     });
   }
 
+  async listAuditLogs() {
+    return this.prisma.resultAuditLog.findMany({
+      include: {
+        changer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        result: {
+          select: {
+            id: true,
+            sport: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        changedAt: 'desc',
+      },
+      take: 20,
+    });
+  }
+
   async getRanking() {
     const teams = await this.prisma.team.findMany({
       include: {
@@ -82,6 +117,9 @@ export class ResultsService {
         sportId: true,
         teamId: true,
         position: true,
+        rawScore: true,
+        resultDate: true,
+        notes: true,
       },
     });
 
@@ -103,22 +141,50 @@ export class ResultsService {
 
     const scoring = await this.resolveScoring(sportId, teamId, position);
 
-    return this.prisma.result.update({
-      where: { id },
-      data: {
-        sportId,
-        teamId,
-        position,
-        rawScore: dto.rawScore,
-        calculatedPoints: scoring?.points ?? 0,
-        resultDate: dto.resultDate ? new Date(dto.resultDate) : undefined,
-        notes: dto.notes,
-        recordedBy,
-      },
-      include: {
-        sport: true,
-        team: true,
-      },
+    const nextResultDate = dto.resultDate ? new Date(dto.resultDate) : existing.resultDate;
+    const nextRawScore = dto.rawScore ?? existing.rawScore;
+    const nextNotes = dto.notes ?? existing.notes;
+    const changedFields = this.collectAuditChanges(existing, {
+      sportId,
+      teamId,
+      position,
+      rawScore: nextRawScore,
+      resultDate: nextResultDate,
+      notes: nextNotes,
+    });
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.result.update({
+        where: { id },
+        data: {
+          sportId,
+          teamId,
+          position,
+          rawScore: dto.rawScore,
+          calculatedPoints: scoring?.points ?? 0,
+          resultDate: dto.resultDate ? new Date(dto.resultDate) : undefined,
+          notes: dto.notes,
+          recordedBy,
+        },
+        include: {
+          sport: true,
+          team: true,
+        },
+      });
+
+      if (changedFields.length > 0) {
+        await tx.resultAuditLog.createMany({
+          data: changedFields.map((change) => ({
+            resultId: id,
+            changedBy: recordedBy,
+            fieldChanged: change.fieldChanged,
+            oldValue: change.oldValue,
+            newValue: change.newValue,
+          })),
+        });
+      }
+
+      return updated;
     });
   }
 
@@ -153,5 +219,66 @@ export class ResultsService {
         points: true,
       },
     });
+  }
+
+  private collectAuditChanges(
+    existing: {
+      sportId: string;
+      teamId: string | null;
+      position: number | null;
+      rawScore: Prisma.Decimal | number | null;
+      resultDate: Date;
+      notes: string | null;
+    },
+    next: {
+      sportId: string;
+      teamId: string;
+      position: number;
+      rawScore: Prisma.Decimal | number | null;
+      resultDate: Date;
+      notes: string | null;
+    },
+  ) {
+    const changes: Array<{
+      fieldChanged: string;
+      oldValue: string | null;
+      newValue: string | null;
+    }> = [];
+
+    const pairs = [
+      ['sportId', existing.sportId, next.sportId],
+      ['teamId', existing.teamId, next.teamId],
+      ['position', existing.position, next.position],
+      ['rawScore', existing.rawScore, next.rawScore],
+      ['resultDate', existing.resultDate.toISOString(), next.resultDate.toISOString()],
+      ['notes', existing.notes, next.notes],
+    ] as const;
+
+    for (const [fieldChanged, oldValue, newValue] of pairs) {
+      const normalizedOld = this.normalizeAuditValue(oldValue);
+      const normalizedNew = this.normalizeAuditValue(newValue);
+
+      if (normalizedOld !== normalizedNew) {
+        changes.push({
+          fieldChanged,
+          oldValue: normalizedOld,
+          newValue: normalizedNew,
+        });
+      }
+    }
+
+    return changes;
+  }
+
+  private normalizeAuditValue(value: unknown) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return String(value);
   }
 }
