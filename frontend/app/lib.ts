@@ -52,6 +52,40 @@ export type BackdropSponsorSummary = {
   backdropPriority: number;
 };
 
+export type SponsorAdminSummary = {
+  id: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone?: string | null;
+  status: 'pending' | 'active' | 'inactive';
+  createdAt: string;
+  couponCount: number;
+  quota: {
+    id: string;
+    level: 'bronze' | 'prata' | 'ouro';
+    price: number;
+    courtesyCount: number;
+  };
+};
+
+export type CouponAdminSummary = {
+  id: string;
+  code: string;
+  status: 'active' | 'used' | 'expired';
+  createdAt: string;
+  redeemedAt?: string | null;
+  sponsor: {
+    id: string;
+    companyName: string;
+  };
+  athlete?: {
+    id: string;
+    name: string;
+    cpf: string;
+  } | null;
+};
+
 export type RankingRow = {
   id: string;
   name: string;
@@ -379,4 +413,16 @@ export function adminUpdateResult(resultId: string, input: Partial<ResultInput>)
 
 export function adminGetResultAuditLogs() {
   return adminFetchJson<ResultAuditLogSummary[]>('/results/audit');
+}
+
+export function adminGetSponsors() {
+  return adminFetchJson<SponsorAdminSummary[]>('/sponsors');
+}
+
+export function adminGetCoupons() {
+  return adminFetchJson<CouponAdminSummary[]>('/coupons');
+}
+
+export function adminGetSponsorCoupons(sponsorId: string) {
+  return adminFetchJson<CouponAdminSummary[]>(`/sponsors/${sponsorId}/coupons`);
 }

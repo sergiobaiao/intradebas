@@ -46,6 +46,7 @@ export function createPrismaMock() {
       createMany: jest.fn(),
     },
     coupon: {
+      findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
       updateMany: jest.fn(),

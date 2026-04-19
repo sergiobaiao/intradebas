@@ -133,6 +133,86 @@ describe('SponsorshipService', () => {
     expect(result[1].level).toBe('prata');
   });
 
+  it('lists sponsors with quota and coupon counts for admin visibility', async () => {
+    prisma.sponsor = {
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'sponsor-1',
+          companyName: 'Acme',
+          contactName: 'Joao',
+          email: 'joao@acme.com',
+          phone: '86999999999',
+          status: SponsorStatus.active,
+          createdAt: new Date('2026-04-19T10:00:00Z'),
+          coupons: [{ id: 'c1' }, { id: 'c2' }],
+          quota: {
+            id: 'quota-1',
+            level: SponsorshipLevel.ouro,
+            price: 1000,
+            courtesyCount: 4,
+          },
+        },
+      ]),
+    } as any;
+
+    const result = await service.listSponsors();
+
+    expect(result[0]).toMatchObject({
+      companyName: 'Acme',
+      couponCount: 2,
+      quota: {
+        level: 'ouro',
+        courtesyCount: 4,
+      },
+    });
+  });
+
+  it('lists coupons with sponsor and redeemed athlete context', async () => {
+    prisma.coupon = {
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'coupon-1',
+          code: 'OURO-AAAA1111',
+          status: 'used',
+          createdAt: new Date('2026-04-19T10:00:00Z'),
+          redeemedAt: new Date('2026-04-19T12:00:00Z'),
+          sponsor: {
+            id: 'sponsor-1',
+            companyName: 'Acme',
+          },
+          athlete: {
+            id: 'athlete-1',
+            name: 'Joao Silva',
+            cpf: '123.456.789-00',
+          },
+        },
+      ]),
+    } as any;
+
+    const result = await service.listCoupons();
+
+    expect(result[0]).toMatchObject({
+      code: 'OURO-AAAA1111',
+      status: 'used',
+      sponsor: {
+        companyName: 'Acme',
+      },
+      athlete: {
+        name: 'Joao Silva',
+      },
+    });
+  });
+
+  it('rejects sponsor coupon listing for unknown sponsor', async () => {
+    prisma.sponsor = {
+      findUnique: jest.fn().mockResolvedValue(null),
+    } as any;
+
+    await expect(service.listSponsorCoupons('missing')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
   it('activates sponsor and generates missing courtesy coupons', async () => {
     prisma.sponsor = {
       findUnique: jest.fn().mockResolvedValue({

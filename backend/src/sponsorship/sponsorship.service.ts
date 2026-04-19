@@ -131,6 +131,118 @@ export class SponsorshipService {
     }));
   }
 
+  async listSponsors() {
+    const sponsors = await this.prisma.sponsor.findMany({
+      include: {
+        quota: {
+          select: {
+            id: true,
+            level: true,
+            price: true,
+            courtesyCount: true,
+          },
+        },
+        coupons: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { companyName: 'asc' }],
+    });
+
+    return sponsors.map((sponsor) => ({
+      id: sponsor.id,
+      companyName: sponsor.companyName,
+      contactName: sponsor.contactName,
+      email: sponsor.email,
+      phone: sponsor.phone,
+      status: sponsor.status,
+      createdAt: sponsor.createdAt,
+      couponCount: sponsor.coupons.length,
+      quota: {
+        id: sponsor.quota.id,
+        level: sponsor.quota.level,
+        price: Number(sponsor.quota.price),
+        courtesyCount: sponsor.quota.courtesyCount,
+      },
+    }));
+  }
+
+  async listCoupons() {
+    const coupons = await this.prisma.coupon.findMany({
+      include: {
+        sponsor: {
+          select: {
+            id: true,
+            companyName: true,
+          },
+        },
+        athlete: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
+    });
+
+    return coupons.map((coupon) => ({
+      id: coupon.id,
+      code: coupon.code,
+      status: coupon.status,
+      createdAt: coupon.createdAt,
+      redeemedAt: coupon.redeemedAt,
+      sponsor: coupon.sponsor,
+      athlete: coupon.athlete,
+    }));
+  }
+
+  async listSponsorCoupons(sponsorId: string) {
+    const sponsor = await this.prisma.sponsor.findUnique({
+      where: { id: sponsorId },
+      select: { id: true },
+    });
+
+    if (!sponsor) {
+      throw new BadRequestException('Patrocinador invalido');
+    }
+
+    const coupons = await this.prisma.coupon.findMany({
+      where: {
+        sponsorId,
+      },
+      include: {
+        sponsor: {
+          select: {
+            id: true,
+            companyName: true,
+          },
+        },
+        athlete: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
+    });
+
+    return coupons.map((coupon) => ({
+      id: coupon.id,
+      code: coupon.code,
+      status: coupon.status,
+      createdAt: coupon.createdAt,
+      redeemedAt: coupon.redeemedAt,
+      sponsor: coupon.sponsor,
+      athlete: coupon.athlete,
+    }));
+  }
+
   async activateSponsor(sponsorId: string) {
     const sponsor = await this.prisma.sponsor.findUnique({
       where: { id: sponsorId },

@@ -17,9 +17,27 @@ export class SponsorshipController {
     return this.sponsorshipService.createSponsorInterest(dto);
   }
 
+  @Get('sponsors')
+  @UseGuards(JwtAuthGuard)
+  listSponsors() {
+    return this.sponsorshipService.listSponsors();
+  }
+
   @Get('backdrop')
   listBackdropSponsors() {
     return this.sponsorshipService.listBackdropSponsors();
+  }
+
+  @Get('coupons')
+  @UseGuards(JwtAuthGuard)
+  listCoupons() {
+    return this.sponsorshipService.listCoupons();
+  }
+
+  @Get('sponsors/:id/coupons')
+  @UseGuards(JwtAuthGuard)
+  listSponsorCoupons(@Param('id') id: string) {
+    return this.sponsorshipService.listSponsorCoupons(id);
   }
 
   @Patch('sponsors/:id/activate')
