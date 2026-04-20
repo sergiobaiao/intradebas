@@ -133,6 +133,9 @@ export default function AdminResultadosPage() {
           <a className="button secondary" href="/admin/dashboard">
             Voltar ao dashboard
           </a>
+          <a className="button secondary" href="/admin/resultados/novo">
+            Abrir lancamento dedicado
+          </a>
         </div>
 
         {error ? <p className="error-text">{error}</p> : null}

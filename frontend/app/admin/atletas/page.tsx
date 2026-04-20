@@ -60,6 +60,9 @@ export default function AdminAthletesPage() {
           <a className="button secondary" href="/admin/dashboard">
             Voltar ao dashboard
           </a>
+          <a className="button secondary" href="/admin/atletas/novo">
+            Novo atleta
+          </a>
         </div>
 
         {error ? <p className="error-text">{error}</p> : null}
@@ -93,8 +96,13 @@ export default function AdminAthletesPage() {
                   {athlete.sports.map((sport) => sport.name).join(', ') || 'Nenhuma'}
                 </p>
 
+                <div className="cta-row">
+                  <a className="button secondary" href={`/admin/atletas/${athlete.id}`}>
+                    Ver perfil
+                  </a>
+
                 {athlete.status === 'pending' ? (
-                  <div className="cta-row">
+                  <>
                     <button
                       className="button primary"
                       disabled={pendingActionId === athlete.id}
@@ -111,8 +119,9 @@ export default function AdminAthletesPage() {
                     >
                       Rejeitar
                     </button>
-                  </div>
+                  </>
                 ) : null}
+                </div>
               </article>
             ))}
           </div>
@@ -121,4 +130,3 @@ export default function AdminAthletesPage() {
     </main>
   );
 }
-

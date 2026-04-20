@@ -103,6 +103,13 @@ export type SportSummary = {
   scheduleNotes?: string | null;
 };
 
+export type SportDetailSummary = SportSummary & {
+  description?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  results: ResultSummary[];
+};
+
 export type ResultSummary = {
   id: string;
   position: number;
@@ -292,6 +299,14 @@ export function getSports() {
 
 export function getBackdropSponsors() {
   return fetchJson<BackdropSponsorSummary[]>('/backdrop', []);
+}
+
+export function getAthlete(id: string) {
+  return fetchJson<AthleteSummary | null>(`/athletes/${id}`, null);
+}
+
+export function getSport(id: string) {
+  return fetchJson<SportDetailSummary | null>(`/sports/${id}`, null);
 }
 
 export async function createSponsorInterest(input: {

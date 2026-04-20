@@ -63,6 +63,11 @@ export default function AdminModalidadesPage() {
                 <p>Resultados lancados: {sport.resultCount}</p>
                 <p>ALDEBARUN: {sport.isAldebarun ? 'sim' : 'nao'}</p>
                 <p>Agenda: {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}</p>
+                <div className="cta-row">
+                  <a className="button secondary" href={`/admin/modalidades/${sport.id}`}>
+                    Ver detalhes
+                  </a>
+                </div>
               </article>
             ))}
           </div>
