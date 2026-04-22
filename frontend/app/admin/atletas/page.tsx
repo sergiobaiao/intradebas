@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import {
   AthleteSummary,
+  PaginatedResponse,
   adminFetchJson,
+  adminGetAthleteReviewPage,
   adminUpdateAthleteStatus,
 } from '../../lib';
 
@@ -12,18 +14,37 @@ export default function AdminAthletesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('pending');
+  const [teamIdFilter, setTeamIdFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     void loadAthletes();
-  }, []);
+  }, [page, statusFilter, teamIdFilter, search]);
 
   async function loadAthletes() {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await adminFetchJson<AthleteSummary[]>('/athletes/admin/review');
-      setAthletes(response);
+      const [response, loadedTeams] = await Promise.all([
+        adminGetAthleteReviewPage({
+          page,
+          pageSize: 12,
+          status: statusFilter,
+          teamId: teamIdFilter,
+          search,
+        }),
+        adminFetchJson<{ id: string; name: string }[]>('/teams'),
+      ]);
+      setAthletes(response.items);
+      setTotal(response.total);
+      setTotalPages(response.totalPages);
+      setTeams(loadedTeams);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar atletas');
     } finally {
@@ -47,8 +68,6 @@ export default function AdminAthletesPage() {
     }
   }
 
-  const pendingAthletes = athletes.filter((athlete) => athlete.status === 'pending');
-
   return (
     <main className="section">
       <div className="shell">
@@ -65,14 +84,42 @@ export default function AdminAthletesPage() {
           </a>
         </div>
 
+        <div className="card" style={{ marginTop: '24px' }}>
+          <div className="form-grid">
+            <label>
+              <span>Status</span>
+              <select value={statusFilter} onChange={(event) => { setPage(1); setStatusFilter(event.target.value); }}>
+                <option value="">Todos</option>
+                <option value="pending">Pendentes</option>
+                <option value="active">Ativos</option>
+                <option value="rejected">Rejeitados</option>
+              </select>
+            </label>
+            <label>
+              <span>Equipe</span>
+              <select value={teamIdFilter} onChange={(event) => { setPage(1); setTeamIdFilter(event.target.value); }}>
+                <option value="">Todas</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field-span">
+              <span>Busca por nome/CPF</span>
+              <input value={search} onChange={(event) => { setPage(1); setSearch(event.target.value); }} />
+            </label>
+          </div>
+          <p style={{ marginTop: '12px' }}>Total filtrado: {total}</p>
+        </div>
+
         {error ? <p className="error-text">{error}</p> : null}
 
         {loading ? <p>Carregando atletas...</p> : null}
 
-        {!loading && pendingAthletes.length === 0 ? (
+        {!loading && athletes.length === 0 ? (
           <div className="card empty-state">
-            <strong>Nenhum atleta pendente.</strong>
-            <span>Todas as inscricoes pendentes ja foram revisadas.</span>
+            <strong>Nenhum atleta encontrado.</strong>
+            <span>Ajuste os filtros para ampliar a busca.</span>
           </div>
         ) : null}
 
@@ -126,6 +173,15 @@ export default function AdminAthletesPage() {
             ))}
           </div>
         ) : null}
+        <div className="cta-row" style={{ marginTop: '24px' }}>
+          <button className="button secondary" type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => Math.max(current - 1, 1))}>
+            Pagina anterior
+          </button>
+          <span>Pagina {page} de {totalPages}</span>
+          <button className="button secondary" type="button" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
+            Proxima pagina
+          </button>
+        </div>
       </div>
     </main>
   );

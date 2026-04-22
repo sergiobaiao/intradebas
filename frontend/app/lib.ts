@@ -181,6 +181,14 @@ export type CreateMediaInput = {
   sortOrder?: number;
 };
 
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type ScoringConfigSummary = {
   id: string;
   category: string;
@@ -424,6 +432,21 @@ export async function adminFetchJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+function buildQuery(params: Record<string, string | number | undefined | null>) {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null || value === '') {
+      continue;
+    }
+
+    query.set(key, String(value));
+  }
+
+  const serialized = query.toString();
+  return serialized ? `?${serialized}` : '';
+}
+
 export function adminUpdateAthleteStatus(
   athleteId: string,
   status: 'active' | 'rejected',
@@ -500,6 +523,29 @@ export function adminUpdateResult(resultId: string, input: Partial<ResultInput>)
 
 export function adminGetResultAuditLogs() {
   return adminFetchJson<ResultAuditLogSummary[]>('/results/audit');
+}
+
+export function adminGetAthleteReviewPage(input: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  teamId?: string;
+  search?: string;
+}) {
+  return adminFetchJson<PaginatedResponse<AthleteSummary>>(
+    `/athletes/admin/review${buildQuery(input)}`,
+  );
+}
+
+export function adminGetResultsPage(input: {
+  page?: number;
+  pageSize?: number;
+  teamId?: string;
+  sportId?: string;
+}) {
+  return adminFetchJson<PaginatedResponse<ResultSummary>>(
+    `/results/admin${buildQuery(input)}`,
+  );
 }
 
 export function adminGetSponsors() {

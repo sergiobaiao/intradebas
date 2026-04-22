@@ -10,6 +10,7 @@ import {
   adminCreateResult,
   adminFetchJson,
   adminGetResultAuditLogs,
+  adminGetResultsPage,
   adminUpdateResult,
 } from '../../lib';
 
@@ -33,10 +34,14 @@ export default function AdminResultadosPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [resultTeamFilter, setResultTeamFilter] = useState('');
+  const [resultSportFilter, setResultSportFilter] = useState('');
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [page, resultTeamFilter, resultSportFilter]);
 
   async function loadData() {
     setLoading(true);
@@ -44,13 +49,19 @@ export default function AdminResultadosPage() {
 
     try {
       const [loadedResults, loadedTeams, loadedSports] = await Promise.all([
-        adminFetchJson<ResultSummary[]>('/results'),
+        adminGetResultsPage({
+          page,
+          pageSize: 12,
+          teamId: resultTeamFilter,
+          sportId: resultSportFilter,
+        }),
         adminFetchJson<TeamSummary[]>('/teams'),
         adminFetchJson<SportSummary[]>('/sports'),
       ]);
       const loadedAuditLogs = await adminGetResultAuditLogs();
 
-      setResults(loadedResults);
+      setResults(loadedResults.items);
+      setTotalPages(loadedResults.totalPages);
       setTeams(loadedTeams);
       setSports(loadedSports);
       setAuditLogs(loadedAuditLogs);
@@ -221,6 +232,29 @@ export default function AdminResultadosPage() {
 
         {!loading ? (
           <>
+            <div className="card" style={{ marginTop: '24px' }}>
+              <div className="form-grid">
+                <label>
+                  <span>Filtrar por modalidade</span>
+                  <select value={resultSportFilter} onChange={(event) => { setPage(1); setResultSportFilter(event.target.value); }}>
+                    <option value="">Todas</option>
+                    {sports.map((sport) => (
+                      <option key={sport.id} value={sport.id}>{sport.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Filtrar por equipe</span>
+                  <select value={resultTeamFilter} onChange={(event) => { setPage(1); setResultTeamFilter(event.target.value); }}>
+                    <option value="">Todas</option>
+                    {teams.map((team) => (
+                      <option key={team.id} value={team.id}>{team.name}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
             <div className="review-grid" style={{ marginTop: '24px' }}>
               {results.map((result) => (
                 <article key={result.id} className="card review-card">
@@ -244,6 +278,15 @@ export default function AdminResultadosPage() {
                   </div>
                 </article>
               ))}
+            </div>
+            <div className="cta-row" style={{ marginTop: '24px' }}>
+              <button className="button secondary" type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => Math.max(current - 1, 1))}>
+                Pagina anterior
+              </button>
+              <span>Pagina {page} de {totalPages}</span>
+              <button className="button secondary" type="button" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
+                Proxima pagina
+              </button>
             </div>
 
             <div className="card" style={{ marginTop: '24px' }}>

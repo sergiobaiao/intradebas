@@ -194,4 +194,46 @@ describe('AthletesService', () => {
       service.updateStatus('missing', { status: 'active' }),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('returns paginated athlete review data with filters', async () => {
+    prisma.athlete.count.mockResolvedValue(2);
+    prisma.athlete.findMany.mockResolvedValue([
+      {
+        id: 'athlete-1',
+        name: 'Joao Silva',
+        cpf: '123.456.789-00',
+        email: null,
+        phone: null,
+        birthDate: new Date('1990-01-01'),
+        type: 'titular',
+        status: 'pending',
+        unit: null,
+        shirtSize: 'M',
+        createdAt: new Date('2026-04-17T00:00:00Z'),
+        team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 10 },
+        registrations: [{ sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' } }],
+      },
+    ]);
+
+    const result = await service.findReviewPage({
+      page: '2',
+      pageSize: '5',
+      status: 'pending',
+      teamId: 'team-1',
+      search: 'joao',
+    });
+
+    expect(prisma.athlete.count).toHaveBeenCalled();
+    expect(prisma.athlete.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 5,
+        take: 5,
+        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      }),
+    );
+    expect(result.total).toBe(2);
+    expect(result.page).toBe(2);
+    expect(result.totalPages).toBe(1);
+    expect(result.items).toHaveLength(1);
+  });
 });

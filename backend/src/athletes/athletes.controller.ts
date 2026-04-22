@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AthletesService } from './athletes.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
@@ -10,8 +10,20 @@ export class AthletesController {
 
   @Get('admin/review')
   @UseGuards(JwtAuthGuard)
-  findReviewList() {
-    return this.athletesService.findAll();
+  findReviewList(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: string,
+    @Query('teamId') teamId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.athletesService.findReviewPage({
+      page,
+      pageSize,
+      status,
+      teamId,
+      search,
+    });
   }
 
   @Get()

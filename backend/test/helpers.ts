@@ -6,6 +6,7 @@ export function createPrismaMock() {
       upsert: jest.fn(),
     },
     athlete: {
+      count: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -17,6 +18,7 @@ export function createPrismaMock() {
       update: jest.fn(),
     },
     result: {
+      count: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
       groupBy: jest.fn(),

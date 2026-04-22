@@ -8,6 +8,20 @@ import { UpdateResultDto } from './dto/update-result.dto';
 export class ResultsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizePage(value?: string) {
+    const parsed = Number(value ?? 1);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  }
+
+  private normalizePageSize(value?: string) {
+    const parsed = Number(value ?? 12);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 12;
+    }
+
+    return Math.min(Math.floor(parsed), 50);
+  }
+
   async listResults() {
     return this.prisma.result.findMany({
       select: {
@@ -35,6 +49,61 @@ export class ResultsService {
       },
       orderBy: [{ resultDate: 'desc' }, { createdAt: 'desc' }],
     });
+  }
+
+  async listAdminResults(query: {
+    page?: string;
+    pageSize?: string;
+    teamId?: string;
+    sportId?: string;
+  }) {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const where: Prisma.ResultWhereInput = {
+      ...(query.teamId ? { teamId: query.teamId } : {}),
+      ...(query.sportId ? { sportId: query.sportId } : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.result.count({ where }),
+      this.prisma.result.findMany({
+        where,
+        select: {
+          id: true,
+          position: true,
+          rawScore: true,
+          calculatedPoints: true,
+          resultDate: true,
+          notes: true,
+          sport: {
+            select: {
+              id: true,
+              name: true,
+              category: true,
+            },
+          },
+          team: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              totalScore: true,
+            },
+          },
+        },
+        orderBy: [{ resultDate: 'desc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
   }
 
   async listAuditLogs() {

@@ -277,4 +277,46 @@ describe('ResultsService', () => {
     });
     expect(auditLogs).toHaveLength(1);
   });
+
+  it('returns paginated admin results with filters', async () => {
+    prisma.result.count.mockResolvedValue(3);
+    prisma.result.findMany.mockResolvedValue([
+      {
+        id: 'result-1',
+        position: 1,
+        rawScore: 10,
+        calculatedPoints: 5,
+        resultDate: new Date('2026-04-20T10:00:00Z'),
+        notes: null,
+        sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+        team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 10 },
+      },
+    ]);
+
+    const result = await service.listAdminResults({
+      page: '1',
+      pageSize: '10',
+      teamId: 'team-1',
+      sportId: 'sport-1',
+    });
+
+    expect(prisma.result.count).toHaveBeenCalledWith({
+      where: {
+        teamId: 'team-1',
+        sportId: 'sport-1',
+      },
+    });
+    expect(prisma.result.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          teamId: 'team-1',
+          sportId: 'sport-1',
+        },
+        skip: 0,
+        take: 10,
+      }),
+    );
+    expect(result.total).toBe(3);
+    expect(result.items).toHaveLength(1);
+  });
 });

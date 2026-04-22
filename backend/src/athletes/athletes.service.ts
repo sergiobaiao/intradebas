@@ -19,6 +19,20 @@ import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 export class AthletesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizePage(value?: string) {
+    const parsed = Number(value ?? 1);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  }
+
+  private normalizePageSize(value?: string) {
+    const parsed = Number(value ?? 12);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 12;
+    }
+
+    return Math.min(Math.floor(parsed), 50);
+  }
+
   private toResponse(athlete: AthleteWithRelations) {
     const sports = athlete.registrations.map(
       (registration: AthleteWithRelations['registrations'][number]) =>
@@ -126,6 +140,89 @@ export class AthletesService {
     }
 
     return this.toResponse(athlete);
+  }
+
+  async findReviewPage(query: {
+    page?: string;
+    pageSize?: string;
+    status?: string;
+    teamId?: string;
+    search?: string;
+  }) {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const search = query.search?.trim();
+    const where: Prisma.AthleteWhereInput = {
+      ...(query.status ? { status: query.status as AthleteStatus } : {}),
+      ...(query.teamId ? { teamId: query.teamId } : {}),
+      ...(search
+        ? {
+            OR: [
+              {
+                name: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                cpf: {
+                  contains: search,
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, athletes] = await Promise.all([
+      this.prisma.athlete.count({ where }),
+      this.prisma.athlete.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          cpf: true,
+          email: true,
+          phone: true,
+          birthDate: true,
+          type: true,
+          status: true,
+          unit: true,
+          shirtSize: true,
+          createdAt: true,
+          team: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              totalScore: true,
+            },
+          },
+          registrations: {
+            select: {
+              sport: {
+                select: {
+                  id: true,
+                  name: true,
+                  category: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items: athletes.map((athlete: AthleteWithRelations) => this.toResponse(athlete)),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
   }
 
   async create(dto: CreateAthleteDto) {

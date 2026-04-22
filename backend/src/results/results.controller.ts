@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
@@ -11,6 +11,22 @@ export class ResultsController {
   @Get()
   listResults() {
     return this.resultsService.listResults();
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard)
+  listAdminResults(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('teamId') teamId?: string,
+    @Query('sportId') sportId?: string,
+  ) {
+    return this.resultsService.listAdminResults({
+      page,
+      pageSize,
+      teamId,
+      sportId,
+    });
   }
 
   @Get('ranking')
