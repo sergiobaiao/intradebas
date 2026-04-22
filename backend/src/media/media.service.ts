@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMediaDto } from './dto/create-media.dto';
+import { CreateUploadedMediaDto } from './dto/create-uploaded-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 
 @Injectable()
@@ -30,6 +31,37 @@ export class MediaService {
         url: dto.url,
         thumbnailUrl: dto.thumbnailUrl,
         provider: dto.provider,
+        isFeatured: dto.isFeatured,
+        sortOrder: dto.sortOrder,
+        uploadedBy,
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async createUploaded(
+    dto: CreateUploadedMediaDto,
+    file: { filename: string; mimetype: string; originalname?: string },
+    uploadedBy: string,
+  ) {
+    const type = file.mimetype.startsWith('video/') ? 'video' : 'photo';
+    const url = `/api/v1/media/files/${file.filename}`;
+
+    return this.prisma.media.create({
+      data: {
+        type,
+        title: dto.title ?? file.originalname ?? file.filename,
+        url,
+        thumbnailUrl: type === 'photo' ? url : undefined,
+        provider: 'local',
         isFeatured: dto.isFeatured,
         sortOrder: dto.sortOrder,
         uploadedBy,

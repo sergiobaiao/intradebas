@@ -102,6 +102,62 @@ describe('MediaService', () => {
     expect(result.uploader.name).toBe('Admin');
   });
 
+  it('creates a local uploaded media item', async () => {
+    prisma.media.create.mockResolvedValue({
+      id: 'media-3',
+      type: 'photo',
+      title: 'arquivo.jpg',
+      url: '/api/v1/media/files/arquivo.jpg',
+      thumbnailUrl: '/api/v1/media/files/arquivo.jpg',
+      provider: 'local',
+      isFeatured: true,
+      sortOrder: 3,
+      createdAt: new Date('2026-04-22T12:00:00Z'),
+      uploader: {
+        id: 'user-1',
+        name: 'Admin',
+        email: 'admin@intradebas.local',
+      },
+    });
+
+    const result = await service.createUploaded(
+      {
+        title: 'arquivo.jpg',
+        isFeatured: true,
+        sortOrder: 3,
+      },
+      {
+        filename: 'arquivo.jpg',
+        mimetype: 'image/jpeg',
+        originalname: 'arquivo.jpg',
+      },
+      'user-1',
+    );
+
+    expect(prisma.media.create).toHaveBeenCalledWith({
+      data: {
+        type: 'photo',
+        title: 'arquivo.jpg',
+        url: '/api/v1/media/files/arquivo.jpg',
+        thumbnailUrl: '/api/v1/media/files/arquivo.jpg',
+        provider: 'local',
+        isFeatured: true,
+        sortOrder: 3,
+        uploadedBy: 'user-1',
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+    expect(result.url).toContain('/api/v1/media/files/');
+  });
+
   it('updates a media item when it exists', async () => {
     prisma.media.findUnique.mockResolvedValue({ id: 'media-1' });
     prisma.media.update.mockResolvedValue({

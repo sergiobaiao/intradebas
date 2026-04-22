@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreateMediaInput, adminCreateMedia } from '../../../lib';
+import { CreateMediaInput, adminCreateMedia, adminUploadMedia } from '../../../lib';
 
 const providers: CreateMediaInput['provider'][] = ['local', 'youtube', 'vimeo'];
 const types: CreateMediaInput['type'][] = ['photo', 'video'];
@@ -14,6 +14,7 @@ export default function AdminNovaMidiaPage() {
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [sortOrder, setSortOrder] = useState('0');
   const [isFeatured, setIsFeatured] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -25,15 +26,28 @@ export default function AdminNovaMidiaPage() {
     setError(null);
 
     try {
-      await adminCreateMedia({
-        type,
-        provider,
-        title: title || undefined,
-        url,
-        thumbnailUrl: thumbnailUrl || undefined,
-        isFeatured,
-        sortOrder: Number(sortOrder),
-      });
+      if (provider === 'local') {
+        if (!file) {
+          throw new Error('Selecione um arquivo para upload');
+        }
+
+        await adminUploadMedia(file, {
+          title: title || undefined,
+          isFeatured,
+          sortOrder: Number(sortOrder),
+        });
+      } else {
+        await adminCreateMedia({
+          type,
+          provider,
+          title: title || undefined,
+          url,
+          thumbnailUrl: thumbnailUrl || undefined,
+          isFeatured,
+          sortOrder: Number(sortOrder),
+        });
+      }
+
       router.push('/admin/midia');
       router.refresh();
     } catch (submitError) {
@@ -48,7 +62,7 @@ export default function AdminNovaMidiaPage() {
       <div className="shell">
         <span className="eyebrow">Midia</span>
         <h1>Novo item de midia</h1>
-        <p>Cadastre fotos e videos por URL publica, mantendo o acervo editorial dentro do painel.</p>
+        <p>Cadastre fotos e videos por upload local ou por URL publica, mantendo o acervo editorial dentro do painel.</p>
         {error ? <p className="error-text">{error}</p> : null}
         <div className="card">
           <form className="form-grid" onSubmit={handleSubmit}>
@@ -79,18 +93,31 @@ export default function AdminNovaMidiaPage() {
               <span>Titulo</span>
               <input value={title} onChange={(event) => setTitle(event.target.value)} />
             </label>
-            <label className="field-span">
-              <span>URL</span>
-              <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} />
-            </label>
-            <label className="field-span">
-              <span>Thumbnail URL</span>
-              <input
-                type="url"
-                value={thumbnailUrl}
-                onChange={(event) => setThumbnailUrl(event.target.value)}
-              />
-            </label>
+            {provider === 'local' ? (
+              <label className="field-span">
+                <span>Arquivo</span>
+                <input
+                  type="file"
+                  accept={type === 'photo' ? 'image/*' : 'video/*'}
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : (
+              <>
+                <label className="field-span">
+                  <span>URL</span>
+                  <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} />
+                </label>
+                <label className="field-span">
+                  <span>Thumbnail URL</span>
+                  <input
+                    type="url"
+                    value={thumbnailUrl}
+                    onChange={(event) => setThumbnailUrl(event.target.value)}
+                  />
+                </label>
+              </>
+            )}
             <label>
               <span>Ordem</span>
               <input
@@ -112,7 +139,14 @@ export default function AdminNovaMidiaPage() {
               <a className="button secondary" href="/admin/midia">
                 Cancelar
               </a>
-              <button className="button primary" type="submit" disabled={submitting || !url.trim()}>
+              <button
+                className="button primary"
+                type="submit"
+                disabled={
+                  submitting ||
+                  (provider === 'local' ? !file : !url.trim())
+                }
+              >
                 {submitting ? 'Salvando...' : 'Criar item'}
               </button>
             </div>

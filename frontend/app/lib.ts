@@ -655,6 +655,50 @@ export function adminCreateMedia(input: CreateMediaInput) {
   });
 }
 
+export function adminUploadMedia(file: File, input: {
+  title?: string;
+  isFeatured?: boolean;
+  sortOrder?: number;
+}) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+  const formData = new FormData();
+
+  formData.set('file', file);
+
+  if (input.title) {
+    formData.set('title', input.title);
+  }
+
+  if (typeof input.isFeatured === 'boolean') {
+    formData.set('isFeatured', String(input.isFeatured));
+  }
+
+  if (typeof input.sortOrder === 'number') {
+    formData.set('sortOrder', String(input.sortOrder));
+  }
+
+  return fetch(`${apiBase}/media/upload`, {
+    method: 'POST',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+    body: formData,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao enviar midia');
+    }
+
+    return (await response.json()) as MediaAdminSummary;
+  });
+}
+
 export function adminUpdateMedia(mediaId: string, input: UpdateMediaInput) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
   const token = getAdminTokenFromCookie();
