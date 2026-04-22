@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
+import { UpdateAthleteDto } from './dto/update-athlete.dto';
 import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 
 @Injectable()
@@ -361,6 +362,92 @@ export class AthletesService {
     });
 
     return this.toResponse(athlete);
+  }
+
+  async update(id: string, dto: UpdateAthleteDto) {
+    const athlete = await this.prisma.athlete.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        teamId: true,
+      },
+    });
+
+    if (!athlete) {
+      throw new NotFoundException('Atleta nao encontrado');
+    }
+
+    if (dto.teamId) {
+      const team = await this.prisma.team.findUnique({
+        where: { id: dto.teamId },
+        select: { id: true },
+      });
+
+      if (!team) {
+        throw new BadRequestException('Equipe informada e invalida');
+      }
+    }
+
+    if (dto.sports) {
+      const sports = await this.prisma.sport.findMany({
+        where: {
+          id: {
+            in: dto.sports,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (sports.length !== dto.sports.length) {
+        throw new BadRequestException('Existe modalidade invalida na inscricao');
+      }
+    }
+
+    const updated = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.athlete.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          email: dto.email,
+          phone: dto.phone,
+          birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+          unit: dto.unit,
+          teamId: dto.teamId,
+          shirtSize: dto.shirtSize as ShirtSize | undefined,
+        },
+      });
+
+      if (dto.sports) {
+        await tx.registration.deleteMany({
+          where: {
+            athleteId: id,
+          },
+        });
+
+        await tx.registration.createMany({
+          data: dto.sports.map((sportId) => ({
+            athleteId: id,
+            sportId,
+          })),
+        });
+      }
+
+      return tx.athlete.findUniqueOrThrow({
+        where: { id },
+        include: {
+          team: true,
+          registrations: {
+            include: {
+              sport: true,
+            },
+          },
+        },
+      });
+    });
+
+    return this.toResponse(updated);
   }
 
   async updateStatus(id: string, dto: UpdateAthleteStatusDto) {

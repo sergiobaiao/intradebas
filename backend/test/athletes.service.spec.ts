@@ -195,6 +195,58 @@ describe('AthletesService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('updates athlete profile data and replaces sport registrations', async () => {
+    prisma.athlete.findUnique.mockResolvedValue({ id: 'athlete-1', teamId: 'team-1' });
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-2' });
+    prisma.sport.findMany.mockResolvedValue([{ id: 'sport-2' }]);
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        athlete: {
+          update: jest.fn().mockResolvedValue({}),
+          findUniqueOrThrow: jest.fn().mockResolvedValue({
+            id: 'athlete-1',
+            name: 'Joao Atualizado',
+            cpf: '123.456.789-00',
+            email: 'novo@email.com',
+            phone: '86988887777',
+            birthDate: new Date('1991-02-02'),
+            type: AthleteType.titular,
+            status: AthleteStatus.active,
+            unit: 'Bloco B',
+            shirtSize: ShirtSize.G,
+            createdAt: new Date('2026-04-17T00:00:00Z'),
+            team: { id: 'team-2', name: 'Jacare', color: '#2D6A4F', totalScore: 0 },
+            registrations: [
+              {
+                sport: { id: 'sport-2', name: 'Volei', category: 'coletiva' },
+              },
+            ],
+          }),
+        },
+        registration: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+          createMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+      }),
+    );
+
+    const result = await service.update('athlete-1', {
+      name: 'Joao Atualizado',
+      email: 'novo@email.com',
+      phone: '86988887777',
+      birthDate: '1991-02-02',
+      unit: 'Bloco B',
+      teamId: 'team-2',
+      shirtSize: 'G',
+      sports: ['sport-2'],
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(result.name).toBe('Joao Atualizado');
+    expect(result.team?.id).toBe('team-2');
+    expect(result.sports[0].id).toBe('sport-2');
+  });
+
   it('returns paginated athlete review data with filters', async () => {
     prisma.athlete.count.mockResolvedValue(2);
     prisma.athlete.findMany.mockResolvedValue([

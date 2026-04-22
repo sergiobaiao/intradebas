@@ -53,6 +53,7 @@ export function createPrismaMock() {
       update: jest.fn(),
     },
     registration: {
+      deleteMany: jest.fn(),
       createMany: jest.fn(),
     },
     coupon: {

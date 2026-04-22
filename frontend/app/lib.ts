@@ -9,9 +9,13 @@ export type AthleteSummary = {
   id: string;
   name: string;
   cpf: string;
+  email?: string | null;
+  phone?: string | null;
+  birthDate?: string;
   type: string;
   status: string;
-  shirtSize: string;
+  unit?: string | null;
+  shirtSize: 'PP' | 'P' | 'M' | 'G' | 'GG' | 'XGG';
   team?: TeamSummary;
   sports: { id: string; name: string; category: string }[];
 };
@@ -30,6 +34,17 @@ export type CreateAthleteInput = {
   sports: string[];
   lgpdConsent: boolean;
   couponCode?: string;
+};
+
+export type UpdateAthleteInput = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  birthDate?: string;
+  unit?: string;
+  teamId?: string;
+  shirtSize?: 'PP' | 'P' | 'M' | 'G' | 'GG' | 'XGG';
+  sports?: string[];
 };
 
 export type SponsorshipQuotaSummary = {
@@ -467,6 +482,30 @@ export function adminUpdateAthleteStatus(
         | { message?: string }
         | null;
       throw new Error(body?.message ?? 'Falha ao atualizar status do atleta');
+    }
+
+    return (await response.json()) as AthleteSummary;
+  });
+}
+
+export function adminUpdateAthlete(athleteId: string, input: UpdateAthleteInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/athletes/${athleteId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar atleta');
     }
 
     return (await response.json()) as AthleteSummary;

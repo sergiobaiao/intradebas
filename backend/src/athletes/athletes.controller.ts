@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AthletesService } from './athletes.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
+import { UpdateAthleteDto } from './dto/update-athlete.dto';
 import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 
 @Controller('athletes')
@@ -39,6 +40,12 @@ export class AthletesController {
   @Post()
   create(@Body() dto: CreateAthleteDto) {
     return this.athletesService.create(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  update(@Param('id') id: string, @Body() dto: UpdateAthleteDto) {
+    return this.athletesService.update(id, dto);
   }
 
   @Patch(':id/status')
