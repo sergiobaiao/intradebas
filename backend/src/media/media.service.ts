@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 
 @Injectable()
@@ -18,6 +19,30 @@ export class MediaService {
         },
       },
       orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  async create(dto: CreateMediaDto, uploadedBy: string) {
+    return this.prisma.media.create({
+      data: {
+        type: dto.type,
+        title: dto.title,
+        url: dto.url,
+        thumbnailUrl: dto.thumbnailUrl,
+        provider: dto.provider,
+        isFeatured: dto.isFeatured,
+        sortOrder: dto.sortOrder,
+        uploadedBy,
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
   }
 

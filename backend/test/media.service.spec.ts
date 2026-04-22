@@ -47,6 +47,61 @@ describe('MediaService', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('creates a media item with uploader context', async () => {
+    prisma.media.create.mockResolvedValue({
+      id: 'media-2',
+      type: 'video',
+      title: 'Cerimonia',
+      url: 'https://example.com/cerimonia',
+      thumbnailUrl: 'https://example.com/thumb.jpg',
+      provider: 'youtube',
+      isFeatured: false,
+      sortOrder: 2,
+      createdAt: new Date('2026-04-21T12:00:00Z'),
+      uploader: {
+        id: 'user-1',
+        name: 'Admin',
+        email: 'admin@intradebas.local',
+      },
+    });
+
+    const result = await service.create(
+      {
+        type: 'video',
+        title: 'Cerimonia',
+        url: 'https://example.com/cerimonia',
+        thumbnailUrl: 'https://example.com/thumb.jpg',
+        provider: 'youtube',
+        isFeatured: false,
+        sortOrder: 2,
+      },
+      'user-1',
+    );
+
+    expect(prisma.media.create).toHaveBeenCalledWith({
+      data: {
+        type: 'video',
+        title: 'Cerimonia',
+        url: 'https://example.com/cerimonia',
+        thumbnailUrl: 'https://example.com/thumb.jpg',
+        provider: 'youtube',
+        isFeatured: false,
+        sortOrder: 2,
+        uploadedBy: 'user-1',
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+    expect(result.uploader.name).toBe('Admin');
+  });
+
   it('updates a media item when it exists', async () => {
     prisma.media.findUnique.mockResolvedValue({ id: 'media-1' });
     prisma.media.update.mockResolvedValue({

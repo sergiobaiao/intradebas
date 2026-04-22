@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { MediaService } from './media.service';
 
@@ -11,6 +12,14 @@ export class MediaController {
   @Get()
   findAll() {
     return this.mediaService.findAll();
+  }
+
+  @Post()
+  create(
+    @Body() dto: CreateMediaDto,
+    @Req() request: { user: { sub: string } },
+  ) {
+    return this.mediaService.create(dto, request.user.sub);
   }
 
   @Patch(':id')

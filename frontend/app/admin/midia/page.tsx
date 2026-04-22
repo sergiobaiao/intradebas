@@ -63,6 +63,14 @@ export default function AdminMidiaPage() {
         <span className="eyebrow">Midia</span>
         <h1>Gestao de fotos e videos</h1>
         <p>Visao administrativa do acervo de midia do evento.</p>
+        <div className="cta-row">
+          <a className="button primary" href="/admin/midia/nova">
+            Novo item
+          </a>
+          <a className="button secondary" href="/admin/dashboard">
+            Voltar ao dashboard
+          </a>
+        </div>
         {error ? <p className="error-text">{error}</p> : null}
         {loading ? <p>Carregando midia...</p> : null}
         {!loading && items.length === 0 ? <div className="card empty-state"><strong>Nenhum item de midia cadastrado.</strong></div> : null}

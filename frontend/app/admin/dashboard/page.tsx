@@ -60,6 +60,9 @@ export default async function AdminDashboardPage() {
           <a className="button secondary" href="/admin/midia">
             Midia
           </a>
+          <a className="button secondary" href="/admin/midia/nova">
+            Nova midia
+          </a>
           <a className="button secondary" href="/admin/configuracoes">
             Configuracoes
           </a>

@@ -171,6 +171,16 @@ export type MediaAdminSummary = {
   };
 };
 
+export type CreateMediaInput = {
+  type: 'photo' | 'video';
+  title?: string;
+  url: string;
+  thumbnailUrl?: string;
+  provider: 'local' | 'youtube' | 'vimeo';
+  isFeatured?: boolean;
+  sortOrder?: number;
+};
+
 export type ScoringConfigSummary = {
   id: string;
   category: string;
@@ -532,6 +542,30 @@ export function adminActivateSponsor(sponsorId: string) {
 
 export function adminGetMedia() {
   return adminFetchJson<MediaAdminSummary[]>('/media');
+}
+
+export function adminCreateMedia(input: CreateMediaInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/media`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao criar midia');
+    }
+
+    return (await response.json()) as MediaAdminSummary;
+  });
 }
 
 export function adminUpdateMedia(mediaId: string, input: UpdateMediaInput) {
