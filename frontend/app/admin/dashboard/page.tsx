@@ -30,11 +30,17 @@ export default async function AdminDashboardPage() {
           <a className="button secondary" href="/admin/equipes">
             Equipes
           </a>
+          <a className="button secondary" href="/admin/equipes/nova">
+            Nova equipe
+          </a>
           <a className="button secondary" href="/admin/atletas">
             Revisar atletas
           </a>
           <a className="button secondary" href="/admin/modalidades">
             Modalidades
+          </a>
+          <a className="button secondary" href="/admin/modalidades/nova">
+            Nova modalidade
           </a>
           <a className="button secondary" href="/admin/patrocinio">
             Gerenciar patrocinio

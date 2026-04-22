@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TeamsService } from './teams.service';
+import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 
 @Controller('teams')
@@ -20,6 +21,12 @@ export class TeamsController {
   @Get(':id/athletes')
   findAthletes(@Param('id') id: string) {
     return this.teamsService.findAthletes(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  create(@Body() dto: CreateTeamDto) {
+    return this.teamsService.create(dto);
   }
 
   @Patch(':id')

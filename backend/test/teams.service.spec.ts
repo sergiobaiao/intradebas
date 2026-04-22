@@ -65,6 +65,28 @@ describe('TeamsService', () => {
     expect(result[0].sports[0].name).toBe('Futsal');
   });
 
+  it('creates a team', async () => {
+    prisma.team.create.mockResolvedValue({
+      id: 'team-2',
+      name: 'Arara Azul',
+      color: '#123456',
+      totalScore: 0,
+    });
+
+    const result = await service.create({
+      name: 'Arara Azul',
+      color: '#123456',
+    });
+
+    expect(prisma.team.create).toHaveBeenCalledWith({
+      data: {
+        name: 'Arara Azul',
+        color: '#123456',
+      },
+    });
+    expect(result.name).toBe('Arara Azul');
+  });
+
   it('updates a team when it exists', async () => {
     prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
     prisma.team.update.mockResolvedValue({

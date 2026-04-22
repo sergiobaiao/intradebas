@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { SportCategory } from '@prisma/client';
 import { SportsService } from '../src/sports/sports.service';
 import { createPrismaMock } from './helpers';
 
@@ -45,6 +46,42 @@ describe('SportsService', () => {
     await expect(service.findOne('missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('creates a sport', async () => {
+    prisma.sport.create.mockResolvedValue({
+      id: 'sport-2',
+      name: 'Corrida de Rua',
+      category: SportCategory.individual,
+      description: 'Percurso urbano',
+      isAldebarun: true,
+      isActive: true,
+      scheduleDate: new Date('2026-04-22T06:30:00Z'),
+      scheduleNotes: 'Largada no estacionamento',
+    });
+
+    const result = await service.create({
+      name: 'Corrida de Rua',
+      category: SportCategory.individual,
+      description: 'Percurso urbano',
+      isAldebarun: true,
+      isActive: true,
+      scheduleDate: '2026-04-22T06:30:00Z',
+      scheduleNotes: 'Largada no estacionamento',
+    });
+
+    expect(prisma.sport.create).toHaveBeenCalledWith({
+      data: {
+        name: 'Corrida de Rua',
+        category: SportCategory.individual,
+        description: 'Percurso urbano',
+        isAldebarun: true,
+        isActive: true,
+        scheduleDate: new Date('2026-04-22T06:30:00Z'),
+        scheduleNotes: 'Largada no estacionamento',
+      },
+    });
+    expect(result.name).toBe('Corrida de Rua');
   });
 
   it('updates a sport when it exists', async () => {

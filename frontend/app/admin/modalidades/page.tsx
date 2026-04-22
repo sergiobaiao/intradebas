@@ -68,6 +68,14 @@ export default function AdminModalidadesPage() {
         <span className="eyebrow">Modalidades</span>
         <h1>Gestao de modalidades</h1>
         <p>Resumo operacional das modalidades e da quantidade de resultados ja lancados.</p>
+        <div className="cta-row">
+          <a className="button primary" href="/admin/modalidades/nova">
+            Nova modalidade
+          </a>
+          <a className="button secondary" href="/admin/dashboard">
+            Voltar ao dashboard
+          </a>
+        </div>
         {error ? <p className="error-text">{error}</p> : null}
         {loading ? <p>Carregando modalidades...</p> : null}
         {!loading ? (

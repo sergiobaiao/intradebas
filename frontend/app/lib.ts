@@ -196,6 +196,16 @@ export type UpdateSportInput = {
   scheduleNotes?: string;
 };
 
+export type CreateSportInput = {
+  name: string;
+  category: 'coletiva' | 'individual' | 'dupla' | 'fitness';
+  description?: string;
+  isAldebarun?: boolean;
+  isActive?: boolean;
+  scheduleDate?: string;
+  scheduleNotes?: string;
+};
+
 export type UpdateMediaInput = {
   isFeatured?: boolean;
   sortOrder?: number;
@@ -573,6 +583,54 @@ export function adminUpdateTeam(teamId: string, input: UpdateTeamInput) {
     }
 
     return (await response.json()) as TeamSummary;
+  });
+}
+
+export function adminCreateTeam(input: { name: string; color?: string }) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/teams`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao criar equipe');
+    }
+
+    return (await response.json()) as TeamSummary;
+  });
+}
+
+export function adminCreateSport(input: CreateSportInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/sports`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao criar modalidade');
+    }
+
+    return (await response.json()) as SportSummary;
   });
 }
 

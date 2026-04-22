@@ -65,6 +65,14 @@ export default function AdminEquipesPage() {
         <span className="eyebrow">Equipes</span>
         <h1>Gestao de equipes</h1>
         <p>Visao consolidada das equipes, composicao de atletas e placar acumulado.</p>
+        <div className="cta-row">
+          <a className="button primary" href="/admin/equipes/nova">
+            Nova equipe
+          </a>
+          <a className="button secondary" href="/admin/dashboard">
+            Voltar ao dashboard
+          </a>
+        </div>
         {error ? <p className="error-text">{error}</p> : null}
         {loading ? <p>Carregando equipes...</p> : null}
         {!loading && grouped.length === 0 ? <div className="card empty-state"><strong>Nenhuma equipe cadastrada.</strong></div> : null}

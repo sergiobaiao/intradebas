@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateSportDto } from './dto/create-sport.dto';
 import { UpdateSportDto } from './dto/update-sport.dto';
 
 @Injectable()
@@ -38,6 +39,20 @@ export class SportsService {
     }
 
     return sport;
+  }
+
+  async create(dto: CreateSportDto) {
+    return this.prisma.sport.create({
+      data: {
+        name: dto.name,
+        category: dto.category,
+        description: dto.description,
+        isAldebarun: dto.isAldebarun,
+        isActive: dto.isActive,
+        scheduleDate: dto.scheduleDate ? new Date(dto.scheduleDate) : undefined,
+        scheduleNotes: dto.scheduleNotes,
+      },
+    });
   }
 
   async update(id: string, dto: UpdateSportDto) {
