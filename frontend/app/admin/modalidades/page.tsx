@@ -1,13 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ResultSummary, SportSummary, adminFetchJson } from '../../lib';
+import { ResultSummary, SportSummary, adminFetchJson, adminUpdateSport } from '../../lib';
 
 export default function AdminModalidadesPage() {
   const [sports, setSports] = useState<SportSummary[]>([]);
   const [results, setResults] = useState<ResultSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [sportName, setSportName] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleNotes, setScheduleNotes] = useState('');
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     void loadData();
@@ -39,6 +44,24 @@ export default function AdminModalidadesPage() {
     [results, sports],
   );
 
+  async function saveSport(sportId: string) {
+    setError(null);
+    try {
+      const updated = await adminUpdateSport(sportId, {
+        name: sportName || undefined,
+        isActive,
+        scheduleDate: scheduleDate ? new Date(scheduleDate).toISOString() : undefined,
+        scheduleNotes: scheduleNotes || undefined,
+      });
+      setSports((current) =>
+        current.map((sport) => (sport.id === sportId ? { ...sport, ...updated } : sport)),
+      );
+      setEditingId(null);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Falha ao atualizar modalidade');
+    }
+  }
+
   return (
     <main className="section">
       <div className="shell">
@@ -63,10 +86,54 @@ export default function AdminModalidadesPage() {
                 <p>Resultados lancados: {sport.resultCount}</p>
                 <p>ALDEBARUN: {sport.isAldebarun ? 'sim' : 'nao'}</p>
                 <p>Agenda: {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}</p>
+                {editingId === sport.id ? (
+                  <div className="form-grid">
+                    <label>
+                      <span>Nome</span>
+                      <input value={sportName} onChange={(event) => setSportName(event.target.value)} />
+                    </label>
+                    <label>
+                      <span>Data/hora</span>
+                      <input type="datetime-local" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
+                    </label>
+                    <label className="field-span">
+                      <span>Notas</span>
+                      <input value={scheduleNotes} onChange={(event) => setScheduleNotes(event.target.value)} />
+                    </label>
+                    <label className="checkbox-row field-span">
+                      <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+                      <span>Modalidade ativa</span>
+                    </label>
+                  </div>
+                ) : null}
                 <div className="cta-row">
                   <a className="button secondary" href={`/admin/modalidades/${sport.id}`}>
                     Ver detalhes
                   </a>
+                  {editingId === sport.id ? (
+                    <>
+                      <button className="button primary" type="button" onClick={() => saveSport(sport.id)}>
+                        Salvar
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="button secondary"
+                      type="button"
+                      onClick={() => {
+                        setEditingId(sport.id);
+                        setSportName(sport.name);
+                        setScheduleDate(sport.scheduleDate ? new Date(sport.scheduleDate).toISOString().slice(0, 16) : '');
+                        setScheduleNotes(sport.scheduleNotes ?? '');
+                        setIsActive(sport.isActive !== false);
+                      }}
+                    >
+                      Editar
+                    </button>
+                  )}
                 </div>
               </article>
             ))}

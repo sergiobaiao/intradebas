@@ -183,6 +183,19 @@ export type ScoringConfigSummary = {
   };
 };
 
+export type UpdateTeamInput = {
+  name?: string;
+  color?: string;
+};
+
+export type UpdateSportInput = {
+  name?: string;
+  description?: string;
+  isActive?: boolean;
+  scheduleDate?: string;
+  scheduleNotes?: string;
+};
+
 function getAdminTokenFromCookie() {
   if (typeof document === 'undefined') {
     return null;
@@ -480,4 +493,76 @@ export function adminGetMedia() {
 
 export function adminGetScoringConfig() {
   return adminFetchJson<ScoringConfigSummary[]>('/settings/scoring');
+}
+
+export function adminUpdateTeam(teamId: string, input: UpdateTeamInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/teams/${teamId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar equipe');
+    }
+
+    return (await response.json()) as TeamSummary;
+  });
+}
+
+export function adminUpdateSport(sportId: string, input: UpdateSportInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/sports/${sportId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar modalidade');
+    }
+
+    return (await response.json()) as SportSummary;
+  });
+}
+
+export function adminUpdateScoringConfig(rowId: string, points: number) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/settings/scoring/${rowId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ points }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar configuracao');
+    }
+
+    return (await response.json()) as ScoringConfigSummary;
+  });
 }

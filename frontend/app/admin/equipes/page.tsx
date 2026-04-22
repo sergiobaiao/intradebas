@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AthleteSummary, TeamSummary, adminFetchJson } from '../../lib';
+import { AthleteSummary, TeamSummary, adminFetchJson, adminUpdateTeam } from '../../lib';
 
 export default function AdminEquipesPage() {
   const [teams, setTeams] = useState<TeamSummary[]>([]);
   const [athletes, setAthletes] = useState<AthleteSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState('');
+  const [teamColor, setTeamColor] = useState('');
 
   useEffect(() => {
     void loadData();
@@ -40,6 +43,22 @@ export default function AdminEquipesPage() {
     [athletes, teams],
   );
 
+  async function saveTeam(teamId: string) {
+    setError(null);
+    try {
+      const updated = await adminUpdateTeam(teamId, {
+        name: teamName || undefined,
+        color: teamColor || undefined,
+      });
+      setTeams((current) =>
+        current.map((team) => (team.id === teamId ? { ...team, ...updated } : team)),
+      );
+      setEditingId(null);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Falha ao atualizar equipe');
+    }
+  }
+
   return (
     <main className="section">
       <div className="shell">
@@ -68,6 +87,42 @@ export default function AdminEquipesPage() {
                 <p>
                   Modalidades: {Array.from(new Set(team.athletes.flatMap((athlete) => athlete.sports.map((sport) => sport.name)))).join(', ') || 'Nenhuma'}
                 </p>
+                {editingId === team.id ? (
+                  <div className="form-grid">
+                    <label>
+                      <span>Nome</span>
+                      <input value={teamName} onChange={(event) => setTeamName(event.target.value)} />
+                    </label>
+                    <label>
+                      <span>Cor</span>
+                      <input value={teamColor} onChange={(event) => setTeamColor(event.target.value)} />
+                    </label>
+                  </div>
+                ) : null}
+                <div className="cta-row">
+                  {editingId === team.id ? (
+                    <>
+                      <button className="button primary" type="button" onClick={() => saveTeam(team.id)}>
+                        Salvar
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="button secondary"
+                      type="button"
+                      onClick={() => {
+                        setEditingId(team.id);
+                        setTeamName(team.name);
+                        setTeamColor(team.color ?? '');
+                      }}
+                    >
+                      Editar equipe
+                    </button>
+                  )}
+                </div>
               </article>
             ))}
           </div>

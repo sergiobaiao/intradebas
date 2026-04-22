@@ -46,4 +46,24 @@ describe('SportsService', () => {
       NotFoundException,
     );
   });
+
+  it('updates a sport when it exists', async () => {
+    prisma.sport.findUnique.mockResolvedValue({ id: 'sport-1' });
+    prisma.sport.update.mockResolvedValue({
+      id: 'sport-1',
+      name: 'Futsal Master',
+      isActive: false,
+      scheduleDate: new Date('2026-04-21T10:00:00Z'),
+      scheduleNotes: 'Quadra principal',
+    });
+
+    const result = await service.update('sport-1', {
+      name: 'Futsal Master',
+      isActive: false,
+      scheduleDate: '2026-04-21T10:00:00Z',
+      scheduleNotes: 'Quadra principal',
+    });
+
+    expect(result.name).toBe('Futsal Master');
+  });
 });

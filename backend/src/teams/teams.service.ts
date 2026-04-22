@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateTeamDto } from './dto/update-team.dto';
 
 @Injectable()
 export class TeamsService {
@@ -70,6 +71,25 @@ export class TeamsService {
           )
         : [],
     }));
+  }
+
+  async update(id: string, dto: UpdateTeamDto) {
+    const team = await this.prisma.team.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Equipe nao encontrada');
+    }
+
+    return this.prisma.team.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        color: dto.color,
+      },
+    });
   }
 }
 

@@ -64,5 +64,21 @@ describe('TeamsService', () => {
     expect(result).toHaveLength(1);
     expect(result[0].sports[0].name).toBe('Futsal');
   });
-});
 
+  it('updates a team when it exists', async () => {
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.team.update.mockResolvedValue({
+      id: 'team-1',
+      name: 'Mucura Prime',
+      color: '#111111',
+      totalScore: 10,
+    });
+
+    const result = await service.update('team-1', {
+      name: 'Mucura Prime',
+      color: '#111111',
+    });
+
+    expect(result.name).toBe('Mucura Prime');
+  });
+});

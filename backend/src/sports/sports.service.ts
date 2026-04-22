@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateSportDto } from './dto/update-sport.dto';
 
 @Injectable()
 export class SportsService {
@@ -37,5 +38,27 @@ export class SportsService {
     }
 
     return sport;
+  }
+
+  async update(id: string, dto: UpdateSportDto) {
+    const sport = await this.prisma.sport.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!sport) {
+      throw new NotFoundException('Modalidade nao encontrada');
+    }
+
+    return this.prisma.sport.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        description: dto.description,
+        isActive: dto.isActive,
+        scheduleDate: dto.scheduleDate ? new Date(dto.scheduleDate) : undefined,
+        scheduleNotes: dto.scheduleNotes,
+      },
+    });
   }
 }
