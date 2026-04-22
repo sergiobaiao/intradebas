@@ -34,6 +34,7 @@ Este projeto agora suporta deploy automatizado de homologacao para uma VM que ja
 3. garanta que o clone consegue fazer `git pull` do GitHub sem interacao
 4. aponte o nginx proxy externo para as portas locais definidas no `.env.homolog`
 5. crie os registros DNS de `intradebas.com.br`, `www.intradebas.com.br` e `api.intradebas.com.br`
+6. nao crie bucket manualmente no MinIO; o bootstrap agora e automatico via `minio-init`
 
 Exemplo:
 
@@ -86,11 +87,12 @@ O script `scripts/deploy-homolog.sh` executa:
 3. `git pull --ff-only`
 4. `docker compose build backend frontend`
 5. `docker compose up -d db redis minio`
-6. `prisma generate`
-7. `prisma migrate deploy`
-8. opcionalmente `prisma seed`
-9. `docker compose up -d backend frontend`
-10. health check do backend
+6. `minio-init` aguarda o MinIO responder e cria o bucket configurado
+7. `prisma generate`
+8. `prisma migrate deploy`
+9. opcionalmente `prisma seed`
+10. `docker compose up -d backend frontend`
+11. health check do backend
 
 ## Seed em homologacao
 

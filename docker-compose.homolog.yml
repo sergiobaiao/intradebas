@@ -23,6 +23,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      minio-init:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:${HOMOLOG_BACKEND_PORT:-14000}:4000"
     networks:
@@ -65,6 +67,28 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio_data:/data
+    networks:
+      - intradebas-net
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      - minio
+    environment:
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set intradebas http://$${MINIO_ENDPOINT}:$${MINIO_PORT} $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY}; do
+          sleep 2
+        done
+        mc mb --ignore-existing intradebas/$${MINIO_BUCKET}
     networks:
       - intradebas-net
 

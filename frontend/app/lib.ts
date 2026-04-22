@@ -267,57 +267,7 @@ function getAdminTokenFromCookie() {
   return entry ? decodeURIComponent(entry.split('=').slice(1).join('=')) : null;
 }
 
-const fallbackTeams: TeamSummary[] = [
-  { id: 'team-mucura', name: 'Mucura', color: '#E63946', totalScore: 18 },
-  { id: 'team-jacare', name: 'Jacare', color: '#2D6A4F', totalScore: 14 },
-  { id: 'team-capivara', name: 'Capivara', color: '#E9C46A', totalScore: 11 },
-];
-
-const fallbackAthletes: AthleteSummary[] = [
-  {
-    id: 'athlete-1',
-    name: 'Marina Carvalho',
-    cpf: '111.222.333-44',
-    type: 'titular',
-    status: 'active',
-    shirtSize: 'M',
-    team: fallbackTeams[0],
-    sports: [{ id: 'sport-corrida', name: 'ALDEBARUN 5K', category: 'individual' }],
-  },
-  {
-    id: 'athlete-2',
-    name: 'Rafael Nunes',
-    cpf: '555.666.777-88',
-    type: 'titular',
-    status: 'active',
-    shirtSize: 'G',
-    team: fallbackTeams[1],
-    sports: [{ id: 'sport-futsal', name: 'Futsal', category: 'coletiva' }],
-  },
-  {
-    id: 'athlete-3',
-    name: 'Livia Rocha',
-    cpf: '999.000.111-22',
-    type: 'convidado',
-    status: 'pending',
-    shirtSize: 'P',
-    team: fallbackTeams[2],
-    sports: [{ id: 'sport-corrida', name: 'ALDEBARUN 5K', category: 'individual' }],
-  },
-];
-
-const fallbackSports: SportSummary[] = [
-  { id: 'sport-futsal', name: 'Futsal', category: 'coletiva', isAldebarun: false },
-  {
-    id: 'sport-aldebarun-5k',
-    name: 'ALDEBARUN 5K',
-    category: 'individual',
-    isAldebarun: true,
-  },
-  { id: 'sport-futevolei', name: 'Futevolei', category: 'dupla', isAldebarun: false },
-];
-
-async function fetchJson<T>(path: string, fallback: T): Promise<T> {
+async function fetchJson<T>(path: string, emptyValue: T): Promise<T> {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
   try {
@@ -328,31 +278,21 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
     });
 
     if (!response.ok) {
-      return fallback;
+      return emptyValue;
     }
 
     return (await response.json()) as T;
   } catch {
-    return fallback;
+    return emptyValue;
   }
 }
 
 export function getTeams() {
-  return fetchJson<TeamSummary[]>('/teams', fallbackTeams);
+  return fetchJson<TeamSummary[]>('/teams', []);
 }
 
 export function getRanking() {
-  return fetchJson<RankingRow[]>(
-    '/results/ranking',
-    fallbackTeams
-      .map((team) => ({
-        id: team.id,
-        name: team.name,
-        color: team.color,
-        totalScore: team.totalScore,
-      }))
-      .sort((left, right) => right.totalScore - left.totalScore),
-  );
+  return fetchJson<RankingRow[]>('/results/ranking', []);
 }
 
 export function getResults() {
@@ -360,7 +300,7 @@ export function getResults() {
 }
 
 export function getAthletes() {
-  return fetchJson<AthleteSummary[]>('/athletes', fallbackAthletes);
+  return fetchJson<AthleteSummary[]>('/athletes', []);
 }
 
 export function getSponsorshipQuotas() {
@@ -368,7 +308,7 @@ export function getSponsorshipQuotas() {
 }
 
 export function getSports() {
-  return fetchJson<SportSummary[]>('/sports', fallbackSports);
+  return fetchJson<SportSummary[]>('/sports', []);
 }
 
 export function getBackdropSponsors() {

@@ -36,6 +36,9 @@ docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOS
 echo "Starting stateful services..."
 docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d db redis minio
 
+echo "Bootstrapping MinIO bucket..."
+docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up --no-deps minio-init
+
 echo "Synchronizing Prisma client and schema..."
 docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:generate
 docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:migrate:deploy
