@@ -1,10 +1,15 @@
 import { NotFoundException } from '@nestjs/common';
+import { MediaStorageService } from '../src/media/media-storage.service';
 import { MediaService } from '../src/media/media.service';
 import { createPrismaMock } from './helpers';
 
 describe('MediaService', () => {
   const prisma = createPrismaMock();
-  const service = new MediaService(prisma as any);
+  const mediaStorage = {
+    uploadObject: jest.fn(),
+    getObject: jest.fn(),
+  } as unknown as MediaStorageService;
+  const service = new MediaService(prisma as any, mediaStorage);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -103,6 +108,10 @@ describe('MediaService', () => {
   });
 
   it('creates a local uploaded media item', async () => {
+    (mediaStorage.uploadObject as jest.Mock).mockResolvedValue({
+      key: 'arquivo.jpg',
+      url: '/api/v1/media/files/arquivo.jpg',
+    });
     prisma.media.create.mockResolvedValue({
       id: 'media-3',
       type: 'photo',
@@ -127,7 +136,7 @@ describe('MediaService', () => {
         sortOrder: 3,
       },
       {
-        filename: 'arquivo.jpg',
+        buffer: Buffer.from('image-bytes'),
         mimetype: 'image/jpeg',
         originalname: 'arquivo.jpg',
       },

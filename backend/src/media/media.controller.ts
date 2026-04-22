@@ -13,9 +13,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
+import { Readable } from 'node:stream';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { CreateUploadedMediaDto } from './dto/create-uploaded-media.dto';
@@ -45,18 +44,7 @@ export class MediaController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_request: any, _file: any, callback: any) => {
-          const uploadDir = join(process.cwd(), 'storage', 'media');
-          mkdirSync(uploadDir, { recursive: true });
-          callback(null, uploadDir);
-        },
-        filename: (_request: any, file: any, callback: any) => {
-          const extension = extname(file.originalname);
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
-          callback(null, uniqueName);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
   upload(
@@ -78,13 +66,19 @@ export class MediaController {
   }
 
   @Get('files/:filename')
-  serveFile(@Param('filename') filename: string, @Res() response: any) {
+  async serveFile(@Param('filename') filename: string, @Res() response: any) {
     if (!/^[a-zA-Z0-9._-]+$/.test(filename)) {
       throw new BadRequestException('Arquivo invalido');
     }
 
-    return response.sendFile(filename, {
-      root: join(process.cwd(), 'storage', 'media'),
-    });
+    const stored = await this.mediaService.getStoredFile(filename);
+    response.setHeader('Content-Type', stored.contentType);
+    const stream = stored.body;
+
+    if (!(stream instanceof Readable)) {
+      throw new BadRequestException('Arquivo indisponivel para streaming');
+    }
+
+    return stream.pipe(response);
   }
 }

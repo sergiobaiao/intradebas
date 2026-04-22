@@ -2,11 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { CreateUploadedMediaDto } from './dto/create-uploaded-media.dto';
+import { MediaStorageService } from './media-storage.service';
 import { UpdateMediaDto } from './dto/update-media.dto';
 
 @Injectable()
 export class MediaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaStorage: MediaStorageService,
+  ) {}
 
   async findAll() {
     return this.prisma.media.findMany({
@@ -49,18 +53,18 @@ export class MediaService {
 
   async createUploaded(
     dto: CreateUploadedMediaDto,
-    file: { filename: string; mimetype: string; originalname?: string },
+    file: { buffer: Buffer; mimetype: string; originalname?: string },
     uploadedBy: string,
   ) {
     const type = file.mimetype.startsWith('video/') ? 'video' : 'photo';
-    const url = `/api/v1/media/files/${file.filename}`;
+    const stored = await this.mediaStorage.uploadObject(file);
 
     return this.prisma.media.create({
       data: {
         type,
-        title: dto.title ?? file.originalname ?? file.filename,
-        url,
-        thumbnailUrl: type === 'photo' ? url : undefined,
+        title: dto.title ?? file.originalname ?? stored.key,
+        url: stored.url,
+        thumbnailUrl: type === 'photo' ? stored.url : undefined,
         provider: 'local',
         isFeatured: dto.isFeatured,
         sortOrder: dto.sortOrder,
@@ -104,5 +108,9 @@ export class MediaService {
         },
       },
     });
+  }
+
+  async getStoredFile(key: string) {
+    return this.mediaStorage.getObject(key);
   }
 }
