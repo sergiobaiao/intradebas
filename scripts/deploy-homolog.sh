@@ -38,7 +38,7 @@ docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOS
 
 echo "Synchronizing Prisma client and schema..."
 docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:generate
-docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:push
+docker compose --project-name "$PROJECT_NAME" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:migrate:deploy
 
 if [[ "$RUN_SEED_ON_DEPLOY" == "true" ]]; then
   echo "Running seed because RUN_SEED_ON_DEPLOY=true..."

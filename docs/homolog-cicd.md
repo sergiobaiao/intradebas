@@ -87,7 +87,7 @@ O script `scripts/deploy-homolog.sh` executa:
 4. `docker compose build backend frontend`
 5. `docker compose up -d db redis minio`
 6. `prisma generate`
-7. `prisma push`
+7. `prisma migrate deploy`
 8. opcionalmente `prisma seed`
 9. `docker compose up -d backend frontend`
 10. health check do backend

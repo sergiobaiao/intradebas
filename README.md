@@ -47,10 +47,11 @@ Fluxo esperado para proximas entregas:
 1. Copie `.env.example` para `.env`.
 2. Ajuste segredos e URLs conforme seu ambiente.
 3. Gere o client Prisma em `backend/` com `npm run prisma:generate`.
-4. Aplique schema localmente com `npm run prisma:push`.
-5. Popule dados-base com `npm run prisma:seed`.
-6. Rode os testes automatizados do backend com `cd backend && npm test`.
-7. Rode `docker compose -f docker-compose.dev.yml up --build`.
+4. Aplique as migrations localmente com `npm run prisma:migrate`.
+5. Para ambientes de deploy, use `npm run prisma:migrate:deploy`.
+6. Popule dados-base com `npm run prisma:seed`.
+7. Rode os testes automatizados do backend com `cd backend && npm test`.
+8. Rode `docker compose -f docker-compose.dev.yml up --build`.
 
 ## Homologacao automatizada
 
@@ -62,6 +63,16 @@ Existe agora um fluxo dedicado para homologacao em VM com proxy reverso externo.
 - guia de setup: [docs/homolog-cicd.md](/files/intradebas/docs/homolog-cicd.md)
 
 Esse fluxo foi pensado para uma VM que ja possui nginx proxy fora deste repositorio, entao ele nao sobe o `nginx` interno do projeto nem ocupa `80/443`.
+
+## Prisma workflow
+
+O projeto agora possui migration baseline versionada em `backend/prisma/migrations/`.
+
+- desenvolvimento com novas alteracoes de schema: `cd backend && npm run prisma:migrate`
+- deploy/homologacao/producao: `cd backend && npm run prisma:migrate:deploy`
+- reset local completo quando necessario: `cd backend && npm run prisma:migrate:reset`
+
+`prisma db push` permanece disponivel apenas como ferramenta auxiliar local, nao como fluxo padrao de deploy.
 
 ## Credenciais admin locais
 
