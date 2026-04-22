@@ -44,11 +44,35 @@ export class AthletesService {
 
   async findAll() {
     const athletes = await this.prisma.athlete.findMany({
-      include: {
-        team: true,
+      select: {
+        id: true,
+        name: true,
+        cpf: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        type: true,
+        status: true,
+        unit: true,
+        shirtSize: true,
+        createdAt: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
         registrations: {
-          include: {
-            sport: true,
+          select: {
+            sport: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+              },
+            },
           },
         },
       },
@@ -63,11 +87,35 @@ export class AthletesService {
   async findOne(id: string) {
     const athlete = await this.prisma.athlete.findUnique({
       where: { id },
-      include: {
-        team: true,
+      select: {
+        id: true,
+        name: true,
+        cpf: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        type: true,
+        status: true,
+        unit: true,
+        shirtSize: true,
+        createdAt: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
         registrations: {
-          include: {
-            sport: true,
+          select: {
+            sport: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+              },
+            },
           },
         },
       },
@@ -249,11 +297,35 @@ export class AthletesService {
 }
 
 type AthleteWithRelations = Prisma.AthleteGetPayload<{
-  include: {
-    team: true;
+  select: {
+    id: true;
+    name: true;
+    cpf: true;
+    email: true;
+    phone: true;
+    birthDate: true;
+    type: true;
+    status: true;
+    unit: true;
+    shirtSize: true;
+    createdAt: true;
+    team: {
+      select: {
+        id: true;
+        name: true;
+        color: true;
+        totalScore: true;
+      };
+    };
     registrations: {
-      include: {
-        sport: true;
+      select: {
+        sport: {
+          select: {
+            id: true;
+            name: true;
+            category: true;
+          };
+        };
       };
     };
   };

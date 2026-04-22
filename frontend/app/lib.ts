@@ -288,7 +288,9 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
 
   try {
     const response = await fetch(`${apiBase}${path}`, {
-      cache: 'no-store',
+      next: {
+        revalidate: 30,
+      },
     });
 
     if (!response.ok) {

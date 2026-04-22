@@ -11,23 +11,46 @@ describe('ResultsService', () => {
   });
 
   it('aggregates ranking totals by team and sorts descending', async () => {
+    prisma.result.groupBy.mockResolvedValue([
+      {
+        teamId: 'team-1',
+        _sum: {
+          calculatedPoints: 8,
+        },
+      },
+      {
+        teamId: 'team-2',
+        _sum: {
+          calculatedPoints: 2,
+        },
+      },
+    ]);
     prisma.team.findMany.mockResolvedValue([
       {
         id: 'team-1',
         name: 'Mucura',
         color: '#E63946',
-        results: [{ calculatedPoints: 3 }, { calculatedPoints: 5 }],
       },
       {
         id: 'team-2',
         name: 'Jacare',
         color: '#2D6A4F',
-        results: [{ calculatedPoints: 2 }],
       },
     ]);
 
     const ranking = await service.getRanking();
 
+    expect(prisma.result.groupBy).toHaveBeenCalledWith({
+      by: ['teamId'],
+      _sum: {
+        calculatedPoints: true,
+      },
+      where: {
+        teamId: {
+          not: null,
+        },
+      },
+    });
     expect(ranking[0]).toMatchObject({ id: 'team-1', totalScore: 8 });
     expect(ranking[1]).toMatchObject({ id: 'team-2', totalScore: 2 });
   });

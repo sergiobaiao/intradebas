@@ -10,9 +10,28 @@ export class ResultsService {
 
   async listResults() {
     return this.prisma.result.findMany({
-      include: {
-        sport: true,
-        team: true,
+      select: {
+        id: true,
+        position: true,
+        rawScore: true,
+        calculatedPoints: true,
+        resultDate: true,
+        notes: true,
+        sport: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
       },
       orderBy: [{ resultDate: 'desc' }, { createdAt: 'desc' }],
     });
@@ -54,29 +73,42 @@ export class ResultsService {
   }
 
   async getRanking() {
-    const teams = await this.prisma.team.findMany({
-      include: {
-        results: {
-          select: {
-            calculatedPoints: true,
+    const [aggregated, teams] = await Promise.all([
+      this.prisma.result.groupBy({
+        by: ['teamId'],
+        _sum: {
+          calculatedPoints: true,
+        },
+        where: {
+          teamId: {
+            not: null,
           },
         },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
+      }),
+      this.prisma.team.findMany({
+        select: {
+          id: true,
+          name: true,
+          color: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      }),
+    ]);
+
+    const totalsByTeam = new Map(
+      aggregated
+        .filter((row) => row.teamId)
+        .map((row) => [row.teamId as string, row._sum.calculatedPoints ?? 0]),
+    );
 
     return teams
-      .map((team: RankingTeam) => ({
+      .map((team) => ({
         id: team.id,
         name: team.name,
         color: team.color,
-        totalScore: team.results.reduce(
-          (sum: number, result: RankingTeam['results'][number]) =>
-            sum + (result.calculatedPoints ?? 0),
-          0,
-        ),
+        totalScore: totalsByTeam.get(team.id) ?? 0,
       }))
       .sort((left: RankingRow, right: RankingRow) => {
         if (right.totalScore !== left.totalScore) {

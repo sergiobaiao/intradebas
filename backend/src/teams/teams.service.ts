@@ -41,11 +41,35 @@ export class TeamsService {
 
     const athletes = await this.prisma.athlete.findMany({
       where: { teamId: id },
-      include: {
-        team: true,
+      select: {
+        id: true,
+        name: true,
+        cpf: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        type: true,
+        status: true,
+        unit: true,
+        shirtSize: true,
+        createdAt: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
         registrations: {
-          include: {
-            sport: true,
+          select: {
+            sport: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+              },
+            },
           },
         },
       },
@@ -65,7 +89,7 @@ export class TeamsService {
       shirtSize: athlete.shirtSize,
       createdAt: athlete.createdAt,
       team: athlete.team,
-      sports: athletes.length
+      sports: athlete.registrations.length
         ? athlete.registrations.map(
             (registration: TeamAthleteWithRelations['registrations'][number]) =>
               registration.sport,
@@ -104,11 +128,35 @@ export class TeamsService {
 }
 
 type TeamAthleteWithRelations = Prisma.AthleteGetPayload<{
-  include: {
-    team: true;
+  select: {
+    id: true;
+    name: true;
+    cpf: true;
+    email: true;
+    phone: true;
+    birthDate: true;
+    type: true;
+    status: true;
+    unit: true;
+    shirtSize: true;
+    createdAt: true;
+    team: {
+      select: {
+        id: true;
+        name: true;
+        color: true;
+        totalScore: true;
+      };
+    };
     registrations: {
-      include: {
-        sport: true;
+      select: {
+        sport: {
+          select: {
+            id: true;
+            name: true;
+            category: true;
+          };
+        };
       };
     };
   };
