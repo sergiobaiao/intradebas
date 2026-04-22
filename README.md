@@ -52,6 +52,17 @@ Fluxo esperado para proximas entregas:
 6. Rode os testes automatizados do backend com `cd backend && npm test`.
 7. Rode `docker compose -f docker-compose.dev.yml up --build`.
 
+## Homologacao automatizada
+
+Existe agora um fluxo dedicado para homologacao em VM com proxy reverso externo.
+
+- workflow: `.github/workflows/deploy-homolog.yml`
+- compose de homologacao: `docker-compose.homolog.yml`
+- script remoto: `scripts/deploy-homolog.sh`
+- guia de setup: [docs/homolog-cicd.md](/files/intradebas/docs/homolog-cicd.md)
+
+Esse fluxo foi pensado para uma VM que ja possui nginx proxy fora deste repositorio, entao ele nao sobe o `nginx` interno do projeto nem ocupa `80/443`.
+
 ## Credenciais admin locais
 
 Depois de `npm run prisma:seed`, o backend cria credenciais locais de desenvolvimento.
