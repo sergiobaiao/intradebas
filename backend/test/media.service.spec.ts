@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { MediaService } from '../src/media/media.service';
 import { createPrismaMock } from './helpers';
 
@@ -44,5 +45,57 @@ describe('MediaService', () => {
       orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
     expect(result).toHaveLength(1);
+  });
+
+  it('updates a media item when it exists', async () => {
+    prisma.media.findUnique.mockResolvedValue({ id: 'media-1' });
+    prisma.media.update.mockResolvedValue({
+      id: 'media-1',
+      type: 'photo',
+      title: 'Abertura',
+      url: 'https://example.com/opening.jpg',
+      thumbnailUrl: null,
+      provider: 'local',
+      isFeatured: true,
+      sortOrder: 4,
+      createdAt: new Date('2026-04-19T12:00:00Z'),
+      uploader: {
+        id: 'user-1',
+        name: 'Admin',
+        email: 'admin@intradebas.local',
+      },
+    });
+
+    const result = await service.update('media-1', {
+      isFeatured: true,
+      sortOrder: 4,
+    });
+
+    expect(prisma.media.update).toHaveBeenCalledWith({
+      where: { id: 'media-1' },
+      data: {
+        isFeatured: true,
+        sortOrder: 4,
+      },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+    expect(result.isFeatured).toBe(true);
+    expect(result.sortOrder).toBe(4);
+  });
+
+  it('throws when media item is missing', async () => {
+    prisma.media.findUnique.mockResolvedValue(null);
+
+    await expect(service.update('missing', { sortOrder: 1 })).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

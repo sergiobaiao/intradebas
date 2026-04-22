@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   CouponAdminSummary,
   SponsorAdminSummary,
+  adminActivateSponsor,
   adminGetCoupons,
   adminGetSponsorCoupons,
   adminGetSponsors,
@@ -16,6 +17,7 @@ export default function AdminPatrocinioPage() {
   const [selectedCoupons, setSelectedCoupons] = useState<CouponAdminSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [activatingSponsorId, setActivatingSponsorId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +66,26 @@ export default function AdminPatrocinioPage() {
     }
   }
 
+  async function activateSponsor(sponsorId: string) {
+    setActivatingSponsorId(sponsorId);
+    setError(null);
+
+    try {
+      await adminActivateSponsor(sponsorId);
+      await loadData();
+
+      if (selectedSponsorId === sponsorId) {
+        await loadSponsorCoupons(sponsorId);
+      }
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error ? loadError.message : 'Falha ao ativar patrocinador',
+      );
+    } finally {
+      setActivatingSponsorId(null);
+    }
+  }
+
   const selectedSponsor = useMemo(
     () => sponsors.find((sponsor) => sponsor.id === selectedSponsorId) ?? null,
     [selectedSponsorId, sponsors],
@@ -108,6 +130,16 @@ export default function AdminPatrocinioPage() {
                     >
                       Ver cupons
                     </button>
+                    {sponsor.status === 'pending' ? (
+                      <button
+                        className="button"
+                        type="button"
+                        onClick={() => void activateSponsor(sponsor.id)}
+                        disabled={activatingSponsorId === sponsor.id}
+                      >
+                        {activatingSponsorId === sponsor.id ? 'Ativando...' : 'Ativar'}
+                      </button>
+                    ) : null}
                   </div>
                 </article>
               ))}

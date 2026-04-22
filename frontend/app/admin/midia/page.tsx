@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MediaAdminSummary, adminGetMedia } from '../../lib';
+import { MediaAdminSummary, adminGetMedia, adminUpdateMedia } from '../../lib';
 
 export default function AdminMidiaPage() {
   const [items, setItems] = useState<MediaAdminSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [sortOrder, setSortOrder] = useState('0');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -21,6 +24,36 @@ export default function AdminMidiaPage() {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar midia');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveItem(mediaId: string) {
+    setError(null);
+
+    try {
+      const updated = await adminUpdateMedia(mediaId, {
+        isFeatured,
+        sortOrder: Number(sortOrder),
+      });
+
+      setItems((current) =>
+        [...current]
+          .map((item) => (item.id === mediaId ? updated : item))
+          .sort((left, right) => {
+            if (left.isFeatured !== right.isFeatured) {
+              return Number(right.isFeatured) - Number(left.isFeatured);
+            }
+
+            if (left.sortOrder !== right.sortOrder) {
+              return left.sortOrder - right.sortOrder;
+            }
+
+            return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+          }),
+      );
+      setEditingId(null);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Falha ao atualizar midia');
     }
   }
 
@@ -46,7 +79,52 @@ export default function AdminMidiaPage() {
                 </div>
                 <p>URL: {item.url}</p>
                 <p>Uploader: {item.uploader.name}</p>
-                <p>Ordem: {item.sortOrder}</p>
+                {editingId === item.id ? (
+                  <>
+                    <label className="field">
+                      <span>Destaque</span>
+                      <input
+                        type="checkbox"
+                        checked={isFeatured}
+                        onChange={(event) => setIsFeatured(event.target.checked)}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Ordem</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={sortOrder}
+                        onChange={(event) => setSortOrder(event.target.value)}
+                      />
+                    </label>
+                    <div className="cta-row">
+                      <button className="button" type="button" onClick={() => void saveItem(item.id)}>
+                        Salvar
+                      </button>
+                      <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p>Ordem: {item.sortOrder}</p>
+                    <div className="cta-row">
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => {
+                          setEditingId(item.id);
+                          setIsFeatured(item.isFeatured);
+                          setSortOrder(String(item.sortOrder));
+                        }}
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  </>
+                )}
               </article>
             ))}
           </div>

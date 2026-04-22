@@ -196,6 +196,11 @@ export type UpdateSportInput = {
   scheduleNotes?: string;
 };
 
+export type UpdateMediaInput = {
+  isFeatured?: boolean;
+  sortOrder?: number;
+};
+
 function getAdminTokenFromCookie() {
   if (typeof document === 'undefined') {
     return null;
@@ -487,8 +492,60 @@ export function adminGetSponsorCoupons(sponsorId: string) {
   return adminFetchJson<CouponAdminSummary[]>(`/sponsors/${sponsorId}/coupons`);
 }
 
+export function adminActivateSponsor(sponsorId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/sponsors/${sponsorId}/activate`, {
+    method: 'PATCH',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao ativar patrocinador');
+    }
+
+    return (await response.json()) as {
+      id: string;
+      status: 'active' | 'pending' | 'inactive';
+      couponsGenerated: number;
+    };
+  });
+}
+
 export function adminGetMedia() {
   return adminFetchJson<MediaAdminSummary[]>('/media');
+}
+
+export function adminUpdateMedia(mediaId: string, input: UpdateMediaInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/media/${mediaId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar midia');
+    }
+
+    return (await response.json()) as MediaAdminSummary;
+  });
 }
 
 export function adminGetScoringConfig() {

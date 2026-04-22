@@ -58,6 +58,8 @@ export function createPrismaMock() {
     },
     media: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
     },
     $transaction: jest.fn(),
   };
