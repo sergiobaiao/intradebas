@@ -273,4 +273,78 @@ describe('SponsorshipService', () => {
     expect(result.couponsGenerated).toBe(2);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
+
+  it('updates sponsor operational data for admin editing', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findUnique: jest.fn().mockResolvedValue({ id: 'sponsor-1' }),
+      update: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        companyName: 'Acme Atualizada',
+        contactName: 'Maria Souza',
+        email: 'maria@acme.com',
+        phone: '86988887777',
+        logoUrl: 'https://example.com/logo.png',
+        status: SponsorStatus.inactive,
+        createdAt: new Date('2026-04-19T10:00:00Z'),
+        coupons: [{ id: 'c1' }],
+        quota: {
+          id: 'quota-2',
+          level: SponsorshipLevel.prata,
+          price: 500,
+          courtesyCount: 2,
+        },
+      }),
+    } as any;
+    prisma.sponsorshipQuota = {
+      ...prisma.sponsorshipQuota,
+      findUnique: jest.fn().mockResolvedValue({ id: 'quota-2' }),
+    } as any;
+
+    const result = await service.updateSponsor('sponsor-1', {
+      companyName: 'Acme Atualizada',
+      contactName: 'Maria Souza',
+      email: 'Maria@Acme.com',
+      phone: '86988887777',
+      logoUrl: 'https://example.com/logo.png',
+      quotaId: 'quota-2',
+      status: SponsorStatus.inactive,
+    });
+
+    expect(prisma.sponsor.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'sponsor-1' },
+        data: expect.objectContaining({
+          email: 'maria@acme.com',
+          quotaId: 'quota-2',
+          status: SponsorStatus.inactive,
+        }),
+      }),
+    );
+    expect(result).toMatchObject({
+      companyName: 'Acme Atualizada',
+      status: 'inactive',
+      quota: {
+        id: 'quota-2',
+        level: 'prata',
+      },
+    });
+  });
+
+  it('rejects sponsor editing for invalid quota', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findUnique: jest.fn().mockResolvedValue({ id: 'sponsor-1' }),
+    } as any;
+    prisma.sponsorshipQuota = {
+      ...prisma.sponsorshipQuota,
+      findUnique: jest.fn().mockResolvedValue(null),
+    } as any;
+
+    await expect(
+      service.updateSponsor('sponsor-1', {
+        quotaId: 'missing',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

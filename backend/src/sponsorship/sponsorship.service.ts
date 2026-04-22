@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, SponsorStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 
 @Injectable()
 export class SponsorshipService {
@@ -157,6 +158,7 @@ export class SponsorshipService {
       contactName: sponsor.contactName,
       email: sponsor.email,
       phone: sponsor.phone,
+      logoUrl: sponsor.logoUrl,
       status: sponsor.status,
       createdAt: sponsor.createdAt,
       couponCount: sponsor.coupons.length,
@@ -307,6 +309,74 @@ export class SponsorshipService {
       id: created.id,
       status: created.status,
       couponsGenerated: created.coupons.length,
+    };
+  }
+
+  async updateSponsor(sponsorId: string, input: UpdateSponsorDto) {
+    const sponsor = await this.prisma.sponsor.findUnique({
+      where: { id: sponsorId },
+      select: { id: true },
+    });
+
+    if (!sponsor) {
+      throw new BadRequestException('Patrocinador invalido');
+    }
+
+    if (input.quotaId) {
+      const quota = await this.prisma.sponsorshipQuota.findUnique({
+        where: { id: input.quotaId },
+        select: { id: true },
+      });
+
+      if (!quota) {
+        throw new BadRequestException('Cota de patrocinio invalida');
+      }
+    }
+
+    const updated = await this.prisma.sponsor.update({
+      where: { id: sponsorId },
+      data: {
+        companyName: input.companyName,
+        contactName: input.contactName,
+        email: input.email?.toLowerCase(),
+        phone: input.phone,
+        logoUrl: input.logoUrl,
+        quotaId: input.quotaId,
+        status: input.status,
+      },
+      include: {
+        quota: {
+          select: {
+            id: true,
+            level: true,
+            price: true,
+            courtesyCount: true,
+          },
+        },
+        coupons: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    return {
+      id: updated.id,
+      companyName: updated.companyName,
+      contactName: updated.contactName,
+      email: updated.email,
+      phone: updated.phone,
+      status: updated.status,
+      logoUrl: updated.logoUrl,
+      createdAt: updated.createdAt,
+      couponCount: updated.coupons.length,
+      quota: {
+        id: updated.quota.id,
+        level: updated.quota.level,
+        price: Number(updated.quota.price),
+        courtesyCount: updated.quota.courtesyCount,
+      },
     };
   }
 }

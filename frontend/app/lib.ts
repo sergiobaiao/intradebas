@@ -73,6 +73,7 @@ export type SponsorAdminSummary = {
   contactName: string;
   email: string;
   phone?: string | null;
+  logoUrl?: string | null;
   status: 'pending' | 'active' | 'inactive';
   createdAt: string;
   couponCount: number;
@@ -82,6 +83,16 @@ export type SponsorAdminSummary = {
     price: number;
     courtesyCount: number;
   };
+};
+
+export type UpdateSponsorInput = {
+  companyName?: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  logoUrl?: string;
+  quotaId?: string;
+  status?: 'pending' | 'active' | 'inactive';
 };
 
 export type CouponAdminSummary = {
@@ -624,6 +635,30 @@ export function adminActivateSponsor(sponsorId: string) {
       status: 'active' | 'pending' | 'inactive';
       couponsGenerated: number;
     };
+  });
+}
+
+export function adminUpdateSponsor(sponsorId: string, input: UpdateSponsorInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/sponsors/${sponsorId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar patrocinador');
+    }
+
+    return (await response.json()) as SponsorAdminSummary;
   });
 }
 

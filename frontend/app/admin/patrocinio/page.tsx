@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   CouponAdminSummary,
   SponsorAdminSummary,
@@ -8,17 +8,29 @@ import {
   adminGetCoupons,
   adminGetSponsorCoupons,
   adminGetSponsors,
+  adminUpdateSponsor,
+  getSponsorshipQuotas,
+  SponsorshipQuotaSummary,
 } from '../../lib';
 
 export default function AdminPatrocinioPage() {
   const [sponsors, setSponsors] = useState<SponsorAdminSummary[]>([]);
+  const [quotas, setQuotas] = useState<SponsorshipQuotaSummary[]>([]);
   const [allCoupons, setAllCoupons] = useState<CouponAdminSummary[]>([]);
   const [selectedSponsorId, setSelectedSponsorId] = useState<string>('');
   const [selectedCoupons, setSelectedCoupons] = useState<CouponAdminSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [couponLoading, setCouponLoading] = useState(false);
   const [activatingSponsorId, setActivatingSponsorId] = useState<string | null>(null);
+  const [savingSponsor, setSavingSponsor] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [quotaId, setQuotaId] = useState('');
+  const [status, setStatus] = useState<SponsorAdminSummary['status']>('pending');
 
   useEffect(() => {
     void loadData();
@@ -42,7 +54,9 @@ export default function AdminPatrocinioPage() {
         adminGetSponsors(),
         adminGetCoupons(),
       ]);
+      const loadedQuotas = await getSponsorshipQuotas();
       setSponsors(loadedSponsors);
+      setQuotas(loadedQuotas);
       setAllCoupons(loadedCoupons);
       setSelectedSponsorId((current) => current || loadedSponsors[0]?.id || '');
     } catch (loadError) {
@@ -90,6 +104,58 @@ export default function AdminPatrocinioPage() {
     () => sponsors.find((sponsor) => sponsor.id === selectedSponsorId) ?? null,
     [selectedSponsorId, sponsors],
   );
+
+  useEffect(() => {
+    if (!selectedSponsor) {
+      setCompanyName('');
+      setContactName('');
+      setEmail('');
+      setPhone('');
+      setLogoUrl('');
+      setQuotaId('');
+      setStatus('pending');
+      return;
+    }
+
+    setCompanyName(selectedSponsor.companyName);
+    setContactName(selectedSponsor.contactName);
+    setEmail(selectedSponsor.email);
+    setPhone(selectedSponsor.phone ?? '');
+    setLogoUrl(selectedSponsor.logoUrl ?? '');
+    setQuotaId(selectedSponsor.quota.id);
+    setStatus(selectedSponsor.status);
+  }, [selectedSponsor]);
+
+  async function handleSponsorSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!selectedSponsor) {
+      return;
+    }
+
+    setSavingSponsor(true);
+    setError(null);
+
+    try {
+      await adminUpdateSponsor(selectedSponsor.id, {
+        companyName,
+        contactName,
+        email,
+        phone: phone || undefined,
+        logoUrl: logoUrl || undefined,
+        quotaId,
+        status,
+      });
+      await loadData();
+      await loadSponsorCoupons(selectedSponsor.id);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error ? loadError.message : 'Falha ao atualizar patrocinador',
+      );
+    } finally {
+      setSavingSponsor(false);
+    }
+  }
 
   return (
     <main className="section">
@@ -143,6 +209,61 @@ export default function AdminPatrocinioPage() {
                   </div>
                 </article>
               ))}
+            </div>
+
+            <div className="card" style={{ marginTop: '24px' }}>
+              <h2>Edicao do patrocinador selecionado</h2>
+              {!selectedSponsor ? <p>Selecione um patrocinador para editar.</p> : null}
+              {selectedSponsor ? (
+                <form className="form-grid" onSubmit={handleSponsorSave}>
+                  <label>
+                    Empresa
+                    <input value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
+                  </label>
+                  <label>
+                    Contato
+                    <input value={contactName} onChange={(event) => setContactName(event.target.value)} />
+                  </label>
+                  <label>
+                    E-mail
+                    <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
+                  </label>
+                  <label>
+                    Telefone
+                    <input value={phone} onChange={(event) => setPhone(event.target.value)} />
+                  </label>
+                  <label className="field-span">
+                    Logo URL
+                    <input value={logoUrl} onChange={(event) => setLogoUrl(event.target.value)} />
+                  </label>
+                  <label>
+                    Cota
+                    <select value={quotaId} onChange={(event) => setQuotaId(event.target.value)}>
+                      {quotas.map((quota) => (
+                        <option key={quota.id} value={quota.id}>
+                          {quota.level.toUpperCase()} · {quota.courtesyCount} cortesias
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Status
+                    <select
+                      value={status}
+                      onChange={(event) => setStatus(event.target.value as SponsorAdminSummary['status'])}
+                    >
+                      <option value="pending">pending</option>
+                      <option value="active">active</option>
+                      <option value="inactive">inactive</option>
+                    </select>
+                  </label>
+                  <div className="cta-row field-span">
+                    <button className="button" type="submit" disabled={savingSponsor || !quotaId}>
+                      {savingSponsor ? 'Salvando...' : 'Salvar patrocinador'}
+                    </button>
+                  </div>
+                </form>
+              ) : null}
             </div>
 
             <div className="card" style={{ marginTop: '24px' }}>

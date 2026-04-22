@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateSponsorInterestDto } from './dto/create-sponsor-interest.dto';
+import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 import { SponsorshipService } from './sponsorship.service';
 
 @Controller()
@@ -44,5 +45,11 @@ export class SponsorshipController {
   @UseGuards(JwtAuthGuard)
   activateSponsor(@Param('id') id: string) {
     return this.sponsorshipService.activateSponsor(id);
+  }
+
+  @Patch('sponsors/:id')
+  @UseGuards(JwtAuthGuard)
+  updateSponsor(@Param('id') id: string, @Body() dto: UpdateSponsorDto) {
+    return this.sponsorshipService.updateSponsor(id, dto);
   }
 }
