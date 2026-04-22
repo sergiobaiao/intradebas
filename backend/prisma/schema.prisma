@@ -106,6 +106,7 @@ model Team {
   athletes Athlete[]
   results  Result[]
 
+  @@index([totalScore, name])
   @@map("teams")
 }
 
@@ -137,6 +138,9 @@ model Athlete {
   results       Result[]
   redeemedCoupons Coupon[]    @relation("coupon_redeemed_by")
 
+  @@index([teamId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([titularId])
   @@map("athletes")
 }
 
@@ -157,6 +161,8 @@ model Sport {
   registrations Registration[]
   results       Result[]
 
+  @@index([isActive, scheduleDate])
+  @@index([category, name])
   @@map("sports")
 }
 
@@ -174,6 +180,8 @@ model Registration {
   partner Athlete? @relation("registration_partner", fields: [partnerId], references: [id])
 
   @@unique([athleteId, sportId])
+  @@index([sportId, status])
+  @@index([partnerId])
   @@map("registrations")
 }
 
@@ -197,6 +205,11 @@ model Result {
   recorder User             @relation("recorded_results", fields: [recordedBy], references: [id])
   audits   ResultAuditLog[]
 
+  @@index([resultDate, createdAt])
+  @@index([teamId, resultDate])
+  @@index([sportId, resultDate])
+  @@index([teamId, sportId])
+  @@index([recordedBy])
   @@map("results")
 }
 
@@ -212,6 +225,9 @@ model ResultAuditLog {
   result  Result @relation(fields: [resultId], references: [id])
   changer User   @relation("audit_changed_by", fields: [changedBy], references: [id])
 
+  @@index([changedAt])
+  @@index([resultId, changedAt])
+  @@index([changedBy, changedAt])
   @@map("result_audit_log")
 }
 
@@ -225,6 +241,8 @@ model ScoringConfig {
 
   updatedByUser User @relation(fields: [updatedBy], references: [id])
 
+  @@unique([category, position])
+  @@index([updatedBy])
   @@map("scoring_config")
 }
 
@@ -241,6 +259,7 @@ model SponsorshipQuota {
 
   sponsors Sponsor[]
 
+  @@index([backdropPriority])
   @@map("sponsorship_quotas")
 }
 
@@ -261,6 +280,8 @@ model Sponsor {
   quota   SponsorshipQuota @relation(fields: [quotaId], references: [id])
   coupons Coupon[]
 
+  @@index([quotaId, status])
+  @@index([status, createdAt])
   @@map("sponsors")
 }
 
@@ -276,6 +297,9 @@ model Coupon {
   sponsor  Sponsor  @relation(fields: [sponsorId], references: [id])
   athlete  Athlete? @relation("coupon_redeemed_by", fields: [redeemedBy], references: [id])
 
+  @@index([sponsorId, status, createdAt])
+  @@index([redeemedBy])
+  @@index([status, redeemedAt])
   @@map("coupons")
 }
 
@@ -293,6 +317,8 @@ model Media {
 
   uploader User @relation(fields: [uploadedBy], references: [id])
 
+  @@index([isFeatured, sortOrder, createdAt])
+  @@index([uploadedBy, createdAt])
   @@map("media")
 }
 
@@ -305,6 +331,6 @@ model LgpdConsentLog {
   userAgent    String?  @map("user_agent")
   policyVersion String  @default("v1.0") @map("policy_version")
 
+  @@index([athleteCpf, consentedAt])
   @@map("lgpd_consent_log")
 }
-
