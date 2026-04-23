@@ -52,4 +52,16 @@ export class SponsorshipController {
   updateSponsor(@Param('id') id: string, @Body() dto: UpdateSponsorDto) {
     return this.sponsorshipService.updateSponsor(id, dto);
   }
+
+  @Post('sponsors/:id/coupons')
+  @UseGuards(JwtAuthGuard)
+  createCouponForSponsor(@Param('id') id: string) {
+    return this.sponsorshipService.createCouponForSponsor(id);
+  }
+
+  @Patch('coupons/:id/expire')
+  @UseGuards(JwtAuthGuard)
+  expireCoupon(@Param('id') id: string) {
+    return this.sponsorshipService.expireCoupon(id);
+  }
 }

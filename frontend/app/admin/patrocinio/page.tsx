@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   CouponAdminSummary,
+  adminCreateSponsorCoupon,
+  adminExpireCoupon,
   SponsorAdminSummary,
   adminActivateSponsor,
   adminGetCoupons,
@@ -23,6 +25,8 @@ export default function AdminPatrocinioPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [activatingSponsorId, setActivatingSponsorId] = useState<string | null>(null);
   const [savingSponsor, setSavingSponsor] = useState(false);
+  const [creatingCoupon, setCreatingCoupon] = useState(false);
+  const [expiringCouponId, setExpiringCouponId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
@@ -157,6 +161,42 @@ export default function AdminPatrocinioPage() {
     }
   }
 
+  async function createCoupon() {
+    if (!selectedSponsor) {
+      return;
+    }
+
+    setCreatingCoupon(true);
+    setError(null);
+
+    try {
+      await adminCreateSponsorCoupon(selectedSponsor.id);
+      await loadData();
+      await loadSponsorCoupons(selectedSponsor.id);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Falha ao gerar cupom');
+    } finally {
+      setCreatingCoupon(false);
+    }
+  }
+
+  async function expireCoupon(couponId: string) {
+    setExpiringCouponId(couponId);
+    setError(null);
+
+    try {
+      await adminExpireCoupon(couponId);
+      if (selectedSponsorId) {
+        await loadSponsorCoupons(selectedSponsorId);
+      }
+      await loadData();
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Falha ao expirar cupom');
+    } finally {
+      setExpiringCouponId(null);
+    }
+  }
+
   return (
     <main className="section">
       <div className="shell">
@@ -281,6 +321,18 @@ export default function AdminPatrocinioPage() {
                   ? `Cupons de ${selectedSponsor.companyName}`
                   : 'Selecione um patrocinador para ver os cupons'}
               </h2>
+              {selectedSponsor ? (
+                <div className="cta-row" style={{ marginBottom: '16px' }}>
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={() => createCoupon()}
+                    disabled={creatingCoupon}
+                  >
+                    {creatingCoupon ? 'Gerando...' : 'Gerar cupom extra'}
+                  </button>
+                </div>
+              ) : null}
               {couponLoading ? <p>Carregando cupons...</p> : null}
               {!couponLoading && selectedCoupons.length === 0 ? (
                 <p>Nenhum cupom encontrado para este patrocinador.</p>
@@ -307,6 +359,18 @@ export default function AdminPatrocinioPage() {
                           ? new Date(coupon.redeemedAt).toLocaleString('pt-BR')
                           : 'Nao utilizada'}
                       </p>
+                      {coupon.status === 'active' ? (
+                        <div className="cta-row">
+                          <button
+                            className="button secondary"
+                            type="button"
+                            onClick={() => expireCoupon(coupon.id)}
+                            disabled={expiringCouponId === coupon.id}
+                          >
+                            {expiringCouponId === coupon.id ? 'Expirando...' : 'Expirar'}
+                          </button>
+                        </div>
+                      ) : null}
                     </article>
                   ))}
                 </div>

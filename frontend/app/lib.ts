@@ -584,6 +584,30 @@ export function adminGetSponsorCoupons(sponsorId: string) {
   return adminFetchJson<CouponAdminSummary[]>(`/sponsors/${sponsorId}/coupons`);
 }
 
+export function adminCreateSponsorCoupon(sponsorId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/sponsors/${sponsorId}/coupons`, {
+    method: 'POST',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao gerar cupom');
+    }
+
+    return (await response.json()) as CouponAdminSummary;
+  });
+}
+
 export function adminActivateSponsor(sponsorId: string) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
   const token = getAdminTokenFromCookie();
@@ -609,6 +633,30 @@ export function adminActivateSponsor(sponsorId: string) {
       status: 'active' | 'pending' | 'inactive';
       couponsGenerated: number;
     };
+  });
+}
+
+export function adminExpireCoupon(couponId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/coupons/${couponId}/expire`, {
+    method: 'PATCH',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao expirar cupom');
+    }
+
+    return (await response.json()) as CouponAdminSummary;
   });
 }
 

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma, SponsorStatus } from '@prisma/client';
+import { CouponStatus, Prisma, SponsorStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 
@@ -378,6 +378,95 @@ export class SponsorshipService {
         courtesyCount: updated.quota.courtesyCount,
       },
     };
+  }
+
+  async createCouponForSponsor(sponsorId: string) {
+    const sponsor = await this.prisma.sponsor.findUnique({
+      where: { id: sponsorId },
+      include: {
+        quota: {
+          select: {
+            level: true,
+          },
+        },
+      },
+    });
+
+    if (!sponsor) {
+      throw new BadRequestException('Patrocinador invalido');
+    }
+
+    let code = this.generateCouponCode(sponsor.quota.level);
+
+    while (await this.prisma.coupon.findUnique({ where: { code }, select: { id: true } })) {
+      code = this.generateCouponCode(sponsor.quota.level);
+    }
+
+    return this.prisma.coupon.create({
+      data: {
+        code,
+        sponsorId: sponsor.id,
+      },
+      include: {
+        sponsor: {
+          select: {
+            id: true,
+            companyName: true,
+          },
+        },
+        athlete: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+          },
+        },
+      },
+    });
+  }
+
+  async expireCoupon(couponId: string) {
+    const coupon = await this.prisma.coupon.findUnique({
+      where: { id: couponId },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!coupon) {
+      throw new BadRequestException('Cupom invalido');
+    }
+
+    if (coupon.status === CouponStatus.used) {
+      throw new BadRequestException('Cupom utilizado nao pode ser expirado');
+    }
+
+    if (coupon.status === CouponStatus.expired) {
+      throw new BadRequestException('Cupom ja expirado');
+    }
+
+    return this.prisma.coupon.update({
+      where: { id: couponId },
+      data: {
+        status: CouponStatus.expired,
+      },
+      include: {
+        sponsor: {
+          select: {
+            id: true,
+            companyName: true,
+          },
+        },
+        athlete: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+          },
+        },
+      },
+    });
   }
 }
 

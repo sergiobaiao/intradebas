@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { SponsorshipLevel, SponsorStatus } from '@prisma/client';
+import { CouponStatus, SponsorshipLevel, SponsorStatus } from '@prisma/client';
 import { SponsorshipService } from '../src/sponsorship/sponsorship.service';
 import { createPrismaMock } from './helpers';
 
@@ -346,5 +346,84 @@ describe('SponsorshipService', () => {
         quotaId: 'missing',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('creates an extra coupon for a sponsor with a unique code', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        quota: {
+          level: SponsorshipLevel.ouro,
+        },
+      }),
+    } as any;
+    prisma.coupon = {
+      ...prisma.coupon,
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({
+        id: 'coupon-1',
+        code: 'OURO-ABC12345',
+        status: CouponStatus.active,
+        createdAt: new Date('2026-04-23T10:00:00Z'),
+        redeemedAt: null,
+        sponsor: {
+          id: 'sponsor-1',
+          companyName: 'Acme',
+        },
+        athlete: null,
+      }),
+    } as any;
+
+    const result = await service.createCouponForSponsor('sponsor-1');
+
+    expect(prisma.coupon.create).toHaveBeenCalled();
+    expect(result.status).toBe('active');
+  });
+
+  it('expires an active coupon', async () => {
+    prisma.coupon = {
+      ...prisma.coupon,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'coupon-1',
+        status: CouponStatus.active,
+      }),
+      update: jest.fn().mockResolvedValue({
+        id: 'coupon-1',
+        code: 'OURO-ABC12345',
+        status: CouponStatus.expired,
+        createdAt: new Date('2026-04-23T10:00:00Z'),
+        redeemedAt: null,
+        sponsor: {
+          id: 'sponsor-1',
+          companyName: 'Acme',
+        },
+        athlete: null,
+      }),
+    } as any;
+
+    const result = await service.expireCoupon('coupon-1');
+
+    expect(prisma.coupon.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'coupon-1' },
+        data: { status: CouponStatus.expired },
+      }),
+    );
+    expect(result.status).toBe('expired');
+  });
+
+  it('rejects coupon expiration for used coupons', async () => {
+    prisma.coupon = {
+      ...prisma.coupon,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'coupon-1',
+        status: CouponStatus.used,
+      }),
+    } as any;
+
+    await expect(service.expireCoupon('coupon-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });
