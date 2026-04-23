@@ -478,6 +478,43 @@ export class AthletesService {
     return this.toResponse(updated);
   }
 
+  async remove(id: string) {
+    const athlete = await this.prisma.athlete.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!athlete) {
+      throw new NotFoundException('Atleta nao encontrado');
+    }
+
+    const [dependentsCount, resultsCount, redeemedCouponsCount] =
+      await Promise.all([
+        this.prisma.athlete.count({ where: { titularId: id } }),
+        this.prisma.result.count({ where: { athleteId: id } }),
+        this.prisma.coupon.count({ where: { athlete: { id } } }),
+      ]);
+
+    if (dependentsCount > 0) {
+      throw new BadRequestException('Atleta possui dependentes vinculados');
+    }
+
+    if (resultsCount > 0) {
+      throw new BadRequestException('Atleta possui resultados registrados');
+    }
+
+    if (redeemedCouponsCount > 0) {
+      throw new BadRequestException('Atleta possui cupom resgatado');
+    }
+
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.registration.deleteMany({ where: { athleteId: id } });
+      await tx.athlete.delete({ where: { id } });
+    });
+
+    return { id, deleted: true };
+  }
+
 }
 
 type AthleteWithRelations = Prisma.AthleteGetPayload<{

@@ -288,4 +288,37 @@ describe('AthletesService', () => {
     expect(result.totalPages).toBe(1);
     expect(result.items).toHaveLength(1);
   });
+
+  it('deletes an athlete after removing registrations when there are no blocking links', async () => {
+    prisma.athlete.findUnique.mockResolvedValue({ id: 'athlete-1' });
+    prisma.athlete.count.mockResolvedValue(0);
+    prisma.result.count.mockResolvedValue(0);
+    prisma.coupon.count.mockResolvedValue(0);
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        registration: {
+          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        },
+        athlete: {
+          delete: jest.fn().mockResolvedValue({ id: 'athlete-1' }),
+        },
+      }),
+    );
+
+    const result = await service.remove('athlete-1');
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(result).toEqual({ id: 'athlete-1', deleted: true });
+  });
+
+  it('rejects athlete deletion when dependents exist', async () => {
+    prisma.athlete.findUnique.mockResolvedValue({ id: 'athlete-1' });
+    prisma.athlete.count.mockResolvedValue(1);
+    prisma.result.count.mockResolvedValue(0);
+    prisma.coupon.count.mockResolvedValue(0);
+
+    await expect(service.remove('athlete-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
 });

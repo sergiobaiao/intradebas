@@ -7,12 +7,14 @@ export function createPrismaMock() {
     },
     athlete: {
       count: jest.fn(),
+      delete: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
     },
     team: {
       create: jest.fn(),
+      delete: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),

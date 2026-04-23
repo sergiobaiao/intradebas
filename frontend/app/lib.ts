@@ -474,6 +474,28 @@ export function adminUpdateAthlete(athleteId: string, input: UpdateAthleteInput)
   });
 }
 
+export function adminDeleteAthlete(athleteId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/athletes/${athleteId}`, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao excluir atleta');
+    }
+
+    return (await response.json()) as { id: string; deleted: true };
+  });
+}
+
 export function adminCreateResult(input: ResultInput) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
   const token = getAdminTokenFromCookie();
@@ -886,6 +908,28 @@ export function adminUpdateTeam(teamId: string, input: UpdateTeamInput) {
     }
 
     return (await response.json()) as TeamSummary;
+  });
+}
+
+export function adminDeleteTeam(teamId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/teams/${teamId}`, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao excluir equipe');
+    }
+
+    return (await response.json()) as { id: string; deleted: true };
   });
 }
 

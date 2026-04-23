@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AthleteSummary, TeamSummary, adminFetchJson, adminUpdateTeam } from '../../lib';
+import {
+  AthleteSummary,
+  TeamSummary,
+  adminDeleteTeam,
+  adminFetchJson,
+  adminUpdateTeam,
+} from '../../lib';
 
 export default function AdminEquipesPage() {
   const [teams, setTeams] = useState<TeamSummary[]>([]);
@@ -9,6 +15,7 @@ export default function AdminEquipesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [teamName, setTeamName] = useState('');
   const [teamColor, setTeamColor] = useState('');
 
@@ -56,6 +63,24 @@ export default function AdminEquipesPage() {
       setEditingId(null);
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Falha ao atualizar equipe');
+    }
+  }
+
+  async function deleteTeam(teamId: string) {
+    setDeletingId(teamId);
+    setError(null);
+
+    try {
+      await adminDeleteTeam(teamId);
+      setTeams((current) => current.filter((team) => team.id !== teamId));
+      setAthletes((current) => current.filter((athlete) => athlete.team?.id !== teamId));
+      if (editingId === teamId) {
+        setEditingId(null);
+      }
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Falha ao excluir equipe');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -118,17 +143,27 @@ export default function AdminEquipesPage() {
                       </button>
                     </>
                   ) : (
-                    <button
-                      className="button secondary"
-                      type="button"
-                      onClick={() => {
-                        setEditingId(team.id);
-                        setTeamName(team.name);
-                        setTeamColor(team.color ?? '');
-                      }}
-                    >
-                      Editar equipe
-                    </button>
+                    <>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => {
+                          setEditingId(team.id);
+                          setTeamName(team.name);
+                          setTeamColor(team.color ?? '');
+                        }}
+                      >
+                        Editar equipe
+                      </button>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => deleteTeam(team.id)}
+                        disabled={deletingId === team.id}
+                      >
+                        {deletingId === team.id ? 'Removendo...' : 'Excluir equipe'}
+                      </button>
+                    </>
                   )}
                 </div>
               </article>

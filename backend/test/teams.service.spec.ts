@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TeamsService } from '../src/teams/teams.service';
 import { createPrismaMock } from './helpers';
 
@@ -102,5 +102,27 @@ describe('TeamsService', () => {
     });
 
     expect(result.name).toBe('Mucura Prime');
+  });
+
+  it('deletes an empty team', async () => {
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.athlete.count.mockResolvedValue(0);
+    prisma.result.count.mockResolvedValue(0);
+    prisma.team.delete.mockResolvedValue({ id: 'team-1' });
+
+    const result = await service.remove('team-1');
+
+    expect(prisma.team.delete).toHaveBeenCalledWith({ where: { id: 'team-1' } });
+    expect(result).toEqual({ id: 'team-1', deleted: true });
+  });
+
+  it('rejects team deletion when athletes still exist', async () => {
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.athlete.count.mockResolvedValue(2);
+    prisma.result.count.mockResolvedValue(0);
+
+    await expect(service.remove('team-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });

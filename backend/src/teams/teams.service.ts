@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -124,6 +124,34 @@ export class TeamsService {
         color: dto.color,
       },
     });
+  }
+
+  async remove(id: string) {
+    const team = await this.prisma.team.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Equipe nao encontrada');
+    }
+
+    const [athletesCount, resultsCount] = await Promise.all([
+      this.prisma.athlete.count({ where: { teamId: id } }),
+      this.prisma.result.count({ where: { teamId: id } }),
+    ]);
+
+    if (athletesCount > 0) {
+      throw new BadRequestException('Equipe possui atletas vinculados');
+    }
+
+    if (resultsCount > 0) {
+      throw new BadRequestException('Equipe possui resultados registrados');
+    }
+
+    await this.prisma.team.delete({ where: { id } });
+
+    return { id, deleted: true };
   }
 }
 

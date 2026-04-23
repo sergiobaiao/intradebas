@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   AthleteSummary,
-  PaginatedResponse,
+  adminDeleteAthlete,
   adminFetchJson,
   adminGetAthleteReviewPage,
   adminUpdateAthleteStatus,
@@ -14,6 +14,7 @@ export default function AdminAthletesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -65,6 +66,21 @@ export default function AdminAthletesPage() {
       setError(updateError instanceof Error ? updateError.message : 'Falha ao atualizar atleta');
     } finally {
       setPendingActionId(null);
+    }
+  }
+
+  async function deleteAthlete(athleteId: string) {
+    setDeletingId(athleteId);
+    setError(null);
+
+    try {
+      await adminDeleteAthlete(athleteId);
+      setAthletes((current) => current.filter((athlete) => athlete.id !== athleteId));
+      setTotal((current) => Math.max(current - 1, 0));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Falha ao excluir atleta');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -147,6 +163,14 @@ export default function AdminAthletesPage() {
                   <a className="button secondary" href={`/admin/atletas/${athlete.id}`}>
                     Ver perfil
                   </a>
+                  <button
+                    className="button secondary"
+                    disabled={deletingId === athlete.id}
+                    onClick={() => deleteAthlete(athlete.id)}
+                    type="button"
+                  >
+                    {deletingId === athlete.id ? 'Removendo...' : 'Excluir'}
+                  </button>
 
                 {athlete.status === 'pending' ? (
                   <>
