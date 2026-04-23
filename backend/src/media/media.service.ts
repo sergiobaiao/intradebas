@@ -95,6 +95,7 @@ export class MediaService {
     return this.prisma.media.update({
       where: { id },
       data: {
+        title: dto.title,
         isFeatured: dto.isFeatured,
         sortOrder: dto.sortOrder,
       },
@@ -110,7 +111,49 @@ export class MediaService {
     });
   }
 
+  async remove(id: string) {
+    const media = await this.prisma.media.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        provider: true,
+        url: true,
+      },
+    });
+
+    if (!media) {
+      throw new NotFoundException('Midia nao encontrada');
+    }
+
+    if (media.provider === 'local') {
+      const key = this.extractStoredFileKey(media.url);
+
+      if (key) {
+        await this.mediaStorage.deleteObject(key);
+      }
+    }
+
+    await this.prisma.media.delete({
+      where: { id },
+    });
+
+    return {
+      id,
+      deleted: true,
+    };
+  }
+
   async getStoredFile(key: string) {
     return this.mediaStorage.getObject(key);
+  }
+
+  private extractStoredFileKey(url: string) {
+    const prefix = '/api/v1/media/files/';
+
+    if (!url.startsWith(prefix)) {
+      return null;
+    }
+
+    return url.slice(prefix.length);
   }
 }

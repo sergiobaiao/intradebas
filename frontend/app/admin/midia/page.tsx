@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MediaAdminSummary, adminGetMedia, adminUpdateMedia } from '../../lib';
+import { MediaAdminSummary, adminDeleteMedia, adminGetMedia, adminUpdateMedia } from '../../lib';
 
 export default function AdminMidiaPage() {
   const [items, setItems] = useState<MediaAdminSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
   const [sortOrder, setSortOrder] = useState('0');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function AdminMidiaPage() {
 
     try {
       const updated = await adminUpdateMedia(mediaId, {
+        title: title || undefined,
         isFeatured,
         sortOrder: Number(sortOrder),
       });
@@ -54,6 +57,23 @@ export default function AdminMidiaPage() {
       setEditingId(null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao atualizar midia');
+    }
+  }
+
+  async function deleteItem(mediaId: string) {
+    setDeletingId(mediaId);
+    setError(null);
+
+    try {
+      await adminDeleteMedia(mediaId);
+      setItems((current) => current.filter((item) => item.id !== mediaId));
+      if (editingId === mediaId) {
+        setEditingId(null);
+      }
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Falha ao remover midia');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -90,6 +110,13 @@ export default function AdminMidiaPage() {
                 {editingId === item.id ? (
                   <>
                     <label className="field">
+                      <span>Titulo</span>
+                      <input
+                        value={title}
+                        onChange={(event) => setTitle(event.target.value)}
+                      />
+                    </label>
+                    <label className="field">
                       <span>Destaque</span>
                       <input
                         type="checkbox"
@@ -119,16 +146,25 @@ export default function AdminMidiaPage() {
                   <>
                     <p>Ordem: {item.sortOrder}</p>
                     <div className="cta-row">
-                      <button
-                        className="button secondary"
-                        type="button"
-                        onClick={() => {
+                    <button
+                      className="button secondary"
+                      type="button"
+                      onClick={() => {
                           setEditingId(item.id);
+                          setTitle(item.title ?? '');
                           setIsFeatured(item.isFeatured);
                           setSortOrder(String(item.sortOrder));
                         }}
                       >
                         Editar
+                      </button>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => void deleteItem(item.id)}
+                        disabled={deletingId === item.id}
+                      >
+                        {deletingId === item.id ? 'Removendo...' : 'Remover'}
                       </button>
                     </div>
                   </>

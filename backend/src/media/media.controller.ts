@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -63,6 +64,12 @@ export class MediaController {
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() dto: UpdateMediaDto) {
     return this.mediaService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string) {
+    return this.mediaService.remove(id);
   }
 
   @Get('files/:filename')

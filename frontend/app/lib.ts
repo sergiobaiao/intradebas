@@ -261,6 +261,7 @@ export type CreateSportInput = {
 };
 
 export type UpdateMediaInput = {
+  title?: string;
   isFeatured?: boolean;
   sortOrder?: number;
 };
@@ -777,6 +778,30 @@ export function adminUpdateMedia(mediaId: string, input: UpdateMediaInput) {
     }
 
     return (await response.json()) as MediaAdminSummary;
+  });
+}
+
+export function adminDeleteMedia(mediaId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/media/${mediaId}`, {
+    method: 'DELETE',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao remover midia');
+    }
+
+    return (await response.json()) as { id: string; deleted: true };
   });
 }
 

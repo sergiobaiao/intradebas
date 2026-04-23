@@ -68,6 +68,7 @@ export function createPrismaMock() {
     },
     media: {
       create: jest.fn(),
+      delete: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),

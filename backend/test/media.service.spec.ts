@@ -8,6 +8,7 @@ describe('MediaService', () => {
   const mediaStorage = {
     uploadObject: jest.fn(),
     getObject: jest.fn(),
+    deleteObject: jest.fn(),
   } as unknown as MediaStorageService;
   const service = new MediaService(prisma as any, mediaStorage);
 
@@ -172,7 +173,7 @@ describe('MediaService', () => {
     prisma.media.update.mockResolvedValue({
       id: 'media-1',
       type: 'photo',
-      title: 'Abertura',
+      title: 'Abertura oficial',
       url: 'https://example.com/opening.jpg',
       thumbnailUrl: null,
       provider: 'local',
@@ -187,6 +188,7 @@ describe('MediaService', () => {
     });
 
     const result = await service.update('media-1', {
+      title: 'Abertura oficial',
       isFeatured: true,
       sortOrder: 4,
     });
@@ -194,6 +196,7 @@ describe('MediaService', () => {
     expect(prisma.media.update).toHaveBeenCalledWith({
       where: { id: 'media-1' },
       data: {
+        title: 'Abertura oficial',
         isFeatured: true,
         sortOrder: 4,
       },
@@ -211,11 +214,53 @@ describe('MediaService', () => {
     expect(result.sortOrder).toBe(4);
   });
 
+  it('deletes a local media item and removes the stored object', async () => {
+    prisma.media.findUnique.mockResolvedValue({
+      id: 'media-1',
+      provider: 'local',
+      url: '/api/v1/media/files/arquivo.jpg',
+    });
+    prisma.media.delete.mockResolvedValue({ id: 'media-1' });
+
+    const result = await service.remove('media-1');
+
+    expect(mediaStorage.deleteObject).toHaveBeenCalledWith('arquivo.jpg');
+    expect(prisma.media.delete).toHaveBeenCalledWith({
+      where: { id: 'media-1' },
+    });
+    expect(result).toEqual({
+      id: 'media-1',
+      deleted: true,
+    });
+  });
+
+  it('deletes a remote media item without storage cleanup', async () => {
+    prisma.media.findUnique.mockResolvedValue({
+      id: 'media-2',
+      provider: 'youtube',
+      url: 'https://youtube.com/watch?v=123',
+    });
+    prisma.media.delete.mockResolvedValue({ id: 'media-2' });
+
+    await service.remove('media-2');
+
+    expect(mediaStorage.deleteObject).not.toHaveBeenCalled();
+    expect(prisma.media.delete).toHaveBeenCalledWith({
+      where: { id: 'media-2' },
+    });
+  });
+
   it('throws when media item is missing', async () => {
     prisma.media.findUnique.mockResolvedValue(null);
 
     await expect(service.update('missing', { sortOrder: 1 })).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('throws when deleting a missing media item', async () => {
+    prisma.media.findUnique.mockResolvedValue(null);
+
+    await expect(service.remove('missing')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
