@@ -227,6 +227,12 @@ export type ScoringConfigSummary = {
   };
 };
 
+export type CreateScoringConfigInput = {
+  category: 'coletiva' | 'individual' | 'dupla' | 'fitness';
+  position: number;
+  points: number;
+};
+
 export type UpdateTeamInput = {
   name?: string;
   color?: string;
@@ -702,6 +708,30 @@ export function adminGetScoringConfig() {
   return adminFetchJson<ScoringConfigSummary[]>('/settings/scoring');
 }
 
+export function adminCreateScoringConfig(input: CreateScoringConfigInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/settings/scoring`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao criar configuracao');
+    }
+
+    return (await response.json()) as ScoringConfigSummary;
+  });
+}
+
 export function adminUpdateTeam(teamId: string, input: UpdateTeamInput) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
   const token = getAdminTokenFromCookie();
@@ -819,5 +849,29 @@ export function adminUpdateScoringConfig(rowId: string, points: number) {
     }
 
     return (await response.json()) as ScoringConfigSummary;
+  });
+}
+
+export function adminDeleteScoringConfig(rowId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/settings/scoring/${rowId}`, {
+    method: 'DELETE',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao remover configuracao');
+    }
+
+    return (await response.json()) as { id: string; deleted: true };
   });
 }

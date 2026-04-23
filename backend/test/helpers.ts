@@ -30,6 +30,8 @@ export function createPrismaMock() {
       createMany: jest.fn(),
     },
     scoringConfig: {
+      create: jest.fn(),
+      delete: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
