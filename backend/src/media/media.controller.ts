@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UploadedFile,
@@ -28,7 +29,21 @@ export class MediaController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll() {
+  findAll(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('provider') provider?: string,
+    @Query('featured') featured?: string,
+  ) {
+    if (page || pageSize || provider || featured) {
+      return this.mediaService.findPage({
+        page,
+        pageSize,
+        provider,
+        featured,
+      });
+    }
+
     return this.mediaService.findAll();
   }
 

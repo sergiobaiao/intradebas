@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateSponsorInterestDto } from './dto/create-sponsor-interest.dto';
 import { UpdateSponsorDto } from './dto/update-sponsor.dto';
@@ -20,7 +20,19 @@ export class SponsorshipController {
 
   @Get('sponsors')
   @UseGuards(JwtAuthGuard)
-  listSponsors() {
+  listSponsors(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: string,
+  ) {
+    if (page || pageSize || status) {
+      return this.sponsorshipService.listSponsorsPage({
+        page,
+        pageSize,
+        status,
+      });
+    }
+
     return this.sponsorshipService.listSponsors();
   }
 
@@ -31,7 +43,21 @@ export class SponsorshipController {
 
   @Get('coupons')
   @UseGuards(JwtAuthGuard)
-  listCoupons() {
+  listCoupons(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: string,
+    @Query('sponsorId') sponsorId?: string,
+  ) {
+    if (page || pageSize || status || sponsorId) {
+      return this.sponsorshipService.listCouponsPage({
+        page,
+        pageSize,
+        status,
+        sponsorId,
+      });
+    }
+
     return this.sponsorshipService.listCoupons();
   }
 

@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MediaAdminSummary, adminDeleteMedia, adminGetMedia, adminUpdateMedia } from '../../lib';
+import {
+  MediaAdminSummary,
+  adminDeleteMedia,
+  adminGetMediaPage,
+  adminUpdateMedia,
+} from '../../lib';
 
 export default function AdminMidiaPage() {
   const [items, setItems] = useState<MediaAdminSummary[]>([]);
@@ -12,16 +17,27 @@ export default function AdminMidiaPage() {
   const [sortOrder, setSortOrder] = useState('0');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [providerFilter, setProviderFilter] = useState('');
+  const [featuredFilter, setFeaturedFilter] = useState('');
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [page, providerFilter, featuredFilter]);
 
   async function loadData() {
     setLoading(true);
     setError(null);
     try {
-      setItems(await adminGetMedia());
+      const loaded = await adminGetMediaPage({
+        page,
+        pageSize: 12,
+        provider: providerFilter,
+        featured: featuredFilter,
+      });
+      setItems(loaded.items);
+      setTotalPages(loaded.totalPages);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar midia');
     } finally {
@@ -93,8 +109,42 @@ export default function AdminMidiaPage() {
         </div>
         {error ? <p className="error-text">{error}</p> : null}
         {loading ? <p>Carregando midia...</p> : null}
+        <div className="card" style={{ marginTop: '24px' }}>
+          <div className="form-grid">
+            <label>
+              <span>Filtrar por provider</span>
+              <select
+                value={providerFilter}
+                onChange={(event) => {
+                  setPage(1);
+                  setProviderFilter(event.target.value);
+                }}
+              >
+                <option value="">Todos</option>
+                <option value="local">local</option>
+                <option value="youtube">youtube</option>
+                <option value="vimeo">vimeo</option>
+              </select>
+            </label>
+            <label>
+              <span>Filtrar por destaque</span>
+              <select
+                value={featuredFilter}
+                onChange={(event) => {
+                  setPage(1);
+                  setFeaturedFilter(event.target.value);
+                }}
+              >
+                <option value="">Todos</option>
+                <option value="true">destaque</option>
+                <option value="false">normal</option>
+              </select>
+            </label>
+          </div>
+        </div>
         {!loading && items.length === 0 ? <div className="card empty-state"><strong>Nenhum item de midia cadastrado.</strong></div> : null}
         {!loading ? (
+          <>
           <div className="review-grid">
             {items.map((item) => (
               <article key={item.id} className="card review-card">
@@ -172,6 +222,26 @@ export default function AdminMidiaPage() {
               </article>
             ))}
           </div>
+          <div className="cta-row" style={{ marginTop: '24px' }}>
+            <button
+              className="button secondary"
+              type="button"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((current) => Math.max(current - 1, 1))}
+            >
+              Pagina anterior
+            </button>
+            <span>Pagina {page} de {totalPages}</span>
+            <button
+              className="button secondary"
+              type="button"
+              disabled={page >= totalPages || loading}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Proxima pagina
+            </button>
+          </div>
+          </>
         ) : null}
       </div>
     </main>

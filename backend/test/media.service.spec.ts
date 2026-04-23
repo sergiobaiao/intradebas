@@ -53,6 +53,54 @@ describe('MediaService', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('returns paginated media with provider and featured filters', async () => {
+    prisma.media.count.mockResolvedValue(2);
+    prisma.media.findMany.mockResolvedValue([
+      {
+        id: 'media-1',
+        type: 'photo',
+        title: 'Abertura',
+        url: 'https://example.com/opening.jpg',
+        thumbnailUrl: null,
+        provider: 'local',
+        isFeatured: true,
+        sortOrder: 1,
+        createdAt: new Date('2026-04-19T12:00:00Z'),
+        uploader: {
+          id: 'user-1',
+          name: 'Admin',
+          email: 'admin@intradebas.local',
+        },
+      },
+    ]);
+
+    const result = await service.findPage({
+      page: '1',
+      pageSize: '10',
+      provider: 'local',
+      featured: 'true',
+    });
+
+    expect(prisma.media.count).toHaveBeenCalledWith({
+      where: {
+        provider: 'local',
+        isFeatured: true,
+      },
+    });
+    expect(prisma.media.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          provider: 'local',
+          isFeatured: true,
+        },
+        skip: 0,
+        take: 10,
+      }),
+    );
+    expect(result.total).toBe(2);
+    expect(result.items).toHaveLength(1);
+  });
+
   it('creates a media item with uploader context', async () => {
     prisma.media.create.mockResolvedValue({
       id: 'media-2',

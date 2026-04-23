@@ -577,8 +577,29 @@ export function adminGetSponsors() {
   return adminFetchJson<SponsorAdminSummary[]>('/sponsors');
 }
 
+export function adminGetSponsorsPage(input: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+}) {
+  return adminFetchJson<PaginatedResponse<SponsorAdminSummary>>(
+    `/sponsors${buildQuery(input)}`,
+  );
+}
+
 export function adminGetCoupons() {
   return adminFetchJson<CouponAdminSummary[]>('/coupons');
+}
+
+export function adminGetCouponsPage(input: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  sponsorId?: string;
+}) {
+  return adminFetchJson<PaginatedResponse<CouponAdminSummary>>(
+    `/coupons${buildQuery(input)}`,
+  );
 }
 
 export function adminGetSponsorCoupons(sponsorId: string) {
@@ -687,6 +708,17 @@ export function adminUpdateSponsor(sponsorId: string, input: UpdateSponsorInput)
 
 export function adminGetMedia() {
   return adminFetchJson<MediaAdminSummary[]>('/media');
+}
+
+export function adminGetMediaPage(input: {
+  page?: number;
+  pageSize?: number;
+  provider?: string;
+  featured?: string;
+}) {
+  return adminFetchJson<PaginatedResponse<MediaAdminSummary>>(
+    `/media${buildQuery(input)}`,
+  );
 }
 
 export function adminCreateMedia(input: CreateMediaInput) {

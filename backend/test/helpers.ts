@@ -43,6 +43,7 @@ export function createPrismaMock() {
       findUnique: jest.fn(),
     },
     sponsor: {
+      count: jest.fn(),
       create: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -60,6 +61,7 @@ export function createPrismaMock() {
       createMany: jest.fn(),
     },
     coupon: {
+      count: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -67,6 +69,7 @@ export function createPrismaMock() {
       updateMany: jest.fn(),
     },
     media: {
+      count: jest.fn(),
       create: jest.fn(),
       delete: jest.fn(),
       findMany: jest.fn(),

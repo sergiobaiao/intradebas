@@ -7,6 +7,20 @@ import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 export class SponsorshipService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizePage(value?: string) {
+    const parsed = Number(value ?? 1);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  }
+
+  private normalizePageSize(value?: string) {
+    const parsed = Number(value ?? 12);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 12;
+    }
+
+    return Math.min(Math.floor(parsed), 50);
+  }
+
   private generateCouponCode(level: string) {
     const randomPart = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
     return `${level.toUpperCase()}-${randomPart}`;
@@ -171,6 +185,67 @@ export class SponsorshipService {
     }));
   }
 
+  async listSponsorsPage(query: {
+    page?: string;
+    pageSize?: string;
+    status?: string;
+  }) {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const where: Prisma.SponsorWhereInput = {
+      ...(query.status ? { status: query.status as any } : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.sponsor.count({ where }),
+      this.prisma.sponsor.findMany({
+        where,
+        include: {
+          quota: {
+            select: {
+              id: true,
+              level: true,
+              price: true,
+              courtesyCount: true,
+            },
+          },
+          coupons: {
+            select: {
+              id: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: 'desc' }, { companyName: 'asc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items: items.map((sponsor: AdminSponsor) => ({
+        id: sponsor.id,
+        companyName: sponsor.companyName,
+        contactName: sponsor.contactName,
+        email: sponsor.email,
+        phone: sponsor.phone,
+        logoUrl: sponsor.logoUrl,
+        status: sponsor.status,
+        createdAt: sponsor.createdAt,
+        couponCount: sponsor.coupons.length,
+        quota: {
+          id: sponsor.quota.id,
+          level: sponsor.quota.level,
+          price: Number(sponsor.quota.price),
+          courtesyCount: sponsor.quota.courtesyCount,
+        },
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
+  }
+
   async listCoupons() {
     const coupons = await this.prisma.coupon.findMany({
       include: {
@@ -200,6 +275,61 @@ export class SponsorshipService {
       sponsor: coupon.sponsor,
       athlete: coupon.athlete,
     }));
+  }
+
+  async listCouponsPage(query: {
+    page?: string;
+    pageSize?: string;
+    status?: string;
+    sponsorId?: string;
+  }) {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const where: Prisma.CouponWhereInput = {
+      ...(query.status ? { status: query.status as any } : {}),
+      ...(query.sponsorId ? { sponsorId: query.sponsorId } : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.coupon.count({ where }),
+      this.prisma.coupon.findMany({
+        where,
+        include: {
+          sponsor: {
+            select: {
+              id: true,
+              companyName: true,
+            },
+          },
+          athlete: {
+            select: {
+              id: true,
+              name: true,
+              cpf: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items: items.map((coupon: AdminCoupon) => ({
+        id: coupon.id,
+        code: coupon.code,
+        status: coupon.status,
+        createdAt: coupon.createdAt,
+        redeemedAt: coupon.redeemedAt,
+        sponsor: coupon.sponsor,
+        athlete: coupon.athlete,
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
   }
 
   async listSponsorCoupons(sponsorId: string) {

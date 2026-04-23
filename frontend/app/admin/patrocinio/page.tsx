@@ -7,9 +7,9 @@ import {
   adminExpireCoupon,
   SponsorAdminSummary,
   adminActivateSponsor,
-  adminGetCoupons,
+  adminGetCouponsPage,
   adminGetSponsorCoupons,
-  adminGetSponsors,
+  adminGetSponsorsPage,
   adminUpdateSponsor,
   getSponsorshipQuotas,
   SponsorshipQuotaSummary,
@@ -35,10 +35,16 @@ export default function AdminPatrocinioPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [quotaId, setQuotaId] = useState('');
   const [status, setStatus] = useState<SponsorAdminSummary['status']>('pending');
+  const [sponsorPage, setSponsorPage] = useState(1);
+  const [sponsorTotalPages, setSponsorTotalPages] = useState(1);
+  const [couponPage, setCouponPage] = useState(1);
+  const [couponTotalPages, setCouponTotalPages] = useState(1);
+  const [sponsorStatusFilter, setSponsorStatusFilter] = useState('');
+  const [couponStatusFilter, setCouponStatusFilter] = useState('');
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [sponsorPage, couponPage, sponsorStatusFilter, couponStatusFilter]);
 
   useEffect(() => {
     if (!selectedSponsorId) {
@@ -55,14 +61,25 @@ export default function AdminPatrocinioPage() {
 
     try {
       const [loadedSponsors, loadedCoupons] = await Promise.all([
-        adminGetSponsors(),
-        adminGetCoupons(),
+        adminGetSponsorsPage({
+          page: sponsorPage,
+          pageSize: 8,
+          status: sponsorStatusFilter,
+        }),
+        adminGetCouponsPage({
+          page: couponPage,
+          pageSize: 8,
+          status: couponStatusFilter,
+          sponsorId: selectedSponsorId || undefined,
+        }),
       ]);
       const loadedQuotas = await getSponsorshipQuotas();
-      setSponsors(loadedSponsors);
+      setSponsors(loadedSponsors.items);
+      setSponsorTotalPages(loadedSponsors.totalPages);
       setQuotas(loadedQuotas);
-      setAllCoupons(loadedCoupons);
-      setSelectedSponsorId((current) => current || loadedSponsors[0]?.id || '');
+      setAllCoupons(loadedCoupons.items);
+      setCouponTotalPages(loadedCoupons.totalPages);
+      setSelectedSponsorId((current) => current || loadedSponsors.items[0]?.id || '');
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar patrocinio');
     } finally {
@@ -215,6 +232,41 @@ export default function AdminPatrocinioPage() {
 
         {!loading ? (
           <>
+            <div className="card" style={{ marginTop: '24px' }}>
+              <div className="form-grid">
+                <label>
+                  <span>Status de patrocinador</span>
+                  <select
+                    value={sponsorStatusFilter}
+                    onChange={(event) => {
+                      setSponsorPage(1);
+                      setSponsorStatusFilter(event.target.value);
+                    }}
+                  >
+                    <option value="">Todos</option>
+                    <option value="pending">pending</option>
+                    <option value="active">active</option>
+                    <option value="inactive">inactive</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Status de cupom</span>
+                  <select
+                    value={couponStatusFilter}
+                    onChange={(event) => {
+                      setCouponPage(1);
+                      setCouponStatusFilter(event.target.value);
+                    }}
+                  >
+                    <option value="">Todos</option>
+                    <option value="active">active</option>
+                    <option value="used">used</option>
+                    <option value="expired">expired</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
             <div className="review-grid" style={{ marginTop: '24px' }}>
               {sponsors.map((sponsor) => (
                 <article key={sponsor.id} className="card review-card">
@@ -249,6 +301,25 @@ export default function AdminPatrocinioPage() {
                   </div>
                 </article>
               ))}
+            </div>
+            <div className="cta-row" style={{ marginTop: '24px' }}>
+              <button
+                className="button secondary"
+                type="button"
+                disabled={sponsorPage <= 1 || loading}
+                onClick={() => setSponsorPage((current) => Math.max(current - 1, 1))}
+              >
+                Patrocinadores anteriores
+              </button>
+              <span>Pagina {sponsorPage} de {sponsorTotalPages}</span>
+              <button
+                className="button secondary"
+                type="button"
+                disabled={sponsorPage >= sponsorTotalPages || loading}
+                onClick={() => setSponsorPage((current) => current + 1)}
+              >
+                Proximos patrocinadores
+              </button>
             </div>
 
             <div className="card" style={{ marginTop: '24px' }}>
@@ -375,6 +446,25 @@ export default function AdminPatrocinioPage() {
                   ))}
                 </div>
               ) : null}
+              <div className="cta-row" style={{ marginTop: '16px' }}>
+                <button
+                  className="button secondary"
+                  type="button"
+                  disabled={couponPage <= 1 || loading}
+                  onClick={() => setCouponPage((current) => Math.max(current - 1, 1))}
+                >
+                  Cupons anteriores
+                </button>
+                <span>Pagina {couponPage} de {couponTotalPages}</span>
+                <button
+                  className="button secondary"
+                  type="button"
+                  disabled={couponPage >= couponTotalPages || loading}
+                  onClick={() => setCouponPage((current) => current + 1)}
+                >
+                  Proximos cupons
+                </button>
+              </div>
             </div>
           </>
         ) : null}

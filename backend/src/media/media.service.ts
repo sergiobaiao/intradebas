@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { CreateUploadedMediaDto } from './dto/create-uploaded-media.dto';
@@ -11,6 +12,20 @@ export class MediaService {
     private readonly prisma: PrismaService,
     private readonly mediaStorage: MediaStorageService,
   ) {}
+
+  private normalizePage(value?: string) {
+    const parsed = Number(value ?? 1);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  }
+
+  private normalizePageSize(value?: string) {
+    const parsed = Number(value ?? 12);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 12;
+    }
+
+    return Math.min(Math.floor(parsed), 50);
+  }
 
   async findAll() {
     return this.prisma.media.findMany({
@@ -25,6 +40,51 @@ export class MediaService {
       },
       orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
+  }
+
+  async findPage(query: {
+    page?: string;
+    pageSize?: string;
+    provider?: string;
+    featured?: string;
+  }) {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const where: Prisma.MediaWhereInput = {
+      ...(query.provider ? { provider: query.provider as any } : {}),
+      ...(query.featured === 'true'
+        ? { isFeatured: true }
+        : query.featured === 'false'
+          ? { isFeatured: false }
+          : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.media.count({ where }),
+      this.prisma.media.findMany({
+        where,
+        include: {
+          uploader: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
   }
 
   async create(dto: CreateMediaDto, uploadedBy: string) {

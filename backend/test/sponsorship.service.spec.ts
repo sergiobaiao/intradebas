@@ -167,6 +167,46 @@ describe('SponsorshipService', () => {
     });
   });
 
+  it('returns paginated sponsors filtered by status', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      count: jest.fn().mockResolvedValue(3),
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'sponsor-1',
+          companyName: 'Acme',
+          contactName: 'Joao',
+          email: 'joao@acme.com',
+          phone: '86999999999',
+          logoUrl: null,
+          status: SponsorStatus.active,
+          createdAt: new Date('2026-04-19T10:00:00Z'),
+          coupons: [{ id: 'c1' }],
+          quota: {
+            id: 'quota-1',
+            level: SponsorshipLevel.ouro,
+            price: 1000,
+            courtesyCount: 4,
+          },
+        },
+      ]),
+    } as any;
+
+    const result = await service.listSponsorsPage({
+      page: '1',
+      pageSize: '10',
+      status: 'active',
+    });
+
+    expect(prisma.sponsor.count).toHaveBeenCalledWith({
+      where: {
+        status: 'active',
+      },
+    });
+    expect(result.total).toBe(3);
+    expect(result.items).toHaveLength(1);
+  });
+
   it('lists coupons with sponsor and redeemed athlete context', async () => {
     prisma.coupon = {
       findMany: jest.fn().mockResolvedValue([
@@ -201,6 +241,43 @@ describe('SponsorshipService', () => {
         name: 'Joao Silva',
       },
     });
+  });
+
+  it('returns paginated coupons filtered by status and sponsor', async () => {
+    prisma.coupon = {
+      ...prisma.coupon,
+      count: jest.fn().mockResolvedValue(4),
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'coupon-1',
+          code: 'OURO-AAAA1111',
+          status: 'active',
+          createdAt: new Date('2026-04-19T10:00:00Z'),
+          redeemedAt: null,
+          sponsor: {
+            id: 'sponsor-1',
+            companyName: 'Acme',
+          },
+          athlete: null,
+        },
+      ]),
+    } as any;
+
+    const result = await service.listCouponsPage({
+      page: '1',
+      pageSize: '10',
+      status: 'active',
+      sponsorId: 'sponsor-1',
+    });
+
+    expect(prisma.coupon.count).toHaveBeenCalledWith({
+      where: {
+        status: 'active',
+        sponsorId: 'sponsor-1',
+      },
+    });
+    expect(result.total).toBe(4);
+    expect(result.items).toHaveLength(1);
   });
 
   it('rejects sponsor coupon listing for unknown sponsor', async () => {
