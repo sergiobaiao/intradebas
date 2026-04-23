@@ -23,6 +23,7 @@ export function createPrismaMock() {
       findMany: jest.fn(),
       groupBy: jest.fn(),
       create: jest.fn(),
+      createMany: jest.fn(),
       update: jest.fn(),
     },
     resultAuditLog: {

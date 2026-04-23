@@ -2,12 +2,14 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import {
+  BulkResultInput,
   ResultInput,
   ResultAuditLogSummary,
   ResultSummary,
   SportSummary,
   TeamSummary,
   adminCreateResult,
+  adminCreateResultsBulk,
   adminFetchJson,
   adminGetResultAuditLogs,
   adminGetResultsPage,
@@ -16,6 +18,26 @@ import {
 
 function toDatetimeLocalInput(value: string) {
   return value.slice(0, 16);
+}
+
+type BulkEntryRow = {
+  id: string;
+  sportId: string;
+  teamId: string;
+  position: number;
+  rawScore: string;
+  notes: string;
+};
+
+function makeBulkRow(sportId = '', teamId = ''): BulkEntryRow {
+  return {
+    id: crypto.randomUUID(),
+    sportId,
+    teamId,
+    position: 1,
+    rawScore: '',
+    notes: '',
+  };
 }
 
 export default function AdminResultadosPage() {
@@ -38,6 +60,8 @@ export default function AdminResultadosPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [resultTeamFilter, setResultTeamFilter] = useState('');
   const [resultSportFilter, setResultSportFilter] = useState('');
+  const [bulkDate, setBulkDate] = useState(new Date().toISOString().slice(0, 16));
+  const [bulkRows, setBulkRows] = useState<BulkEntryRow[]>([]);
 
   useEffect(() => {
     void loadData();
@@ -67,6 +91,15 @@ export default function AdminResultadosPage() {
       setAuditLogs(loadedAuditLogs);
       setSportId((current) => current || loadedSports[0]?.id || '');
       setTeamId((current) => current || loadedTeams[0]?.id || '');
+      setBulkRows((current) =>
+        current.length > 0
+          ? current
+          : [
+              makeBulkRow(loadedSports[0]?.id ?? '', loadedTeams[0]?.id ?? ''),
+              makeBulkRow(loadedSports[0]?.id ?? '', loadedTeams[0]?.id ?? ''),
+              makeBulkRow(loadedSports[0]?.id ?? '', loadedTeams[0]?.id ?? ''),
+            ],
+      );
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar resultados');
     } finally {
@@ -82,6 +115,20 @@ export default function AdminResultadosPage() {
     setRawScore('');
     setResultDate(new Date().toISOString().slice(0, 16));
     setNotes('');
+  }
+
+  function updateBulkRow(rowId: string, patch: Partial<BulkEntryRow>) {
+    setBulkRows((current) =>
+      current.map((row) => (row.id === rowId ? { ...row, ...patch } : row)),
+    );
+  }
+
+  function addBulkRow() {
+    setBulkRows((current) => [...current, makeBulkRow(sports[0]?.id ?? '', teams[0]?.id ?? '')]);
+  }
+
+  function removeBulkRow(rowId: string) {
+    setBulkRows((current) => current.filter((row) => row.id !== rowId));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -116,6 +163,46 @@ export default function AdminResultadosPage() {
       resetForm();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Falha ao salvar resultado');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleBulkSubmit() {
+    setSubmitting(true);
+    setError(null);
+    setMessage(null);
+
+    const items: ResultInput[] = bulkRows
+      .filter((row) => row.sportId && row.teamId && row.position > 0)
+      .map((row) => ({
+        sportId: row.sportId,
+        teamId: row.teamId,
+        position: row.position,
+        rawScore: row.rawScore ? Number(row.rawScore) : undefined,
+        resultDate: new Date(bulkDate).toISOString(),
+        notes: row.notes || undefined,
+      }));
+
+    if (items.length === 0) {
+      setSubmitting(false);
+      setError('Preencha pelo menos uma linha valida para o lote.');
+      return;
+    }
+
+    try {
+      await adminCreateResultsBulk({ items } as BulkResultInput);
+      await loadData();
+      setBulkRows([
+        makeBulkRow(sports[0]?.id ?? '', teams[0]?.id ?? ''),
+        makeBulkRow(sports[0]?.id ?? '', teams[0]?.id ?? ''),
+        makeBulkRow(sports[0]?.id ?? '', teams[0]?.id ?? ''),
+      ]);
+      setMessage('Resultados em lote lancados com sucesso.');
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error ? submitError.message : 'Falha ao salvar resultados em lote',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -226,6 +313,119 @@ export default function AdminResultadosPage() {
               ) : null}
             </div>
           </form>
+        </div>
+
+        <div className="card" style={{ marginTop: '24px' }}>
+          <h2>Lancamento em lote</h2>
+          <p>Registre varias colocacoes em uma unica operacao transacional.</p>
+
+          <div className="form-grid">
+            <label className="field-span">
+              <span>Data e hora do lote</span>
+              <input
+                type="datetime-local"
+                value={bulkDate}
+                onChange={(event) => setBulkDate(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="review-grid" style={{ marginTop: '16px' }}>
+            {bulkRows.map((row, index) => (
+              <article key={row.id} className="card review-card">
+                <div className="review-header">
+                  <div>
+                    <h3>Linha {index + 1}</h3>
+                    <small>Entrada em lote</small>
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <label>
+                    <span>Modalidade</span>
+                    <select
+                      value={row.sportId}
+                      onChange={(event) => updateBulkRow(row.id, { sportId: event.target.value })}
+                    >
+                      {sports.map((sport) => (
+                        <option key={sport.id} value={sport.id}>
+                          {sport.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Equipe</span>
+                    <select
+                      value={row.teamId}
+                      onChange={(event) => updateBulkRow(row.id, { teamId: event.target.value })}
+                    >
+                      {teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    <span>Posicao</span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={row.position}
+                      onChange={(event) =>
+                        updateBulkRow(row.id, { position: Number(event.target.value) })
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    <span>Score bruto</span>
+                    <input
+                      type="number"
+                      value={row.rawScore}
+                      onChange={(event) => updateBulkRow(row.id, { rawScore: event.target.value })}
+                    />
+                  </label>
+
+                  <label className="field-span">
+                    <span>Observacoes</span>
+                    <input
+                      value={row.notes}
+                      onChange={(event) => updateBulkRow(row.id, { notes: event.target.value })}
+                    />
+                  </label>
+                </div>
+
+                <div className="cta-row">
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => removeBulkRow(row.id)}
+                    disabled={bulkRows.length <= 1}
+                  >
+                    Remover linha
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="cta-row" style={{ marginTop: '16px' }}>
+            <button className="button secondary" type="button" onClick={addBulkRow}>
+              Adicionar linha
+            </button>
+            <button
+              className="button primary"
+              type="button"
+              onClick={handleBulkSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Salvando lote...' : 'Lancar lote'}
+            </button>
+          </div>
         </div>
 
         {loading ? <p>Carregando resultados...</p> : null}

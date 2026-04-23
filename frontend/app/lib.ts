@@ -156,6 +156,10 @@ export type ResultInput = {
   notes?: string;
 };
 
+export type BulkResultInput = {
+  items: ResultInput[];
+};
+
 export type ResultAuditLogSummary = {
   id: string;
   fieldChanged: string;
@@ -490,6 +494,30 @@ export function adminCreateResult(input: ResultInput) {
     }
 
     return (await response.json()) as ResultSummary;
+  });
+}
+
+export function adminCreateResultsBulk(input: BulkResultInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/results/bulk`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao lancar resultados em lote');
+    }
+
+    return (await response.json()) as ResultSummary[];
   });
 }
 

@@ -189,7 +189,7 @@ export class ResultsService {
   }
 
   async createResult(dto: CreateResultDto, recordedBy: string) {
-    const scoring = await this.resolveScoring(dto.sportId, dto.teamId, dto.position);
+    const scoring = await this.resolveScoring(this.prisma, dto.sportId, dto.teamId, dto.position);
 
     const result = await this.prisma.result.create({
       data: {
@@ -209,6 +209,36 @@ export class ResultsService {
     });
 
     return result;
+  }
+
+  async createBulkResults(items: CreateResultDto[], recordedBy: string) {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const created: ResultWithRelations[] = [];
+
+      for (const item of items) {
+        const scoring = await this.resolveScoring(tx, item.sportId, item.teamId, item.position);
+        const result = await tx.result.create({
+          data: {
+            sportId: item.sportId,
+            teamId: item.teamId,
+            position: item.position,
+            rawScore: item.rawScore,
+            calculatedPoints: scoring?.points ?? 0,
+            resultDate: new Date(item.resultDate),
+            notes: item.notes,
+            recordedBy,
+          },
+          include: {
+            sport: true,
+            team: true,
+          },
+        });
+
+        created.push(result as ResultWithRelations);
+      }
+
+      return created;
+    });
   }
 
   async updateResult(id: string, dto: UpdateResultDto, recordedBy: string) {
@@ -241,7 +271,7 @@ export class ResultsService {
       throw new BadRequestException('Posicao invalida');
     }
 
-    const scoring = await this.resolveScoring(sportId, teamId, position);
+    const scoring = await this.resolveScoring(this.prisma, sportId, teamId, position);
 
     const nextResultDate = dto.resultDate ? new Date(dto.resultDate) : existing.resultDate;
     const nextRawScore = dto.rawScore ?? existing.rawScore;
@@ -290,8 +320,13 @@ export class ResultsService {
     });
   }
 
-  private async resolveScoring(sportId: string, teamId: string, position: number) {
-    const sport = await this.prisma.sport.findUnique({
+  private async resolveScoring(
+    client: Pick<Prisma.TransactionClient, 'sport' | 'team' | 'scoringConfig'>,
+    sportId: string,
+    teamId: string,
+    position: number,
+  ) {
+    const sport = await client.sport.findUnique({
       where: { id: sportId },
       select: {
         id: true,
@@ -303,7 +338,7 @@ export class ResultsService {
       throw new BadRequestException('Modalidade invalida');
     }
 
-    const team = await this.prisma.team.findUnique({
+    const team = await client.team.findUnique({
       where: { id: teamId },
       select: { id: true },
     });
@@ -312,7 +347,7 @@ export class ResultsService {
       throw new BadRequestException('Equipe invalida');
     }
 
-    return this.prisma.scoringConfig.findFirst({
+    return client.scoringConfig.findFirst({
       where: {
         category: sport.category,
         position,
@@ -384,6 +419,13 @@ export class ResultsService {
     return String(value);
   }
 }
+
+type ResultWithRelations = Prisma.ResultGetPayload<{
+  include: {
+    sport: true;
+    team: true;
+  };
+}>;
 
 type RankingTeam = Prisma.TeamGetPayload<{
   include: {

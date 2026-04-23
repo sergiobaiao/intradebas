@@ -87,6 +87,113 @@ describe('ResultsService', () => {
     expect(result.calculatedPoints).toBe(5);
   });
 
+  it('creates results in bulk within a transaction', async () => {
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        sport: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValue({ id: 'sport-1', category: 'coletiva' }),
+        },
+        team: {
+          findUnique: jest.fn().mockResolvedValue({ id: 'team-1' }),
+        },
+        scoringConfig: {
+          findFirst: jest.fn().mockResolvedValue({ points: 5 }),
+        },
+        result: {
+          create: jest
+            .fn()
+            .mockResolvedValueOnce({
+              id: 'result-1',
+              sportId: 'sport-1',
+              teamId: 'team-1',
+              position: 1,
+              calculatedPoints: 5,
+              resultDate: new Date('2026-04-18T00:00:00Z'),
+              sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+              team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
+            })
+            .mockResolvedValueOnce({
+              id: 'result-2',
+              sportId: 'sport-1',
+              teamId: 'team-1',
+              position: 2,
+              calculatedPoints: 5,
+              resultDate: new Date('2026-04-18T00:00:00Z'),
+              sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+              team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
+            }),
+        },
+      }),
+    );
+
+    const result = await service.createBulkResults(
+      [
+        {
+          sportId: 'sport-1',
+          teamId: 'team-1',
+          position: 1,
+          resultDate: '2026-04-18T00:00:00Z',
+        },
+        {
+          sportId: 'sport-1',
+          teamId: 'team-1',
+          position: 2,
+          resultDate: '2026-04-18T00:00:00Z',
+        },
+      ],
+      'admin-1',
+    );
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(result).toHaveLength(2);
+  });
+
+  it('rejects bulk creation without partial persistence when a row is invalid', async () => {
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        sport: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValueOnce({ id: 'sport-1', category: 'coletiva' })
+            .mockResolvedValueOnce(null),
+        },
+        team: {
+          findUnique: jest.fn().mockResolvedValue({ id: 'team-1' }),
+        },
+        scoringConfig: {
+          findFirst: jest.fn().mockResolvedValue({ points: 5 }),
+        },
+        result: {
+          create: jest.fn().mockResolvedValue({
+            id: 'result-1',
+          }),
+        },
+      }),
+    );
+
+    await expect(
+      service.createBulkResults(
+        [
+          {
+            sportId: 'sport-1',
+            teamId: 'team-1',
+            position: 1,
+            resultDate: '2026-04-18T00:00:00Z',
+          },
+          {
+            sportId: 'missing',
+            teamId: 'team-1',
+            position: 2,
+            resultDate: '2026-04-18T00:00:00Z',
+          },
+        ],
+        'admin-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('rejects invalid sport on result creation', async () => {
     prisma.sport.findUnique.mockResolvedValue(null);
 
