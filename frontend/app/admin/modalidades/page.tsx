@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ResultSummary, SportSummary, adminFetchJson, adminUpdateSport } from '../../lib';
+import {
+  ResultSummary,
+  SportSummary,
+  adminDeleteSport,
+  adminFetchJson,
+  adminUpdateSport,
+} from '../../lib';
 
 export default function AdminModalidadesPage() {
   const [sports, setSports] = useState<SportSummary[]>([]);
@@ -9,7 +15,9 @@ export default function AdminModalidadesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sportName, setSportName] = useState('');
+  const [description, setDescription] = useState('');
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -49,6 +57,7 @@ export default function AdminModalidadesPage() {
     try {
       const updated = await adminUpdateSport(sportId, {
         name: sportName || undefined,
+        description: description || undefined,
         isActive,
         scheduleDate: scheduleDate ? new Date(scheduleDate).toISOString() : undefined,
         scheduleNotes: scheduleNotes || undefined,
@@ -59,6 +68,28 @@ export default function AdminModalidadesPage() {
       setEditingId(null);
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Falha ao atualizar modalidade');
+    }
+  }
+
+  async function deleteSport(sportId: string) {
+    setDeletingId(sportId);
+    setError(null);
+
+    try {
+      await adminDeleteSport(sportId);
+      setSports((current) => current.filter((sport) => sport.id !== sportId));
+      setResults((current) => current.filter((result) => result.sport.id !== sportId));
+      if (editingId === sportId) {
+        setEditingId(null);
+      }
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Falha ao excluir modalidade',
+      );
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -100,6 +131,10 @@ export default function AdminModalidadesPage() {
                       <span>Nome</span>
                       <input value={sportName} onChange={(event) => setSportName(event.target.value)} />
                     </label>
+                    <label className="field-span">
+                      <span>Descricao</span>
+                      <input value={description} onChange={(event) => setDescription(event.target.value)} />
+                    </label>
                     <label>
                       <span>Data/hora</span>
                       <input type="datetime-local" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
@@ -128,19 +163,34 @@ export default function AdminModalidadesPage() {
                       </button>
                     </>
                   ) : (
-                    <button
-                      className="button secondary"
-                      type="button"
-                      onClick={() => {
-                        setEditingId(sport.id);
-                        setSportName(sport.name);
-                        setScheduleDate(sport.scheduleDate ? new Date(sport.scheduleDate).toISOString().slice(0, 16) : '');
-                        setScheduleNotes(sport.scheduleNotes ?? '');
-                        setIsActive(sport.isActive !== false);
-                      }}
-                    >
-                      Editar
-                    </button>
+                    <>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => {
+                          setEditingId(sport.id);
+                          setSportName(sport.name);
+                          setDescription(sport.description ?? '');
+                          setScheduleDate(
+                            sport.scheduleDate
+                              ? new Date(sport.scheduleDate).toISOString().slice(0, 16)
+                              : '',
+                          );
+                          setScheduleNotes(sport.scheduleNotes ?? '');
+                          setIsActive(sport.isActive !== false);
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="button secondary"
+                        type="button"
+                        onClick={() => deleteSport(sport.id)}
+                        disabled={deletingId === sport.id}
+                      >
+                        {deletingId === sport.id ? 'Removendo...' : 'Excluir'}
+                      </button>
+                    </>
                   )}
                 </div>
               </article>

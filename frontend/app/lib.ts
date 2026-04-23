@@ -123,6 +123,7 @@ export type SportSummary = {
   id: string;
   name: string;
   category: string;
+  description?: string | null;
   isAldebarun: boolean;
   isActive?: boolean;
   scheduleDate?: string | null;
@@ -1002,6 +1003,30 @@ export function adminUpdateSport(sportId: string, input: UpdateSportInput) {
     }
 
     return (await response.json()) as SportSummary;
+  });
+}
+
+export function adminDeleteSport(sportId: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/sports/${sportId}`, {
+    method: 'DELETE',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao excluir modalidade');
+    }
+
+    return (await response.json()) as { id: string; deleted: true };
   });
 }
 

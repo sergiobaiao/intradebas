@@ -1,4 +1,5 @@
 import { getSport } from '../../../lib';
+import { SportEditForm } from '../sport-edit-form';
 
 type AdminSportDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -32,8 +33,10 @@ export default async function AdminSportDetailPage({
               <p>Categoria: {sport.category}</p>
               <p>Status: {sport.isActive === false ? 'inativa' : 'ativa'}</p>
               <p>ALDEBARUN: {sport.isAldebarun ? 'sim' : 'nao'}</p>
+              <p>Descricao: {sport.description ?? 'Nao informada'}</p>
               <p>Agenda: {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}</p>
             </div>
+            <SportEditForm sport={sport} />
             <div className="review-grid" style={{ marginTop: '24px' }}>
               {sport.results.map((result) => (
                 <article key={result.id} className="card review-card">

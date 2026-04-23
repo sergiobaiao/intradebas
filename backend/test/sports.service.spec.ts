@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SportCategory } from '@prisma/client';
 import { SportsService } from '../src/sports/sports.service';
 import { createPrismaMock } from './helpers';
@@ -89,6 +89,7 @@ describe('SportsService', () => {
     prisma.sport.update.mockResolvedValue({
       id: 'sport-1',
       name: 'Futsal Master',
+      description: 'Categoria principal',
       isActive: false,
       scheduleDate: new Date('2026-04-21T10:00:00Z'),
       scheduleNotes: 'Quadra principal',
@@ -96,11 +97,34 @@ describe('SportsService', () => {
 
     const result = await service.update('sport-1', {
       name: 'Futsal Master',
+      description: 'Categoria principal',
       isActive: false,
       scheduleDate: '2026-04-21T10:00:00Z',
       scheduleNotes: 'Quadra principal',
     });
 
     expect(result.name).toBe('Futsal Master');
+  });
+
+  it('deletes a sport with no registrations or results', async () => {
+    prisma.sport.findUnique.mockResolvedValue({ id: 'sport-1' });
+    prisma.registration.count.mockResolvedValue(0);
+    prisma.result.count.mockResolvedValue(0);
+    prisma.sport.delete.mockResolvedValue({ id: 'sport-1' });
+
+    const result = await service.remove('sport-1');
+
+    expect(prisma.sport.delete).toHaveBeenCalledWith({ where: { id: 'sport-1' } });
+    expect(result).toEqual({ id: 'sport-1', deleted: true });
+  });
+
+  it('rejects sport deletion when registrations exist', async () => {
+    prisma.sport.findUnique.mockResolvedValue({ id: 'sport-1' });
+    prisma.registration.count.mockResolvedValue(2);
+    prisma.result.count.mockResolvedValue(0);
+
+    await expect(service.remove('sport-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });

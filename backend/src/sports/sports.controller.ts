@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SportsService } from './sports.service';
 import { CreateSportDto } from './dto/create-sport.dto';
@@ -28,5 +28,11 @@ export class SportsController {
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() dto: UpdateSportDto) {
     return this.sportsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string) {
+    return this.sportsService.remove(id);
   }
 }
