@@ -169,55 +169,56 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 
 ## Módulo 1 — Portal Público (Frente ao Usuário)
 
-| Subcomponente | Descrição |
-|---|---|
-| Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição |
-| Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe e modalidades |
-| Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse |
-| Central de Resultados | Placar ao vivo das equipes, ranking por modalidade |
-| ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos |
-| Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) |
-| Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores |
-| Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) |
+| Subcomponente | Descrição | Status Atual |
+|---|---|---|
+| Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial |
+| Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe e modalidades | ✅ Implementado |
+| Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
+| Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | 🟡 Implementado com polling/refresh, sem WebSocket/SSE |
+| ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | ❌ Pendente |
+| Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
+| Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial |
+| Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) | ❌ Pendente |
 
 ## Módulo 2 — Painel Administrativo (Comissão Organizadora)
 
-| Subcomponente | Descrição |
-|---|---|
-| Dashboard Principal | KPIs: total de atletas, cotas vendidas, pontuação das equipes, modalidades ativas |
-| Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV |
-| Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes |
-| Gestão de Patrocínio | Controle de cotas vendidas, geração/listagem de cupons, status de pagamento |
-| Input de Resultados | Formulário de lançamento de resultados por modalidade |
-| Gestão de Ranking | Visualização e auditoria do placar consolidado |
-| Gestão de Mídia | Upload de fotos, cadastro de URLs de vídeo |
-| Gestão de Backdrop | Cadastro e ordenação de logos de patrocinadores |
-| Configurações | Tabela de pesos de pontuação, limites, regras de desempate |
-| Logs de Auditoria | Histórico de alterações em resultados e dados críticos |
+| Subcomponente | Descrição | Status Atual |
+|---|---|---|
+| Dashboard Principal | KPIs: total de atletas, cotas vendidas, pontuação das equipes, modalidades ativas | ✅ Implementado |
+| Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV | 🟡 Quase completo; exportação CSV pendente |
+| Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | 🟡 Parcial; limites de participantes pendentes |
+| Gestão de Patrocínio | Controle de cotas vendidas, geração/listagem de cupons, status de pagamento | ✅ Implementado |
+| Input de Resultados | Formulário de lançamento de resultados por modalidade | ✅ Implementado |
+| Gestão de Ranking | Visualização e auditoria do placar consolidado | ✅ Implementado |
+| Gestão de Mídia | Upload de fotos, cadastro de URLs de vídeo | ✅ Implementado |
+| Gestão de Backdrop | Cadastro e ordenação de logos de patrocinadores | 🟡 Parcial |
+| Configurações | Tabela de pesos de pontuação, limites, regras de desempate | 🟡 Parcial; pesos implementados, limites/regras pendentes |
+| Logs de Auditoria | Histórico de alterações em resultados e dados críticos | 🟡 Parcial; resultados implementados, demais dados críticos pendentes |
 
 ## Módulo 3 — Sistema de Autenticação
 
-| Subcomponente | Descrição |
-|---|---|
-| Login Admin | Autenticação JWT para membros da Comissão |
-| Gerenciamento de Admins | Cadastro e remoção de membros da Comissão (superadmin) |
-| Proteção de Rotas | Middleware de autenticação em todas as rotas /admin |
-| Recuperação de Senha | Fluxo de reset via e-mail |
+| Subcomponente | Descrição | Status Atual |
+|---|---|---|
+| Login Admin | Autenticação JWT para membros da Comissão | ✅ Implementado |
+| Gerenciamento de Admins | Cadastro e remoção de membros da Comissão (superadmin) | ❌ Pendente |
+| Proteção de Rotas | Middleware de autenticação em todas as rotas /admin | ✅ Implementado |
+| Recuperação de Senha | Fluxo de reset via e-mail | ❌ Pendente |
 
 ## Módulo 4 — Motor de Resultados e Tempo Real
 
-| Subcomponente | Descrição |
-|---|---|
-| Serviço de Cálculo | Worker que recalcula pontuação após cada input de resultado |
-| WebSocket / SSE | Canal de comunicação para atualização em tempo real no frontend |
-| Cache de Ranking | Cache Redis do placar atual para alta performance |
+| Subcomponente | Descrição | Status Atual |
+|---|---|---|
+| Serviço de Cálculo | Worker que recalcula pontuação após cada input de resultado | ✅ Implementado no serviço principal |
+| WebSocket / SSE | Canal de comunicação para atualização em tempo real no frontend | ❌ Pendente |
+| Cache de Ranking | Cache Redis do placar atual para alta performance | ❌ Pendente |
 
 ## Módulo 5 — Conformidade LGPD
 
-| Subcomponente | Descrição |
-|---|---|
-| Registro de Consentimento | Log imutável de aceite com timestamp e IP |
-| Política de Privacidade | Página pública com texto da política |
+| Subcomponente | Descrição | Status Atual |
+|---|---|---|
+| Registro de Consentimento | Log imutável de aceite com timestamp e IP | 🟡 Parcial |
+| Política de Privacidade | Página pública com texto da política | ❌ Pendente |
+| Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais | ❌ Pendente |
 | Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais |
 
 ---
@@ -1450,45 +1451,50 @@ Response 409 (CPF duplicado):
 
 # 13. ROADMAP DE DESENVOLVIMENTO (POR FASES)
 
+Legenda de status nesta seção:
+- `[x]` implementado
+- `[~]` parcialmente implementado
+- `[ ]` pendente
+
 ## Fase 0 — Preparação (Semana 1)
 Duração estimada: 1 semana
 
-- [ ] Configurar repositório Git (monorepo ou multi-repo)
-- [ ] Setup do ambiente Docker de desenvolvimento
+- [x] Configurar repositório Git (monorepo ou multi-repo)
+- [x] Setup do ambiente Docker de desenvolvimento
 - [ ] Clonar e configurar o template next-shadcn-admin-dashboard
-- [ ] Configurar Prisma + PostgreSQL + primeiras migrations
-- [ ] Configurar NestJS com módulos base
-- [ ] Definir CI/CD básico (GitHub Actions)
+- [x] Configurar Prisma + PostgreSQL + primeiras migrations
+- [x] Configurar NestJS com módulos base
+- [x] Definir CI/CD básico (GitHub Actions)
 - [ ] Validar assunções A01–A10 com Manoel Neto
 
 ## Fase 1 — MVP Core (Semanas 2–5)
 Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
-- [ ] Módulo de autenticação (login, JWT, refresh, recuperação de senha)
+- [~] Módulo de autenticação (login e JWT implementados; refresh e recuperação de senha pendentes)
 - [ ] Layout público (navbar, footer WhatsApp)
 - [ ] Sidebar do Admin adaptada (template customizado)
-- [ ] Dashboard Admin com KPIs mockados
+- [x] Dashboard Admin com KPIs reais
 
 ### Semana 3 — Atletas e Inscrições
-- [ ] Formulário público de inscrição de atleta (com LGPD)
-- [ ] Gestão de atletas no Admin (lista, aprovar convidados, filtros)
-- [ ] Módulo de equipes (Mucura, Jacaré, Capivara) com badges coloridos
+- [~] Formulário público de inscrição de atleta (com LGPD)
+- [x] Gestão de atletas no Admin (lista, aprovar convidados, filtros)
+- [x] Módulo de equipes (Mucura, Jacaré, Capivara) com badges coloridos
 - [ ] Exportação CSV de atletas
 
 ### Semana 4 — Resultados e Ranking
-- [ ] Configuração de modalidades no Admin
-- [ ] Formulário de lançamento de resultados
-- [ ] Motor de cálculo de pontuação
-- [ ] Central de Resultados pública (placar estático — polling a cada 10s)
-- [ ] Configuração da tabela de pesos
+- [x] Configuração de modalidades no Admin
+- [x] Formulário de lançamento de resultados
+- [x] Motor de cálculo de pontuação
+- [x] Central de Resultados pública (placar estático — polling a cada 10s)
+- [x] Configuração da tabela de pesos
 
 ### Semana 5 — Patrocínio e Cupons
-- [ ] Página pública de patrocínio com cards de cotas
-- [ ] Formulário de interesse em patrocínio
-- [ ] Admin: ativação de cota + geração automática de cupons
-- [ ] Validação e resgate de cupom no formulário de inscrição
-- [ ] Bloqueio automático de cotas esgotadas
+- [x] Página pública de patrocínio com cards de cotas
+- [x] Formulário de interesse em patrocínio
+- [x] Admin: ativação de cota + geração automática de cupons
+- [x] Validação e resgate de cupom no formulário de inscrição
+- [x] Bloqueio automático de cotas esgotadas
 
 ## Fase 2 — Completude e Tempo Real (Semanas 6–8)
 Duração estimada: 3 semanas
@@ -1496,21 +1502,21 @@ Duração estimada: 3 semanas
 ### Semana 6 — Tempo Real e Backdrop
 - [ ] Implementação de SSE (Server-Sent Events) para placar ao vivo
 - [ ] Redis Pub/Sub integrado ao motor de cálculo
-- [ ] Componente Backdrop Digital dinâmico com rotação e prioridade Ouro
-- [ ] Upload de logos no Admin (MinIO)
+- [~] Componente Backdrop Digital dinâmico com rotação e prioridade Ouro
+- [x] Upload de logos no Admin (MinIO)
 
 ### Semana 7 — Galeria de Mídia e ALDEBARUN
-- [ ] Upload e gestão de fotos (MinIO)
-- [ ] Integração de vídeos YouTube/Vimeo (embed)
+- [x] Upload e gestão de fotos (MinIO)
+- [x] Integração de vídeos YouTube/Vimeo (embed)
 - [ ] Página dedicada ALDEBARUN II com ranking de tempos de corrida
-- [ ] Logs de auditoria de resultados
+- [x] Logs de auditoria de resultados
 
 ### Semana 8 — LGPD, UX e E-mail
 - [ ] Página de Política de Privacidade
 - [ ] Mecanismo de solicitação de exclusão de dados
 - [ ] Envio de e-mail (confirmação de inscrição, cupons, reset de senha)
 - [ ] Ajustes de UX Mobile (testes em dispositivos reais)
-- [ ] Página pública Home / Landing Page completa
+- [~] Página pública Home / Landing Page completa
 
 ## Fase 3 — Qualidade e Produção (Semanas 9–10)
 Duração estimada: 2 semanas
@@ -1583,7 +1589,7 @@ Duração estimada: 2 semanas
 **Inclui:**
 - ✅ Inscrição de atletas (Titular, Familiar, Convidado)
 - ✅ Vinculação a equipes
-- ✅ Aceite LGPD com log
+- 🟡 Aceite LGPD com log (registro parcial; fluxo completo ainda não finalizado)
 - ✅ Painel Admin completo (gestão de atletas, aprovação de convidados)
 - ✅ Venda de cotas de patrocínio com controle de limite
 - ✅ Geração e resgate de cupons
@@ -1591,19 +1597,32 @@ Duração estimada: 2 semanas
 - ✅ Placar consolidado das equipes (via polling — sem WebSocket)
 - ✅ Cadastro de modalidades
 - ✅ Motor de pontuação básico
-- ✅ Home/Landing Page informativa
-- ✅ Link de suporte WhatsApp
-- ✅ Deploy em Docker (produção básica)
+- 🟡 Home/Landing Page informativa
+- ❌ Link de suporte WhatsApp
+- 🟡 Deploy em Docker (ambiente de projeto pronto; homologação/produção real ainda não ativadas)
 
 **Exclui (Fase 2):**
 - ❌ Live Score via WebSocket/SSE (substituído por polling no MVP)
-- ❌ Backdrop Digital dinâmico com rotação
-- ❌ Galeria de fotos e vídeos
+- 🟡 Backdrop Digital dinâmico com rotação
+- 🟡 Galeria de fotos e vídeos
 - ❌ Página dedicada ALDEBARUN II com ranking de corrida
-- ❌ Upload de fotos do evento
-- ❌ Logs de auditoria de resultados com interface
+- ✅ Upload de fotos do evento
+- ✅ Logs de auditoria de resultados com interface
 - ❌ Mecanismo de exclusão de dados LGPD (solicitação)
 - ❌ E-mails automáticos (confirmações, cupons)
+
+## Status Geral Atual (Atualizado em 23/04/2026)
+
+| Bloco | Situação |
+|---|---|
+| MVP central do evento | ✅ Majoritariamente implementado |
+| Painel administrativo operacional | ✅ Forte |
+| Tempo real pleno (SSE/WebSocket + Redis) | ❌ Pendente |
+| LGPD completo | 🟡 Parcial |
+| Autenticação completa (refresh/reset/admin management) | 🟡 Parcial |
+| Portal público premium completo | 🟡 Parcial |
+| ALDEBARUN II dedicado | ❌ Pendente |
+| Homologação/produção real ativada | ❌ Pendente |
 
 ## Fase 2 — Completude
 
