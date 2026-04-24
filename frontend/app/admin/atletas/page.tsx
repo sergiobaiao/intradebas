@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   AthleteSummary,
   adminDeleteAthlete,
+  adminDownloadAthletesCsv,
   adminFetchJson,
   adminGetAthleteReviewPage,
   adminUpdateAthleteStatus,
@@ -15,6 +16,7 @@ export default function AdminAthletesPage() {
   const [error, setError] = useState<string | null>(null);
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -84,6 +86,26 @@ export default function AdminAthletesPage() {
     }
   }
 
+  async function exportCsv() {
+    setExporting(true);
+    setError(null);
+
+    try {
+      const csv = await adminDownloadAthletesCsv();
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'atletas.csv';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (exportError) {
+      setError(exportError instanceof Error ? exportError.message : 'Falha ao exportar atletas');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <main className="section">
       <div className="shell">
@@ -98,6 +120,9 @@ export default function AdminAthletesPage() {
           <a className="button secondary" href="/admin/atletas/novo">
             Novo atleta
           </a>
+          <button className="button secondary" type="button" onClick={exportCsv} disabled={exporting}>
+            {exporting ? 'Exportando...' : 'Exportar CSV'}
+          </button>
         </div>
 
         <div className="card" style={{ marginTop: '24px' }}>

@@ -1112,3 +1112,27 @@ export function adminDeleteScoringConfig(rowId: string) {
     return (await response.json()) as { id: string; deleted: true };
   });
 }
+
+export async function adminDownloadAthletesCsv() {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  const response = await fetch(`${apiBase}/athletes/export`, {
+    method: 'GET',
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao exportar atletas');
+  }
+
+  return response.text();
+}

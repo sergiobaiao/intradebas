@@ -335,4 +335,37 @@ describe('AthletesService', () => {
       BadRequestException,
     );
   });
+
+  it('exports athletes as csv with team and sports columns', async () => {
+    prisma.athlete.findMany.mockResolvedValue([
+      {
+        name: 'Joao Silva',
+        cpf: '123.456.789-00',
+        email: 'joao@email.com',
+        phone: '86999999999',
+        birthDate: new Date('1990-01-01'),
+        type: 'titular',
+        status: 'active',
+        unit: 'Bloco A',
+        shirtSize: 'M',
+        createdAt: new Date('2026-04-24T10:00:00Z'),
+        team: {
+          name: 'Mucura',
+        },
+        registrations: [
+          { sport: { name: 'Futsal' } },
+          { sport: { name: 'Volei' } },
+        ],
+      },
+    ]);
+
+    const result = await service.exportCsv();
+
+    expect(result).toContain(
+      'nome,cpf,email,telefone,data_nascimento,tipo,status,unidade,camiseta,equipe,modalidades,criado_em',
+    );
+    expect(result).toContain(
+      '"Joao Silva","123.456.789-00","joao@email.com","86999999999","1990-01-01","titular","active","Bloco A","M","Mucura","Futsal; Volei","2026-04-24T10:00:00.000Z"',
+    );
+  });
 });

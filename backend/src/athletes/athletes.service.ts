@@ -140,6 +140,77 @@ export class AthletesService {
     return athletes.map((athlete: AthleteWithRelations) => this.toResponse(athlete));
   }
 
+  async exportCsv() {
+    const athletes = await this.prisma.athlete.findMany({
+      select: {
+        name: true,
+        cpf: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        type: true,
+        status: true,
+        unit: true,
+        shirtSize: true,
+        createdAt: true,
+        team: {
+          select: {
+            name: true,
+          },
+        },
+        registrations: {
+          select: {
+            sport: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
+    });
+
+    const header = [
+      'nome',
+      'cpf',
+      'email',
+      'telefone',
+      'data_nascimento',
+      'tipo',
+      'status',
+      'unidade',
+      'camiseta',
+      'equipe',
+      'modalidades',
+      'criado_em',
+    ];
+
+    const escape = (value: string | null | undefined) =>
+      `"${String(value ?? '').replaceAll('"', '""')}"`;
+
+    const rows = athletes.map((athlete) =>
+      [
+        athlete.name,
+        athlete.cpf,
+        athlete.email,
+        athlete.phone,
+        athlete.birthDate.toISOString().slice(0, 10),
+        athlete.type,
+        athlete.status,
+        athlete.unit,
+        athlete.shirtSize,
+        athlete.team.name,
+        athlete.registrations.map((registration) => registration.sport.name).join('; '),
+        athlete.createdAt.toISOString(),
+      ]
+        .map((value) => escape(value))
+        .join(','),
+    );
+
+    return [header.join(','), ...rows].join('\n');
+  }
+
   async findOne(id: string) {
     const athlete = await this.prisma.athlete.findUnique({
       where: { id },

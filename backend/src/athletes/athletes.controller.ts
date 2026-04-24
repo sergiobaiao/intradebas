@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AthletesService } from './athletes.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
@@ -25,6 +25,14 @@ export class AthletesController {
       teamId,
       search,
     });
+  }
+
+  @Get('export')
+  @UseGuards(JwtAuthGuard)
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename=\"atletas.csv\"')
+  exportCsv() {
+    return this.athletesService.exportCsv();
   }
 
   @Get()

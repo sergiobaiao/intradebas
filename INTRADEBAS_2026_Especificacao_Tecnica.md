@@ -185,7 +185,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
 | Dashboard Principal | KPIs: total de atletas, cotas vendidas, pontuação das equipes, modalidades ativas | ✅ Implementado |
-| Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV | 🟡 Quase completo; exportação CSV pendente |
+| Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV | ✅ Implementado |
 | Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | 🟡 Parcial; limites de participantes pendentes |
 | Gestão de Patrocínio | Controle de cotas vendidas, geração/listagem de cupons, status de pagamento | ✅ Implementado |
 | Input de Resultados | Formulário de lançamento de resultados por modalidade | ✅ Implementado |
@@ -1480,7 +1480,7 @@ Duração estimada: 4 semanas
 - [~] Formulário público de inscrição de atleta (com LGPD)
 - [x] Gestão de atletas no Admin (lista, aprovar convidados, filtros)
 - [x] Módulo de equipes (Mucura, Jacaré, Capivara) com badges coloridos
-- [ ] Exportação CSV de atletas
+- [x] Exportação CSV de atletas
 
 ### Semana 4 — Resultados e Ranking
 - [x] Configuração de modalidades no Admin
