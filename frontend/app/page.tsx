@@ -43,6 +43,9 @@ export default function HomePage() {
                 <a className="button secondary" href="/backdrop">
                   Ver backdrop
                 </a>
+                <a className="button secondary" href="/privacidade">
+                  Politica de privacidade
+                </a>
               </div>
             </div>
 
@@ -81,6 +84,14 @@ export default function HomePage() {
             </a>
             <a className="button secondary" href="/api/health">
               Health frontend
+            </a>
+            <a
+              className="button secondary"
+              href="https://wa.me/5586988265569?text=Ola%2C%20preciso%20de%20ajuda%20com%20o%20portal%20INTRADEBAS%202026."
+              target="_blank"
+              rel="noreferrer"
+            >
+              Suporte WhatsApp
             </a>
           </div>
         </div>

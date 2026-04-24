@@ -293,12 +293,51 @@ main {
   border: 1px solid rgba(22, 33, 62, 0.18);
 }
 
+.public-footer {
+  margin-top: 40px;
+  padding: 28px 0 36px;
+  border-top: 1px solid rgba(22, 33, 62, 0.12);
+  background: rgba(255, 253, 248, 0.7);
+}
+
+.public-footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.public-footer p {
+  margin: 10px 0 0;
+  line-height: 1.7;
+}
+
+.public-footer-links {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.public-footer-links a {
+  font-weight: 700;
+}
+
+.privacy-card {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.privacy-section + .privacy-section {
+  margin-top: 28px;
+}
+
 @media (max-width: 880px) {
   .hero-grid,
   .grid-3,
   .form-grid,
   .checkbox-grid,
-  .review-grid {
+  .review-grid,
+  .public-footer-grid {
     grid-template-columns: 1fr;
   }
 }

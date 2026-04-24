@@ -178,7 +178,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | ❌ Pendente |
 | Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
 | Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial |
-| Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) | ❌ Pendente |
+| Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) | ✅ Implementado |
 
 ## Módulo 2 — Painel Administrativo (Comissão Organizadora)
 
@@ -217,7 +217,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
 | Registro de Consentimento | Log imutável de aceite com timestamp e IP | 🟡 Parcial |
-| Política de Privacidade | Página pública com texto da política | ❌ Pendente |
+| Política de Privacidade | Página pública com texto da política | ✅ Implementado |
 | Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais | ❌ Pendente |
 | Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais |
 
@@ -1472,7 +1472,7 @@ Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
 - [~] Módulo de autenticação (login e JWT implementados; refresh e recuperação de senha pendentes)
-- [ ] Layout público (navbar, footer WhatsApp)
+- [~] Layout público (footer WhatsApp implementado; navbar dedicada ainda pendente)
 - [ ] Sidebar do Admin adaptada (template customizado)
 - [x] Dashboard Admin com KPIs reais
 
@@ -1513,7 +1513,7 @@ Duração estimada: 3 semanas
 - [~] Feed unificado de auditoria para dados críticos do Admin
 
 ### Semana 8 — LGPD, UX e E-mail
-- [ ] Página de Política de Privacidade
+- [x] Página de Política de Privacidade
 - [ ] Mecanismo de solicitação de exclusão de dados
 - [ ] Envio de e-mail (confirmação de inscrição, cupons, reset de senha)
 - [ ] Ajustes de UX Mobile (testes em dispositivos reais)
@@ -1599,7 +1599,7 @@ Duração estimada: 2 semanas
 - ✅ Cadastro de modalidades
 - ✅ Motor de pontuação básico
 - 🟡 Home/Landing Page informativa
-- ❌ Link de suporte WhatsApp
+- ✅ Link de suporte WhatsApp
 - 🟡 Deploy em Docker (ambiente de projeto pronto; homologação/produção real ainda não ativadas)
 
 **Exclui (Fase 2):**
@@ -1612,7 +1612,7 @@ Duração estimada: 2 semanas
 - ❌ Mecanismo de exclusão de dados LGPD (solicitação)
 - ❌ E-mails automáticos (confirmações, cupons)
 
-## Status Geral Atual (Atualizado em 23/04/2026)
+## Status Geral Atual (Atualizado em 24/04/2026)
 
 | Bloco | Situação |
 |---|---|
