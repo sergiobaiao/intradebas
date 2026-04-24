@@ -1,6 +1,7 @@
 export function createPrismaMock() {
   return {
     user: {
+      findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       upsert: jest.fn(),
@@ -36,6 +37,13 @@ export function createPrismaMock() {
       create: jest.fn(),
       createMany: jest.fn(),
       findMany: jest.fn(),
+    },
+    lgpdDeletionRequest: {
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
     },
     scoringConfig: {
       create: jest.fn(),
@@ -85,6 +93,7 @@ export function createPrismaMock() {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    $queryRaw: jest.fn(),
     $transaction: jest.fn(),
   };
 }

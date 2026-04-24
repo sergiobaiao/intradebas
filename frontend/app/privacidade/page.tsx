@@ -1,4 +1,45 @@
+'use client';
+
+import { FormEvent, useState } from 'react';
+import { createLgpdDeletionRequest } from '../lib';
+
 export default function PrivacidadePage() {
+  const [requesterName, setRequesterName] = useState('');
+  const [athleteCpf, setAthleteCpf] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      await createLgpdDeletionRequest({
+        requesterName,
+        athleteCpf,
+        email,
+        phone,
+        reason,
+      });
+      setMessage('Solicitacao registrada com sucesso. A comissao organizadora fara a triagem.');
+      setRequesterName('');
+      setAthleteCpf('');
+      setEmail('');
+      setPhone('');
+      setReason('');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Falha ao registrar solicitacao LGPD');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <main className="section">
       <div className="shell">
@@ -41,10 +82,48 @@ export default function PrivacidadePage() {
             <h2>Direitos do titular</h2>
             <p>
               Solicitacoes relacionadas a acesso, correcao ou exclusao de dados pessoais podem ser
-              encaminhadas pelo canal oficial de suporte informado abaixo. O fluxo completo de
-              exclusao ainda esta em evolucao no produto, mas o canal de atendimento ja esta
-              disponivel para registro manual das demandas.
+              encaminhadas pelo formulario abaixo. A triagem e a execucao administrativa continuam
+              sob responsabilidade da comissao organizadora.
             </p>
+          </section>
+
+          <section className="privacy-section">
+            <h2>Solicitar exclusao de dados</h2>
+            <form className="form-grid" onSubmit={handleSubmit}>
+              <label>
+                <span>Nome do solicitante</span>
+                <input value={requesterName} onChange={(event) => setRequesterName(event.target.value)} />
+              </label>
+              <label>
+                <span>CPF do titular dos dados</span>
+                <input
+                  value={athleteCpf}
+                  onChange={(event) => setAthleteCpf(event.target.value)}
+                  placeholder="000.000.000-00"
+                />
+              </label>
+              <label>
+                <span>E-mail</span>
+                <input value={email} onChange={(event) => setEmail(event.target.value)} />
+              </label>
+              <label>
+                <span>Telefone</span>
+                <input value={phone} onChange={(event) => setPhone(event.target.value)} />
+              </label>
+              <label className="field-span">
+                <span>Motivo</span>
+                <textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={5} />
+              </label>
+
+              {message ? <p className="success-text field-span">{message}</p> : null}
+              {error ? <p className="error-text field-span">{error}</p> : null}
+
+              <div className="cta-row field-span">
+                <button className="button primary" type="submit" disabled={submitting}>
+                  {submitting ? 'Enviando...' : 'Registrar solicitacao'}
+                </button>
+              </div>
+            </form>
           </section>
 
           <section className="privacy-section">

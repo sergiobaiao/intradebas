@@ -75,6 +75,13 @@ enum SponsorshipLevel {
   ouro
 }
 
+enum LgpdRequestStatus {
+  pending
+  in_review
+  resolved
+  rejected
+}
+
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
@@ -91,6 +98,7 @@ model User {
   auditLogs       AuditLog[]        @relation("generic_audit_changed_by")
   scoringConfigs  ScoringConfig[]
   uploadedMedia   Media[]
+  reviewedLgpdDeletionRequests LgpdDeletionRequest[] @relation("lgpd_deletion_request_reviewed_by")
 
   @@map("users")
 }
@@ -138,6 +146,7 @@ model Athlete {
   partneredIn   Registration[] @relation("registration_partner")
   results       Result[]
   redeemedCoupons Coupon[]    @relation("coupon_redeemed_by")
+  lgpdDeletionRequests LgpdDeletionRequest[]
 
   @@index([teamId, status, createdAt])
   @@index([status, createdAt])
@@ -355,4 +364,28 @@ model LgpdConsentLog {
 
   @@index([athleteCpf, consentedAt])
   @@map("lgpd_consent_log")
+}
+
+model LgpdDeletionRequest {
+  id            String            @id @default(uuid())
+  athleteId     String?           @map("athlete_id")
+  athleteCpf    String            @map("athlete_cpf")
+  requesterName String            @map("requester_name")
+  email         String?
+  phone         String?
+  reason        String?
+  status        LgpdRequestStatus @default(pending)
+  adminNotes    String?           @map("admin_notes")
+  requestedAt   DateTime          @default(now()) @map("requested_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  reviewedBy    String?           @map("reviewed_by")
+  reviewedAt    DateTime?         @map("reviewed_at")
+
+  athlete  Athlete? @relation(fields: [athleteId], references: [id])
+  reviewer User?    @relation("lgpd_deletion_request_reviewed_by", fields: [reviewedBy], references: [id])
+
+  @@index([athleteCpf, requestedAt])
+  @@index([status, requestedAt])
+  @@index([reviewedBy, reviewedAt])
+  @@map("lgpd_deletion_request")
 }

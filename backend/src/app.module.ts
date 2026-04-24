@@ -3,6 +3,7 @@ import { AuditModule } from './audit/audit.module';
 import { AthletesModule } from './athletes/athletes.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
+import { LgpdModule } from './lgpd/lgpd.module';
 import { MediaModule } from './media/media.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ResultsModule } from './results/results.module';
@@ -17,6 +18,7 @@ import { TeamsModule } from './teams/teams.module';
     AuthModule,
     AuditModule,
     HealthModule,
+    LgpdModule,
     MediaModule,
     ResultsModule,
     SettingsModule,

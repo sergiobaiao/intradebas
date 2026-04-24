@@ -206,6 +206,41 @@ export type AuditLogSummary = {
   };
 };
 
+export type LgpdDeletionRequestSummary = {
+  id: string;
+  athleteCpf: string;
+  requesterName: string;
+  email?: string | null;
+  phone?: string | null;
+  reason?: string | null;
+  status: 'pending' | 'in_review' | 'resolved' | 'rejected';
+  adminNotes?: string | null;
+  requestedAt: string;
+  reviewedAt?: string | null;
+  athlete?: {
+    id: string;
+    name: string;
+    status: string;
+    team?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
+  reviewer?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+};
+
+export type CreateLgpdDeletionRequestInput = {
+  requesterName: string;
+  athleteCpf: string;
+  email?: string;
+  phone?: string;
+  reason?: string;
+};
+
 export type MediaAdminSummary = {
   id: string;
   type: 'photo' | 'video';
@@ -416,6 +451,28 @@ export async function createAthleteRegistration(input: CreateAthleteInput) {
   return (await response.json()) as AthleteSummary;
 }
 
+export async function createLgpdDeletionRequest(input: CreateLgpdDeletionRequestInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/lgpd/deletion-requests`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao registrar solicitacao LGPD');
+  }
+
+  return (await response.json()) as LgpdDeletionRequestSummary;
+}
+
 export async function adminFetchJson<T>(path: string): Promise<T> {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
   const token = getAdminTokenFromCookie();
@@ -606,6 +663,42 @@ export function adminGetAuditLogs(entityType?: string) {
   return adminFetchJson<AuditLogSummary[]>(
     `/audit${buildQuery({ entityType })}`,
   );
+}
+
+export function adminGetLgpdDeletionRequests(status?: string) {
+  return adminFetchJson<LgpdDeletionRequestSummary[]>(
+    `/lgpd/deletion-requests${buildQuery({ status })}`,
+  );
+}
+
+export function adminUpdateLgpdDeletionRequest(
+  requestId: string,
+  input: {
+    status?: 'pending' | 'in_review' | 'resolved' | 'rejected';
+    adminNotes?: string;
+  },
+) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/lgpd/deletion-requests/${requestId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar solicitacao LGPD');
+    }
+
+    return (await response.json()) as LgpdDeletionRequestSummary;
+  });
 }
 
 export function adminGetAthleteReviewPage(input: {

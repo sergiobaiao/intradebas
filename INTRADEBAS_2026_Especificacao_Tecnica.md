@@ -218,8 +218,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 |---|---|---|
 | Registro de Consentimento | Log imutável de aceite com timestamp e IP | 🟡 Parcial |
 | Política de Privacidade | Página pública com texto da política | ✅ Implementado |
-| Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais | ❌ Pendente |
-| Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais |
+| Exclusão de Dados | Mecanismo de solicitação de exclusão de dados pessoais | 🟡 Parcial; solicitação implementada, execução administrativa ainda pendente |
 
 ---
 
@@ -1514,7 +1513,7 @@ Duração estimada: 3 semanas
 
 ### Semana 8 — LGPD, UX e E-mail
 - [x] Página de Política de Privacidade
-- [ ] Mecanismo de solicitação de exclusão de dados
+- [~] Mecanismo de solicitação de exclusão de dados
 - [ ] Envio de e-mail (confirmação de inscrição, cupons, reset de senha)
 - [ ] Ajustes de UX Mobile (testes em dispositivos reais)
 - [~] Página pública Home / Landing Page completa
@@ -1609,7 +1608,7 @@ Duração estimada: 2 semanas
 - ❌ Página dedicada ALDEBARUN II com ranking de corrida
 - ✅ Upload de fotos do evento
 - ✅ Logs de auditoria de resultados com interface
-- ❌ Mecanismo de exclusão de dados LGPD (solicitação)
+- 🟡 Mecanismo de exclusão de dados LGPD (solicitação)
 - ❌ E-mails automáticos (confirmações, cupons)
 
 ## Status Geral Atual (Atualizado em 24/04/2026)
