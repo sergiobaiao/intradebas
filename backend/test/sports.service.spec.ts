@@ -85,7 +85,15 @@ describe('SportsService', () => {
   });
 
   it('updates a sport when it exists', async () => {
-    prisma.sport.findUnique.mockResolvedValue({ id: 'sport-1' });
+    prisma.sport.findUnique.mockResolvedValue({
+      id: 'sport-1',
+      name: 'Futsal',
+      description: null,
+      isActive: true,
+      scheduleDate: null,
+      scheduleNotes: null,
+    });
+    prisma.auditLog.createMany.mockResolvedValue({ count: 4 });
     prisma.sport.update.mockResolvedValue({
       id: 'sport-1',
       name: 'Futsal Master',
@@ -101,20 +109,23 @@ describe('SportsService', () => {
       isActive: false,
       scheduleDate: '2026-04-21T10:00:00Z',
       scheduleNotes: 'Quadra principal',
-    });
+    }, 'admin-1');
 
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result.name).toBe('Futsal Master');
   });
 
   it('deletes a sport with no registrations or results', async () => {
-    prisma.sport.findUnique.mockResolvedValue({ id: 'sport-1' });
+    prisma.sport.findUnique.mockResolvedValue({ id: 'sport-1', name: 'Futsal' });
     prisma.registration.count.mockResolvedValue(0);
     prisma.result.count.mockResolvedValue(0);
+    prisma.auditLog.createMany.mockResolvedValue({ count: 1 });
     prisma.sport.delete.mockResolvedValue({ id: 'sport-1' });
 
-    const result = await service.remove('sport-1');
+    const result = await service.remove('sport-1', 'admin-1');
 
     expect(prisma.sport.delete).toHaveBeenCalledWith({ where: { id: 'sport-1' } });
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result).toEqual({ id: 'sport-1', deleted: true });
   });
 

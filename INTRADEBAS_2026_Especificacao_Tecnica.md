@@ -193,7 +193,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Gestão de Mídia | Upload de fotos, cadastro de URLs de vídeo | ✅ Implementado |
 | Gestão de Backdrop | Cadastro e ordenação de logos de patrocinadores | 🟡 Parcial |
 | Configurações | Tabela de pesos de pontuação, limites, regras de desempate | 🟡 Parcial; pesos implementados, limites/regras pendentes |
-| Logs de Auditoria | Histórico de alterações em resultados e dados críticos | 🟡 Parcial; resultados implementados, demais dados críticos pendentes |
+| Logs de Auditoria | Histórico de alterações em resultados e dados críticos | 🟡 Parcial; resultados, atletas, equipes, modalidades e patrocinadores implementados |
 
 ## Módulo 3 — Sistema de Autenticação
 
@@ -1510,6 +1510,7 @@ Duração estimada: 3 semanas
 - [x] Integração de vídeos YouTube/Vimeo (embed)
 - [ ] Página dedicada ALDEBARUN II com ranking de tempos de corrida
 - [x] Logs de auditoria de resultados
+- [~] Feed unificado de auditoria para dados críticos do Admin
 
 ### Semana 8 — LGPD, UX e E-mail
 - [ ] Página de Política de Privacidade

@@ -196,9 +196,20 @@ describe('AthletesService', () => {
   });
 
   it('updates athlete profile data and replaces sport registrations', async () => {
-    prisma.athlete.findUnique.mockResolvedValue({ id: 'athlete-1', teamId: 'team-1' });
+    prisma.athlete.findUnique.mockResolvedValue({
+      id: 'athlete-1',
+      name: 'Joao Silva',
+      email: 'joao@email.com',
+      phone: '86999999999',
+      birthDate: new Date('1990-01-01'),
+      unit: 'Bloco A',
+      teamId: 'team-1',
+      shirtSize: ShirtSize.M,
+      registrations: [{ sportId: 'sport-1' }],
+    });
     prisma.team.findUnique.mockResolvedValue({ id: 'team-2' });
     prisma.sport.findMany.mockResolvedValue([{ id: 'sport-2' }]);
+    prisma.auditLog.createMany.mockResolvedValue({ count: 7 });
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         athlete: {
@@ -239,9 +250,10 @@ describe('AthletesService', () => {
       teamId: 'team-2',
       shirtSize: 'G',
       sports: ['sport-2'],
-    });
+    }, 'admin-1');
 
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result.name).toBe('Joao Atualizado');
     expect(result.team?.id).toBe('team-2');
     expect(result.sports[0].id).toBe('sport-2');
@@ -290,10 +302,11 @@ describe('AthletesService', () => {
   });
 
   it('deletes an athlete after removing registrations when there are no blocking links', async () => {
-    prisma.athlete.findUnique.mockResolvedValue({ id: 'athlete-1' });
+    prisma.athlete.findUnique.mockResolvedValue({ id: 'athlete-1', name: 'Joao Silva' });
     prisma.athlete.count.mockResolvedValue(0);
     prisma.result.count.mockResolvedValue(0);
     prisma.coupon.count.mockResolvedValue(0);
+    prisma.auditLog.createMany.mockResolvedValue({ count: 1 });
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         registration: {
@@ -305,9 +318,10 @@ describe('AthletesService', () => {
       }),
     );
 
-    const result = await service.remove('athlete-1');
+    const result = await service.remove('athlete-1', 'admin-1');
 
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result).toEqual({ id: 'athlete-1', deleted: true });
   });
 

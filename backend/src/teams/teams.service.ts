@@ -8,6 +8,31 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 export class TeamsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async createAuditEntries(
+    teamId: string,
+    teamName: string,
+    changedBy: string | undefined,
+    action: string,
+    changes: Array<{ fieldChanged?: string; oldValue?: string | null; newValue?: string | null }>,
+  ) {
+    if (!changedBy || changes.length === 0) {
+      return;
+    }
+
+    await this.prisma.auditLog.createMany({
+      data: changes.map((change) => ({
+        entityType: 'team',
+        entityId: teamId,
+        entityLabel: teamName,
+        action,
+        fieldChanged: change.fieldChanged,
+        oldValue: change.oldValue ?? null,
+        newValue: change.newValue ?? null,
+        changedBy,
+      })),
+    });
+  }
+
   async findAll() {
     return this.prisma.team.findMany({
       orderBy: [{ totalScore: 'desc' }, { name: 'asc' }],
@@ -107,29 +132,36 @@ export class TeamsService {
     });
   }
 
-  async update(id: string, dto: UpdateTeamDto) {
+  async update(id: string, dto: UpdateTeamDto, changedBy?: string) {
     const team = await this.prisma.team.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, name: true, color: true },
     });
 
     if (!team) {
       throw new NotFoundException('Equipe nao encontrada');
     }
 
-    return this.prisma.team.update({
+    const updated = await this.prisma.team.update({
       where: { id },
       data: {
         name: dto.name,
         color: dto.color,
       },
     });
+
+    await this.createAuditEntries(id, updated.name, changedBy, 'update', [
+      { fieldChanged: 'name', oldValue: team.name, newValue: updated.name },
+      { fieldChanged: 'color', oldValue: team.color ?? null, newValue: updated.color ?? null },
+    ].filter((change) => change.oldValue !== change.newValue));
+
+    return updated;
   }
 
-  async remove(id: string) {
+  async remove(id: string, changedBy?: string) {
     const team = await this.prisma.team.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (!team) {
@@ -150,6 +182,10 @@ export class TeamsService {
     }
 
     await this.prisma.team.delete({ where: { id } });
+
+    await this.createAuditEntries(id, team.name, changedBy, 'delete', [
+      { oldValue: team.name, newValue: null },
+    ]);
 
     return { id, deleted: true };
   }

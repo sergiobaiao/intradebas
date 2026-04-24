@@ -302,6 +302,7 @@ describe('SponsorshipService', () => {
         coupons: [],
       }),
     } as any;
+    prisma.auditLog.createMany.mockResolvedValue({ count: 2 });
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         sponsor: {
@@ -325,9 +326,10 @@ describe('SponsorshipService', () => {
       }),
     );
 
-    const result = await service.activateSponsor('sponsor-1');
+    const result = await service.activateSponsor('sponsor-1', 'admin-1');
 
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result.status).toBe('active');
     expect(result.couponsGenerated).toBe(2);
   });
@@ -354,7 +356,16 @@ describe('SponsorshipService', () => {
   it('updates sponsor operational data for admin editing', async () => {
     prisma.sponsor = {
       ...prisma.sponsor,
-      findUnique: jest.fn().mockResolvedValue({ id: 'sponsor-1' }),
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        companyName: 'Acme',
+        contactName: 'Joao',
+        email: 'joao@acme.com',
+        phone: '86999999999',
+        logoUrl: null,
+        quotaId: 'quota-1',
+        status: SponsorStatus.active,
+      }),
       update: jest.fn().mockResolvedValue({
         id: 'sponsor-1',
         companyName: 'Acme Atualizada',
@@ -373,6 +384,7 @@ describe('SponsorshipService', () => {
         },
       }),
     } as any;
+    prisma.auditLog.createMany.mockResolvedValue({ count: 7 });
     prisma.sponsorshipQuota = {
       ...prisma.sponsorshipQuota,
       findUnique: jest.fn().mockResolvedValue({ id: 'quota-2' }),
@@ -386,7 +398,7 @@ describe('SponsorshipService', () => {
       logoUrl: 'https://example.com/logo.png',
       quotaId: 'quota-2',
       status: SponsorStatus.inactive,
-    });
+    }, 'admin-1');
 
     expect(prisma.sponsor.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -398,6 +410,7 @@ describe('SponsorshipService', () => {
         }),
       }),
     );
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result).toMatchObject({
       companyName: 'Acme Atualizada',
       status: 'inactive',

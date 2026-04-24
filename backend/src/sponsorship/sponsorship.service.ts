@@ -7,6 +7,43 @@ import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 export class SponsorshipService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private toAuditValue(value: unknown) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return String(value);
+  }
+
+  private async createAuditEntries(
+    sponsorId: string,
+    sponsorLabel: string,
+    changedBy: string | undefined,
+    action: string,
+    changes: Array<{ fieldChanged?: string; oldValue?: unknown; newValue?: unknown }>,
+  ) {
+    if (!changedBy || changes.length === 0) {
+      return;
+    }
+
+    await this.prisma.auditLog.createMany({
+      data: changes.map((change) => ({
+        entityType: 'sponsor',
+        entityId: sponsorId,
+        entityLabel: sponsorLabel,
+        action,
+        fieldChanged: change.fieldChanged,
+        oldValue: this.toAuditValue(change.oldValue),
+        newValue: this.toAuditValue(change.newValue),
+        changedBy,
+      })),
+    });
+  }
+
   private normalizePage(value?: string) {
     const parsed = Number(value ?? 1);
     return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
@@ -375,7 +412,7 @@ export class SponsorshipService {
     }));
   }
 
-  async activateSponsor(sponsorId: string) {
+  async activateSponsor(sponsorId: string, changedBy?: string) {
     const sponsor = await this.prisma.sponsor.findUnique({
       where: { id: sponsorId },
       include: {
@@ -435,6 +472,21 @@ export class SponsorshipService {
       });
     });
 
+    await this.createAuditEntries(
+      created.id,
+      sponsor.companyName,
+      changedBy,
+      'activate',
+      [
+        { fieldChanged: 'status', oldValue: sponsor.status, newValue: created.status },
+        {
+          fieldChanged: 'couponsGenerated',
+          oldValue: existingCouponCount,
+          newValue: created.coupons.length,
+        },
+      ],
+    );
+
     return {
       id: created.id,
       status: created.status,
@@ -442,10 +494,19 @@ export class SponsorshipService {
     };
   }
 
-  async updateSponsor(sponsorId: string, input: UpdateSponsorDto) {
+  async updateSponsor(sponsorId: string, input: UpdateSponsorDto, changedBy?: string) {
     const sponsor = await this.prisma.sponsor.findUnique({
       where: { id: sponsorId },
-      select: { id: true },
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        email: true,
+        phone: true,
+        logoUrl: true,
+        quotaId: true,
+        status: true,
+      },
     });
 
     if (!sponsor) {
@@ -490,6 +551,27 @@ export class SponsorshipService {
         },
       },
     });
+
+    await this.createAuditEntries(sponsorId, updated.companyName, changedBy, 'update', [
+      {
+        fieldChanged: 'companyName',
+        oldValue: sponsor.companyName,
+        newValue: updated.companyName,
+      },
+      {
+        fieldChanged: 'contactName',
+        oldValue: sponsor.contactName,
+        newValue: updated.contactName,
+      },
+      { fieldChanged: 'email', oldValue: sponsor.email, newValue: updated.email },
+      { fieldChanged: 'phone', oldValue: sponsor.phone, newValue: updated.phone },
+      { fieldChanged: 'logoUrl', oldValue: sponsor.logoUrl, newValue: updated.logoUrl },
+      { fieldChanged: 'quotaId', oldValue: sponsor.quotaId, newValue: updated.quota.id },
+      { fieldChanged: 'status', oldValue: sponsor.status, newValue: updated.status },
+    ].filter(
+      (change) =>
+        this.toAuditValue(change.oldValue) !== this.toAuditValue(change.newValue),
+    ));
 
     return {
       id: updated.id,

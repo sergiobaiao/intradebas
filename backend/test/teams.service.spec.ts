@@ -88,7 +88,12 @@ describe('TeamsService', () => {
   });
 
   it('updates a team when it exists', async () => {
-    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.team.findUnique.mockResolvedValue({
+      id: 'team-1',
+      name: 'Mucura',
+      color: '#E63946',
+    });
+    prisma.auditLog.createMany.mockResolvedValue({ count: 2 });
     prisma.team.update.mockResolvedValue({
       id: 'team-1',
       name: 'Mucura Prime',
@@ -99,20 +104,23 @@ describe('TeamsService', () => {
     const result = await service.update('team-1', {
       name: 'Mucura Prime',
       color: '#111111',
-    });
+    }, 'admin-1');
 
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result.name).toBe('Mucura Prime');
   });
 
   it('deletes an empty team', async () => {
-    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1', name: 'Mucura' });
     prisma.athlete.count.mockResolvedValue(0);
     prisma.result.count.mockResolvedValue(0);
+    prisma.auditLog.createMany.mockResolvedValue({ count: 1 });
     prisma.team.delete.mockResolvedValue({ id: 'team-1' });
 
-    const result = await service.remove('team-1');
+    const result = await service.remove('team-1', 'admin-1');
 
     expect(prisma.team.delete).toHaveBeenCalledWith({ where: { id: 'team-1' } });
+    expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result).toEqual({ id: 'team-1', deleted: true });
   });
 

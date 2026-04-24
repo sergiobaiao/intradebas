@@ -20,6 +20,47 @@ import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 export class AthletesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private toAuditValue(value: unknown) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    if (Array.isArray(value)) {
+      return value.join(', ');
+    }
+
+    return String(value);
+  }
+
+  private async createAuditEntries(
+    athleteId: string,
+    athleteName: string,
+    changedBy: string | undefined,
+    action: string,
+    changes: Array<{ fieldChanged?: string; oldValue?: unknown; newValue?: unknown }>,
+  ) {
+    if (!changedBy || changes.length === 0) {
+      return;
+    }
+
+    await this.prisma.auditLog.createMany({
+      data: changes.map((change) => ({
+        entityType: 'athlete',
+        entityId: athleteId,
+        entityLabel: athleteName,
+        action,
+        fieldChanged: change.fieldChanged,
+        oldValue: this.toAuditValue(change.oldValue),
+        newValue: this.toAuditValue(change.newValue),
+        changedBy,
+      })),
+    });
+  }
+
   private normalizePage(value?: string) {
     const parsed = Number(value ?? 1);
     return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
@@ -364,12 +405,23 @@ export class AthletesService {
     return this.toResponse(athlete);
   }
 
-  async update(id: string, dto: UpdateAthleteDto) {
+  async update(id: string, dto: UpdateAthleteDto, changedBy?: string) {
     const athlete = await this.prisma.athlete.findUnique({
       where: { id },
       select: {
         id: true,
+        name: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        unit: true,
         teamId: true,
+        shirtSize: true,
+        registrations: {
+          select: {
+            sportId: true,
+          },
+        },
       },
     });
 
@@ -447,13 +499,45 @@ export class AthletesService {
       });
     });
 
+    await this.createAuditEntries(
+      id,
+      updated.name,
+      changedBy,
+      'update',
+      [
+        { fieldChanged: 'name', oldValue: athlete.name, newValue: updated.name },
+        { fieldChanged: 'email', oldValue: athlete.email, newValue: updated.email },
+        { fieldChanged: 'phone', oldValue: athlete.phone, newValue: updated.phone },
+        {
+          fieldChanged: 'birthDate',
+          oldValue: athlete.birthDate,
+          newValue: updated.birthDate,
+        },
+        { fieldChanged: 'unit', oldValue: athlete.unit, newValue: updated.unit },
+        { fieldChanged: 'teamId', oldValue: athlete.teamId, newValue: updated.team.id },
+        {
+          fieldChanged: 'shirtSize',
+          oldValue: athlete.shirtSize,
+          newValue: updated.shirtSize,
+        },
+        {
+          fieldChanged: 'sports',
+          oldValue: athlete.registrations.map((registration) => registration.sportId).sort(),
+          newValue: updated.registrations.map((registration) => registration.sport.id).sort(),
+        },
+      ].filter(
+        (change) =>
+          this.toAuditValue(change.oldValue) !== this.toAuditValue(change.newValue),
+      ),
+    );
+
     return this.toResponse(updated);
   }
 
-  async updateStatus(id: string, dto: UpdateAthleteStatusDto) {
+  async updateStatus(id: string, dto: UpdateAthleteStatusDto, changedBy?: string) {
     const athlete = await this.prisma.athlete.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, name: true, status: true },
     });
 
     if (!athlete) {
@@ -475,13 +559,21 @@ export class AthletesService {
       },
     });
 
+    await this.createAuditEntries(id, athlete.name, changedBy, 'status_change', [
+      {
+        fieldChanged: 'status',
+        oldValue: athlete.status,
+        newValue: updated.status,
+      },
+    ]);
+
     return this.toResponse(updated);
   }
 
-  async remove(id: string) {
+  async remove(id: string, changedBy?: string) {
     const athlete = await this.prisma.athlete.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (!athlete) {
@@ -511,6 +603,10 @@ export class AthletesService {
       await tx.registration.deleteMany({ where: { athleteId: id } });
       await tx.athlete.delete({ where: { id } });
     });
+
+    await this.createAuditEntries(id, athlete.name, changedBy, 'delete', [
+      { oldValue: athlete.name, newValue: null },
+    ]);
 
     return { id, deleted: true };
   }

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuditModule } from './audit/audit.module';
 import { AthletesModule } from './athletes/athletes.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
@@ -14,6 +15,7 @@ import { TeamsModule } from './teams/teams.module';
   imports: [
     PrismaModule,
     AuthModule,
+    AuditModule,
     HealthModule,
     MediaModule,
     ResultsModule,

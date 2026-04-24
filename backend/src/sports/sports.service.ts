@@ -7,6 +7,43 @@ import { UpdateSportDto } from './dto/update-sport.dto';
 export class SportsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private toAuditValue(value: unknown) {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return String(value);
+  }
+
+  private async createAuditEntries(
+    sportId: string,
+    sportName: string,
+    changedBy: string | undefined,
+    action: string,
+    changes: Array<{ fieldChanged?: string; oldValue?: unknown; newValue?: unknown }>,
+  ) {
+    if (!changedBy || changes.length === 0) {
+      return;
+    }
+
+    await this.prisma.auditLog.createMany({
+      data: changes.map((change) => ({
+        entityType: 'sport',
+        entityId: sportId,
+        entityLabel: sportName,
+        action,
+        fieldChanged: change.fieldChanged,
+        oldValue: this.toAuditValue(change.oldValue),
+        newValue: this.toAuditValue(change.newValue),
+        changedBy,
+      })),
+    });
+  }
+
   async findAll() {
     return this.prisma.sport.findMany({
       orderBy: {
@@ -59,17 +96,24 @@ export class SportsService {
     });
   }
 
-  async update(id: string, dto: UpdateSportDto) {
+  async update(id: string, dto: UpdateSportDto, changedBy?: string) {
     const sport = await this.prisma.sport.findUnique({
       where: { id },
-      select: { id: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isActive: true,
+        scheduleDate: true,
+        scheduleNotes: true,
+      },
     });
 
     if (!sport) {
       throw new NotFoundException('Modalidade nao encontrada');
     }
 
-    return this.prisma.sport.update({
+    const updated = await this.prisma.sport.update({
       where: { id },
       data: {
         name: dto.name,
@@ -79,12 +123,41 @@ export class SportsService {
         scheduleNotes: dto.scheduleNotes,
       },
     });
+
+    await this.createAuditEntries(id, updated.name, changedBy, 'update', [
+      { fieldChanged: 'name', oldValue: sport.name, newValue: updated.name },
+      {
+        fieldChanged: 'description',
+        oldValue: sport.description,
+        newValue: updated.description,
+      },
+      {
+        fieldChanged: 'isActive',
+        oldValue: sport.isActive,
+        newValue: updated.isActive,
+      },
+      {
+        fieldChanged: 'scheduleDate',
+        oldValue: sport.scheduleDate,
+        newValue: updated.scheduleDate,
+      },
+      {
+        fieldChanged: 'scheduleNotes',
+        oldValue: sport.scheduleNotes,
+        newValue: updated.scheduleNotes,
+      },
+    ].filter(
+      (change) =>
+        this.toAuditValue(change.oldValue) !== this.toAuditValue(change.newValue),
+    ));
+
+    return updated;
   }
 
-  async remove(id: string) {
+  async remove(id: string, changedBy?: string) {
     const sport = await this.prisma.sport.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (!sport) {
@@ -105,6 +178,10 @@ export class SportsService {
     }
 
     await this.prisma.sport.delete({ where: { id } });
+
+    await this.createAuditEntries(id, sport.name, changedBy, 'delete', [
+      { oldValue: sport.name, newValue: null },
+    ]);
 
     return { id, deleted: true };
   }

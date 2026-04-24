@@ -189,6 +189,23 @@ export type ResultAuditLogSummary = {
   };
 };
 
+export type AuditLogSummary = {
+  id: string;
+  entityType: string;
+  entityId: string;
+  entityLabel?: string | null;
+  action: string;
+  fieldChanged?: string | null;
+  oldValue?: string | null;
+  newValue?: string | null;
+  changedAt: string;
+  changer: {
+    id: string;
+    name: string;
+    email: string;
+  };
+};
+
 export type MediaAdminSummary = {
   id: string;
   type: 'photo' | 'video';
@@ -583,6 +600,12 @@ export function adminUpdateResult(resultId: string, input: Partial<ResultInput>)
 
 export function adminGetResultAuditLogs() {
   return adminFetchJson<ResultAuditLogSummary[]>('/results/audit');
+}
+
+export function adminGetAuditLogs(entityType?: string) {
+  return adminFetchJson<AuditLogSummary[]>(
+    `/audit${buildQuery({ entityType })}`,
+  );
 }
 
 export function adminGetAthleteReviewPage(input: {

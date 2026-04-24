@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AthletesService } from './athletes.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
@@ -44,19 +44,27 @@ export class AthletesController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() dto: UpdateAthleteDto) {
-    return this.athletesService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateAthleteDto,
+    @Req() request: { user: { sub: string } },
+  ) {
+    return this.athletesService.update(id, dto, request.user.sub);
   }
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard)
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateAthleteStatusDto) {
-    return this.athletesService.updateStatus(id, dto);
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateAthleteStatusDto,
+    @Req() request: { user: { sub: string } },
+  ) {
+    return this.athletesService.updateStatus(id, dto, request.user.sub);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) {
-    return this.athletesService.remove(id);
+  remove(@Param('id') id: string, @Req() request: { user: { sub: string } }) {
+    return this.athletesService.remove(id, request.user.sub);
   }
 }

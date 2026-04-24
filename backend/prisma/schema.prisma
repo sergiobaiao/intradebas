@@ -88,6 +88,7 @@ model User {
 
   recordedResults Result[]          @relation("recorded_results")
   resultChanges   ResultAuditLog[]  @relation("audit_changed_by")
+  auditLogs       AuditLog[]        @relation("generic_audit_changed_by")
   scoringConfigs  ScoringConfig[]
   uploadedMedia   Media[]
 
@@ -229,6 +230,27 @@ model ResultAuditLog {
   @@index([resultId, changedAt])
   @@index([changedBy, changedAt])
   @@map("result_audit_log")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  entityType   String   @map("entity_type")
+  entityId     String   @map("entity_id")
+  entityLabel  String?  @map("entity_label")
+  action       String
+  fieldChanged String?  @map("field_changed")
+  oldValue     String?  @map("old_value")
+  newValue     String?  @map("new_value")
+  changedBy    String   @map("changed_by")
+  changedAt    DateTime @default(now()) @map("changed_at")
+
+  changer User @relation("generic_audit_changed_by", fields: [changedBy], references: [id])
+
+  @@index([changedAt])
+  @@index([entityType, changedAt])
+  @@index([entityType, entityId, changedAt])
+  @@index([changedBy, changedAt])
+  @@map("audit_log")
 }
 
 model ScoringConfig {

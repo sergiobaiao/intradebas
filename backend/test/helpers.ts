@@ -32,6 +32,11 @@ export function createPrismaMock() {
       findMany: jest.fn(),
       createMany: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn(),
+      createMany: jest.fn(),
+      findMany: jest.fn(),
+    },
     scoringConfig: {
       create: jest.fn(),
       delete: jest.fn(),
