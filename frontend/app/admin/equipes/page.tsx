@@ -133,6 +133,9 @@ export default function AdminEquipesPage() {
                   </div>
                 ) : null}
                 <div className="cta-row">
+                  <a className="button secondary" href={`/admin/equipes/${team.id}`}>
+                    Ver equipe
+                  </a>
                   {editingId === team.id ? (
                     <>
                       <button className="button primary" type="button" onClick={() => saveTeam(team.id)}>

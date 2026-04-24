@@ -5,6 +5,10 @@ export type TeamSummary = {
   totalScore: number;
 };
 
+export type TeamDetailSummary = TeamSummary & {
+  athletesCount: number;
+};
+
 export type AthleteSummary = {
   id: string;
   name: string;
@@ -301,6 +305,14 @@ async function fetchJson<T>(path: string, emptyValue: T): Promise<T> {
 
 export function getTeams() {
   return fetchJson<TeamSummary[]>('/teams', []);
+}
+
+export function getTeam(id: string) {
+  return fetchJson<TeamDetailSummary | null>(`/teams/${id}`, null);
+}
+
+export function getTeamAthletes(id: string) {
+  return fetchJson<AthleteSummary[]>(`/teams/${id}/athletes`, []);
 }
 
 export function getRanking() {
