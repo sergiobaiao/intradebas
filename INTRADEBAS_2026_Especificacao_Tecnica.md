@@ -174,6 +174,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial |
 | Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe e modalidades | ✅ Implementado |
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
+| Portal do Patrocinador | Acesso por link de e-mail para status da cota e cupons | ✅ Implementado |
 | Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | ✅ Implementado |
 | ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | 🟡 Parcial (página dedicada com dados reais; categorias/faixas ainda pendentes de regulamento) |
 | Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
@@ -230,7 +231,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 |---|---|---|
 | **Visitante** | Qualquer pessoa sem cadastro | Portal público: Home, Resultados, Patrocínio (consulta), ALDEBARUN |
 | **Atleta** | Morador, Familiar ou Convidado inscrito | Portal público + área do atleta (ver própria inscrição, modalidades, equipe) |
-| **Patrocinador** | Empresa/pessoa com cota ativa | Área de patrocinador (ver cupons, status da cota) |
+| **Patrocinador** | Empresa/pessoa com cota ativa | Área de patrocinador implementada (ver cupons, status da cota) |
 | **Admin Operacional** | Membro da Comissão Organizadora | Painel Admin completo exceto configurações críticas e gestão de admins |
 | **Superadmin** | Responsável técnico/chefe da Comissão | Acesso total, incluindo configurações, exclusão de dados e gestão de admins |
 

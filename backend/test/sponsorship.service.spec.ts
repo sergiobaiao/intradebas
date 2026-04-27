@@ -1,11 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
 import { CouponStatus, SponsorshipLevel, SponsorStatus } from '@prisma/client';
+import { MailService } from '../src/mail/mail.service';
 import { SponsorshipService } from '../src/sponsorship/sponsorship.service';
 import { createPrismaMock } from './helpers';
 
 describe('SponsorshipService', () => {
   const prisma = createPrismaMock();
-  const service = new SponsorshipService(prisma as any);
+  const mailService = {
+    sendSponsorPortalAccessEmail: jest.fn(),
+  } as unknown as MailService;
+  const service = new SponsorshipService(prisma as any, mailService);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -86,6 +90,112 @@ describe('SponsorshipService', () => {
     expect(prisma.sponsor.create).toHaveBeenCalled();
     expect(result.status).toBe('pending');
     expect(result.email).toBe('joao@acme.com');
+  });
+
+  it('sends sponsor portal access by e-mail when sponsor exists', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findFirst: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        companyName: 'Acme',
+        contactName: 'Joao',
+        email: 'joao@acme.com',
+      }),
+    } as any;
+    prisma.$executeRaw.mockResolvedValue(1);
+
+    const result = await service.requestPortalAccess('JOAO@ACME.COM');
+
+    expect(result).toEqual({ success: true });
+    expect(prisma.sponsor.findFirst).toHaveBeenCalledWith({
+      where: {
+        email: 'joao@acme.com',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        email: true,
+      },
+    });
+    expect(mailService.sendSponsorPortalAccessEmail).toHaveBeenCalled();
+  });
+
+  it('returns success without e-mailing when sponsor portal access is requested for unknown e-mail', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findFirst: jest.fn().mockResolvedValue(null),
+    } as any;
+
+    const result = await service.requestPortalAccess('missing@example.com');
+
+    expect(result).toEqual({ success: true });
+    expect(mailService.sendSponsorPortalAccessEmail).not.toHaveBeenCalled();
+  });
+
+  it('returns sponsor portal session with coupons for a valid token', async () => {
+    prisma.$queryRaw.mockResolvedValue([
+      {
+        id: 'portal-token-1',
+        sponsorId: 'sponsor-1',
+        expiresAt: new Date(Date.now() + 60_000),
+      },
+    ]);
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        companyName: 'Acme',
+        contactName: 'Joao',
+        email: 'joao@acme.com',
+        phone: '86999999999',
+        logoUrl: null,
+        status: SponsorStatus.active,
+        paymentDate: new Date('2026-04-20T12:00:00Z'),
+        paymentNotes: 'Pago',
+        createdAt: new Date('2026-04-19T10:00:00Z'),
+        quota: {
+          id: 'quota-1',
+          level: SponsorshipLevel.ouro,
+          price: 1000,
+          courtesyCount: 4,
+          benefits: 'Frente camisa',
+          backdropPriority: 3,
+        },
+        coupons: [
+          {
+            id: 'coupon-1',
+            code: 'OURO-AAAA1111',
+            status: CouponStatus.active,
+            createdAt: new Date('2026-04-19T10:00:00Z'),
+            redeemedAt: null,
+            athlete: null,
+          },
+        ],
+      }),
+    } as any;
+    prisma.$executeRaw.mockResolvedValue(1);
+
+    const result = await service.getPortalSession('portal-token');
+
+    expect(result.sponsor.companyName).toBe('Acme');
+    expect(result.coupons).toHaveLength(1);
+    expect(prisma.$executeRaw).toHaveBeenCalled();
+  });
+
+  it('rejects expired sponsor portal token', async () => {
+    prisma.$queryRaw.mockResolvedValue([
+      {
+        id: 'portal-token-1',
+        sponsorId: 'sponsor-1',
+        expiresAt: new Date(Date.now() - 60_000),
+      },
+    ]);
+
+    await expect(service.getPortalSession('expired')).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('lists only active sponsors for the public backdrop ordered by priority', async () => {

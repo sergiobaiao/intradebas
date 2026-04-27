@@ -59,6 +59,11 @@ export default function PatrocinioPage() {
         <span className="eyebrow">Patrocinio</span>
         <h1>Cotas de patrocinio</h1>
         <p>Veja a disponibilidade das cotas e registre seu interesse de patrocinio.</p>
+        <div className="cta-row" style={{ marginTop: '16px' }}>
+          <a className="button secondary" href="/patrocinador">
+            Ja sou patrocinador
+          </a>
+        </div>
 
         <div className="grid-3 sponsorship-grid">
           {quotas.map((quota) => (
@@ -110,6 +115,9 @@ export default function PatrocinioPage() {
               <button className="button primary" type="submit" disabled={submitting || !selectedQuotaId}>
                 {submitting ? 'Enviando...' : 'Registrar interesse'}
               </button>
+              <a className="button secondary" href="/patrocinador">
+                Entrar no portal do patrocinador
+              </a>
             </div>
           </form>
         </div>
@@ -117,4 +125,3 @@ export default function PatrocinioPage() {
     </main>
   );
 }
-

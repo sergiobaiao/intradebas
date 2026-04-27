@@ -126,6 +126,43 @@ export type CouponAdminSummary = {
   } | null;
 };
 
+export type SponsorPortalCouponSummary = {
+  id: string;
+  code: string;
+  status: 'active' | 'used' | 'expired';
+  createdAt: string;
+  redeemedAt?: string | null;
+  athlete?: {
+    id: string;
+    name: string;
+    cpf: string;
+  } | null;
+};
+
+export type SponsorPortalSession = {
+  sponsor: {
+    id: string;
+    companyName: string;
+    contactName: string;
+    email: string;
+    phone?: string | null;
+    logoUrl?: string | null;
+    status: 'pending' | 'active' | 'inactive';
+    paymentDate?: string | null;
+    paymentNotes?: string | null;
+    createdAt: string;
+    quota: {
+      id: string;
+      level: 'bronze' | 'prata' | 'ouro';
+      price: number;
+      courtesyCount: number;
+      benefits?: string | null;
+      backdropPriority: number;
+    };
+  };
+  coupons: SponsorPortalCouponSummary[];
+};
+
 export type RankingRow = {
   id: string;
   name: string;
@@ -558,6 +595,51 @@ export async function createSponsorInterest(input: {
   }
 
   return response.json();
+}
+
+export async function requestSponsorPortalAccess(input: { email: string }) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/sponsors/portal/access-request`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao solicitar acesso ao portal do patrocinador');
+  }
+
+  return (await response.json()) as { success: true };
+}
+
+export async function getSponsorPortalSession(token: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/sponsors/portal/session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao carregar portal do patrocinador');
+  }
+
+  return (await response.json()) as SponsorPortalSession;
 }
 
 export async function createAthleteRegistration(input: CreateAthleteInput) {

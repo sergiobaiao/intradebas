@@ -32,4 +32,33 @@ export class MailService {
       `,
     });
   }
+
+  async sendSponsorPortalAccessEmail(input: {
+    to: string;
+    name: string;
+    companyName: string;
+    portalUrl: string;
+  }) {
+    const from = process.env.MAIL_FROM ?? 'noreply@intradebas.local';
+
+    await this.transporter.sendMail({
+      from,
+      to: input.to,
+      subject: 'Acesso ao portal do patrocinador - INTRADEBAS 2026',
+      text: [
+        `Ola, ${input.name}.`,
+        '',
+        `Seu acesso ao portal do patrocinador da ${input.companyName} esta disponivel no link abaixo:`,
+        input.portalUrl,
+        '',
+        'Se voce nao reconhece esta solicitacao, ignore este e-mail.',
+      ].join('\n'),
+      html: `
+        <p>Ola, ${input.name}.</p>
+        <p>Seu acesso ao portal do patrocinador da <strong>${input.companyName}</strong> esta disponivel no link abaixo:</p>
+        <p><a href="${input.portalUrl}">Abrir portal do patrocinador</a></p>
+        <p>Se voce nao reconhece esta solicitacao, ignore este e-mail.</p>
+      `,
+    });
+  }
 }

@@ -1,11 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CouponStatus, Prisma, SponsorStatus } from '@prisma/client';
+import { createHash, randomBytes } from 'crypto';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 
 @Injectable()
 export class SponsorshipService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   private toAuditValue(value: unknown) {
     if (value === null || value === undefined) {
@@ -61,6 +66,10 @@ export class SponsorshipService {
   private generateCouponCode(level: string) {
     const randomPart = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
     return `${level.toUpperCase()}-${randomPart}`;
+  }
+
+  private hashPortalToken(value: string) {
+    return createHash('sha256').update(value).digest('hex');
   }
 
   async listQuotas() {
@@ -155,6 +164,156 @@ export class SponsorshipService {
         level: sponsor.quota.level,
         price: Number(sponsor.quota.price),
       },
+    };
+  }
+
+  async requestPortalAccess(email: string) {
+    const sponsor = await this.prisma.sponsor.findFirst({
+      where: {
+        email: email.toLowerCase(),
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        companyName: true,
+        contactName: true,
+        email: true,
+      },
+    });
+
+    if (!sponsor) {
+      return { success: true };
+    }
+
+    const rawToken = randomBytes(24).toString('hex');
+    const tokenHash = this.hashPortalToken(rawToken);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+    await this.prisma.$executeRaw(Prisma.sql`
+      DELETE FROM "sponsor_portal_tokens"
+      WHERE "sponsor_id" = ${sponsor.id}
+    `);
+
+    await this.prisma.$executeRaw(Prisma.sql`
+      INSERT INTO "sponsor_portal_tokens" (
+        "id",
+        "sponsor_id",
+        "token_hash",
+        "expires_at",
+        "created_at"
+      )
+      VALUES (
+        gen_random_uuid()::text,
+        ${sponsor.id},
+        ${tokenHash},
+        ${expiresAt},
+        NOW()
+      )
+    `);
+
+    const frontendBaseUrl = process.env.FRONTEND_BASE_URL ?? 'http://localhost:3000';
+    const portalUrl = `${frontendBaseUrl}/patrocinador?token=${encodeURIComponent(rawToken)}`;
+
+    await this.mailService.sendSponsorPortalAccessEmail({
+      to: sponsor.email,
+      name: sponsor.contactName,
+      companyName: sponsor.companyName,
+      portalUrl,
+    });
+
+    return { success: true };
+  }
+
+  async getPortalSession(token: string) {
+    const tokenHash = this.hashPortalToken(token);
+    const rows = await this.prisma.$queryRaw<Array<{
+      id: string;
+      sponsorId: string;
+      expiresAt: Date;
+    }>>(Prisma.sql`
+      SELECT
+        "id",
+        "sponsor_id" AS "sponsorId",
+        "expires_at" AS "expiresAt"
+      FROM "sponsor_portal_tokens"
+      WHERE "token_hash" = ${tokenHash}
+      LIMIT 1
+    `);
+    const portalToken = rows[0];
+
+    if (!portalToken || portalToken.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('Link de acesso invalido ou expirado');
+    }
+
+    await this.prisma.$executeRaw(Prisma.sql`
+      UPDATE "sponsor_portal_tokens"
+      SET "last_accessed_at" = ${new Date()}
+      WHERE "id" = ${portalToken.id}
+    `);
+
+    const sponsor = await this.prisma.sponsor.findUnique({
+      where: { id: portalToken.sponsorId },
+      include: {
+        quota: {
+          select: {
+            id: true,
+            level: true,
+            price: true,
+            courtesyCount: true,
+            benefits: true,
+            backdropPriority: true,
+          },
+        },
+        coupons: {
+          include: {
+            athlete: {
+              select: {
+                id: true,
+                name: true,
+                cpf: true,
+              },
+            },
+          },
+          orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
+        },
+      },
+    });
+
+    if (!sponsor) {
+      throw new BadRequestException('Patrocinador vinculado ao link nao foi encontrado');
+    }
+
+    return {
+      sponsor: {
+        id: sponsor.id,
+        companyName: sponsor.companyName,
+        contactName: sponsor.contactName,
+        email: sponsor.email,
+        phone: sponsor.phone,
+        logoUrl: sponsor.logoUrl,
+        status: sponsor.status,
+        paymentDate: sponsor.paymentDate,
+        paymentNotes: sponsor.paymentNotes,
+        createdAt: sponsor.createdAt,
+        quota: {
+          id: sponsor.quota.id,
+          level: sponsor.quota.level,
+          price: Number(sponsor.quota.price),
+          courtesyCount: sponsor.quota.courtesyCount,
+          benefits: sponsor.quota.benefits,
+          backdropPriority: sponsor.quota.backdropPriority,
+        },
+      },
+      coupons: sponsor.coupons.map((coupon: SponsorPortalCouponWithAthlete) => ({
+        id: coupon.id,
+        code: coupon.code,
+        status: coupon.status,
+        createdAt: coupon.createdAt,
+        redeemedAt: coupon.redeemedAt,
+        athlete: coupon.athlete,
+      })),
     };
   }
 
@@ -735,6 +894,18 @@ type AdminCoupon = Prisma.CouponGetPayload<{
         companyName: true;
       };
     };
+    athlete: {
+      select: {
+        id: true;
+        name: true;
+        cpf: true;
+      };
+    };
+  };
+}>;
+
+type SponsorPortalCouponWithAthlete = Prisma.CouponGetPayload<{
+  include: {
     athlete: {
       select: {
         id: true;

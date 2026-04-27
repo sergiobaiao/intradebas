@@ -12,6 +12,7 @@ export function PublicFooter() {
 
         <div className="public-footer-links">
           <a href="/privacidade">Politica de privacidade</a>
+          <a href="/patrocinador">Portal do patrocinador</a>
           <a
             href="https://wa.me/5586988265569?text=Ola%2C%20preciso%20de%20suporte%20no%20portal%20INTRADEBAS%202026."
             target="_blank"

@@ -67,10 +67,17 @@ export function createPrismaMock() {
     sponsor: {
       count: jest.fn(),
       create: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       findUniqueOrThrow: jest.fn(),
+    },
+    sponsorPortalToken: {
+      create: jest.fn(),
+      deleteMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
     },
     sport: {
       create: jest.fn(),

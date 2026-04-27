@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateSponsorInterestDto } from './dto/create-sponsor-interest.dto';
+import { GetSponsorPortalSessionDto } from './dto/get-sponsor-portal-session.dto';
+import { RequestSponsorPortalAccessDto } from './dto/request-sponsor-portal-access.dto';
 import { UpdateSponsorDto } from './dto/update-sponsor.dto';
 import { SponsorshipService } from './sponsorship.service';
 
@@ -16,6 +18,16 @@ export class SponsorshipController {
   @Post('sponsors')
   createSponsorInterest(@Body() dto: CreateSponsorInterestDto) {
     return this.sponsorshipService.createSponsorInterest(dto);
+  }
+
+  @Post('sponsors/portal/access-request')
+  requestPortalAccess(@Body() dto: RequestSponsorPortalAccessDto) {
+    return this.sponsorshipService.requestPortalAccess(dto.email);
+  }
+
+  @Post('sponsors/portal/session')
+  getPortalSession(@Body() dto: GetSponsorPortalSessionDto) {
+    return this.sponsorshipService.getPortalSession(dto.token);
   }
 
   @Get('sponsors')
