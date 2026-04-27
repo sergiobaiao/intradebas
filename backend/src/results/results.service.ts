@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { from, interval, map, Observable, startWith, switchMap } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateResultDto } from './dto/create-result.dto';
 import { UpdateResultDto } from './dto/update-result.dto';
@@ -229,6 +230,14 @@ export class ResultsService {
 
         return left.name.localeCompare(right.name);
       });
+  }
+
+  streamRanking(intervalMs = 5000): Observable<{ data: RankingRow[] }> {
+    return interval(intervalMs).pipe(
+      startWith(0),
+      switchMap(() => from(this.getRanking())),
+      map((data) => ({ data })),
+    );
   }
 
   async createResult(dto: CreateResultDto, recordedBy: string) {

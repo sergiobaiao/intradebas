@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, MessageEvent, Param, Patch, Post, Query, Req, Sse, UseGuards } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateBulkResultsDto } from './dto/create-bulk-results.dto';
 import { CreateResultDto } from './dto/create-result.dto';
@@ -38,6 +39,11 @@ export class ResultsController {
   @Get('ranking')
   getRanking() {
     return this.resultsService.getRanking();
+  }
+
+  @Sse('ranking/live')
+  streamRanking(): Observable<MessageEvent> {
+    return this.resultsService.streamRanking();
   }
 
   @Get('audit')

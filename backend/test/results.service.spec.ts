@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { firstValueFrom, take } from 'rxjs';
 import { ResultsService } from '../src/results/results.service';
 import { createPrismaMock } from './helpers';
 
@@ -85,6 +86,30 @@ describe('ResultsService', () => {
 
     expect(prisma.result.create).toHaveBeenCalled();
     expect(result.calculatedPoints).toBe(5);
+  });
+
+  it('streams the ranking payload for SSE consumers', async () => {
+    prisma.result.groupBy.mockResolvedValue([
+      {
+        teamId: 'team-1',
+        _sum: {
+          calculatedPoints: 5,
+        },
+      },
+    ]);
+    prisma.team.findMany.mockResolvedValue([
+      {
+        id: 'team-1',
+        name: 'Mucura',
+        color: '#E63946',
+      },
+    ]);
+
+    const event = await firstValueFrom(service.streamRanking(1).pipe(take(1)));
+
+    expect(event).toEqual({
+      data: [{ id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 5 }],
+    });
   });
 
   it('lists ALDEBARUN results for the public race ranking', async () => {

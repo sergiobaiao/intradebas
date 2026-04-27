@@ -174,7 +174,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial |
 | Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe e modalidades | ✅ Implementado |
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
-| Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | 🟡 Implementado com polling/refresh, sem WebSocket/SSE |
+| Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | 🟡 Parcial (SSE implementado; Redis Pub/Sub ainda pendente) |
 | ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | 🟡 Parcial (página dedicada com dados reais; categorias/faixas ainda pendentes de regulamento) |
 | Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
 | Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial |
@@ -1499,7 +1499,7 @@ Duração estimada: 4 semanas
 Duração estimada: 3 semanas
 
 ### Semana 6 — Tempo Real e Backdrop
-- [ ] Implementação de SSE (Server-Sent Events) para placar ao vivo
+- [x] Implementação de SSE (Server-Sent Events) para placar ao vivo
 - [ ] Redis Pub/Sub integrado ao motor de cálculo
 - [~] Componente Backdrop Digital dinâmico com rotação e prioridade Ouro
 - [x] Upload de logos no Admin (MinIO)
@@ -1602,7 +1602,7 @@ Duração estimada: 2 semanas
 - 🟡 Deploy em Docker (ambiente de projeto pronto; homologação/produção real ainda não ativadas)
 
 **Exclui (Fase 2):**
-- ❌ Live Score via WebSocket/SSE (substituído por polling no MVP)
+- 🟡 Live Score via SSE (Redis/WebSocket ainda pendentes)
 - 🟡 Backdrop Digital dinâmico com rotação
 - 🟡 Galeria de fotos e vídeos
 - 🟡 Página dedicada ALDEBARUN II com ranking de corrida (sem faixas etárias/sexo definidas)
@@ -1617,7 +1617,7 @@ Duração estimada: 2 semanas
 |---|---|
 | MVP central do evento | ✅ Majoritariamente implementado |
 | Painel administrativo operacional | ✅ Forte |
-| Tempo real pleno (SSE/WebSocket + Redis) | ❌ Pendente |
+| Tempo real pleno (SSE/WebSocket + Redis) | 🟡 Parcial |
 | LGPD completo | 🟡 Parcial |
 | Autenticação completa (refresh/reset/admin management) | ✅ Implementado |
 | Portal público premium completo | 🟡 Parcial |
