@@ -63,22 +63,41 @@ describe('ResultsService', () => {
   });
 
   it('creates a result with calculated points from scoring config', async () => {
-    prisma.sport.findUnique.mockResolvedValue({
-      id: 'sport-1',
-      category: 'coletiva',
-    });
-    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
-    prisma.scoringConfig.findFirst.mockResolvedValue({ points: 5 });
-    prisma.result.create.mockResolvedValue({
-      id: 'result-1',
-      sportId: 'sport-1',
-      teamId: 'team-1',
-      position: 1,
-      calculatedPoints: 5,
-      resultDate: new Date('2026-04-18T00:00:00Z'),
-      sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
-      team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
-    });
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        sport: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sport-1',
+            category: 'coletiva',
+          }),
+        },
+        team: {
+          findUnique: jest.fn().mockResolvedValue({ id: 'team-1' }),
+          update: jest.fn().mockResolvedValue({ id: 'team-1', totalScore: 5 }),
+        },
+        scoringConfig: {
+          findFirst: jest.fn().mockResolvedValue({ points: 5 }),
+        },
+        result: {
+          create: jest.fn().mockResolvedValue({
+            id: 'result-1',
+            sportId: 'sport-1',
+            teamId: 'team-1',
+            position: 1,
+            calculatedPoints: 5,
+            resultDate: new Date('2026-04-18T00:00:00Z'),
+            sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+            team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
+          }),
+          groupBy: jest.fn().mockResolvedValue([
+            {
+              teamId: 'team-1',
+              _sum: { calculatedPoints: 5 },
+            },
+          ]),
+        },
+      }),
+    );
 
     const result = await service.createResult(
       {
@@ -90,7 +109,7 @@ describe('ResultsService', () => {
       'admin-1',
     );
 
-    expect(prisma.result.create).toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.calculatedPoints).toBe(5);
     expect(redisPubSub.publish).toHaveBeenCalledWith(
       'intradebas:results:ranking-updated',
@@ -208,6 +227,7 @@ describe('ResultsService', () => {
         },
         team: {
           findUnique: jest.fn().mockResolvedValue({ id: 'team-1' }),
+          update: jest.fn().mockResolvedValue({ id: 'team-1', totalScore: 10 }),
         },
         scoringConfig: {
           findFirst: jest.fn().mockResolvedValue({ points: 5 }),
@@ -235,6 +255,12 @@ describe('ResultsService', () => {
               sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
               team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
             }),
+          groupBy: jest.fn().mockResolvedValue([
+            {
+              teamId: 'team-1',
+              _sum: { calculatedPoints: 10 },
+            },
+          ]),
         },
       }),
     );
@@ -276,6 +302,7 @@ describe('ResultsService', () => {
         },
         team: {
           findUnique: jest.fn().mockResolvedValue({ id: 'team-1' }),
+          update: jest.fn(),
         },
         scoringConfig: {
           findFirst: jest.fn().mockResolvedValue({ points: 5 }),
@@ -284,6 +311,7 @@ describe('ResultsService', () => {
           create: jest.fn().mockResolvedValue({
             id: 'result-1',
           }),
+          groupBy: jest.fn(),
         },
       }),
     );
@@ -310,7 +338,24 @@ describe('ResultsService', () => {
   });
 
   it('rejects invalid sport on result creation', async () => {
-    prisma.sport.findUnique.mockResolvedValue(null);
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        sport: {
+          findUnique: jest.fn().mockResolvedValue(null),
+        },
+        team: {
+          findUnique: jest.fn(),
+          update: jest.fn(),
+        },
+        scoringConfig: {
+          findFirst: jest.fn(),
+        },
+        result: {
+          create: jest.fn(),
+          groupBy: jest.fn(),
+        },
+      }),
+    );
 
     await expect(
       service.createResult(
@@ -343,6 +388,22 @@ describe('ResultsService', () => {
     prisma.scoringConfig.findFirst.mockResolvedValue({ points: 3 });
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
+        sport: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sport-1',
+            category: 'coletiva',
+          }),
+        },
+        scoringConfig: {
+          findFirst: jest.fn().mockResolvedValue({ points: 3 }),
+        },
+        team: {
+          findUnique: jest.fn().mockResolvedValue({ id: 'team-2' }),
+          update: jest.fn().mockResolvedValue({ id: 'team-2', totalScore: 3 }),
+        },
+        resultAuditLog: {
+          createMany: jest.fn().mockResolvedValue({ count: 4 }),
+        },
         result: {
           update: jest.fn().mockResolvedValue({
             id: 'result-1',
@@ -354,9 +415,12 @@ describe('ResultsService', () => {
             sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
             team: { id: 'team-2', name: 'Jacare', color: '#2D6A4F', totalScore: 0 },
           }),
-        },
-        resultAuditLog: {
-          createMany: jest.fn().mockResolvedValue({ count: 4 }),
+          groupBy: jest.fn().mockResolvedValue([
+            {
+              teamId: 'team-2',
+              _sum: { calculatedPoints: 3 },
+            },
+          ]),
         },
       }),
     );
@@ -424,6 +488,15 @@ describe('ResultsService', () => {
             sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
             team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 0 },
           }),
+          groupBy: jest.fn().mockResolvedValue([
+            {
+              teamId: 'team-1',
+              _sum: { calculatedPoints: 5 },
+            },
+          ]),
+        },
+        team: {
+          update: jest.fn().mockResolvedValue({ id: 'team-1', totalScore: 5 }),
         },
         resultAuditLog: {
           createMany: auditCreateMany,

@@ -444,6 +444,34 @@ describe('SponsorshipService', () => {
     expect(result.couponsGenerated).toBe(2);
   });
 
+  it('rejects sponsor activation when the target quota is already full', async () => {
+    prisma.sponsor = {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        status: SponsorStatus.inactive,
+        quota: {
+          id: 'quota-1',
+          level: SponsorshipLevel.ouro,
+          courtesyCount: 2,
+        },
+        coupons: [],
+      }),
+    } as any;
+    prisma.sponsorshipQuota = {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'quota-1',
+        maxSlots: 1,
+        sponsors: [
+          { id: 'sponsor-a', status: SponsorStatus.active },
+        ],
+      }),
+    } as any;
+
+    await expect(service.activateSponsor('sponsor-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
   it('does not generate duplicate coupons when sponsor is already active', async () => {
     prisma.sponsor = {
       findUnique: jest.fn().mockResolvedValue({
@@ -531,6 +559,40 @@ describe('SponsorshipService', () => {
     });
   });
 
+  it('rejects sponsor reassignment into a full quota when activating', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        companyName: 'Acme',
+        contactName: 'Joao',
+        email: 'joao@acme.com',
+        phone: '86999999999',
+        logoUrl: null,
+        quotaId: 'quota-1',
+        status: SponsorStatus.inactive,
+      }),
+    } as any;
+    prisma.sponsorshipQuota = {
+      ...prisma.sponsorshipQuota,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'quota-1',
+        maxSlots: 1,
+        sponsors: [{ id: 'sponsor-a', status: SponsorStatus.active }],
+      }),
+    } as any;
+
+    await expect(
+      service.updateSponsor(
+        'sponsor-1',
+        {
+          status: SponsorStatus.active,
+        },
+        'admin-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('rejects sponsor editing for invalid quota', async () => {
     prisma.sponsor = {
       ...prisma.sponsor,
@@ -555,7 +617,9 @@ describe('SponsorshipService', () => {
         id: 'sponsor-1',
         quota: {
           level: SponsorshipLevel.ouro,
+          courtesyCount: 2,
         },
+        coupons: [{ id: 'c1' }],
       }),
     } as any;
     prisma.coupon = {
@@ -579,6 +643,24 @@ describe('SponsorshipService', () => {
 
     expect(prisma.coupon.create).toHaveBeenCalled();
     expect(result.status).toBe('active');
+  });
+
+  it('rejects extra coupon creation once courtesy coupons are exhausted', async () => {
+    prisma.sponsor = {
+      ...prisma.sponsor,
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'sponsor-1',
+        quota: {
+          level: SponsorshipLevel.ouro,
+          courtesyCount: 1,
+        },
+        coupons: [{ id: 'c1' }],
+      }),
+    } as any;
+
+    await expect(service.createCouponForSponsor('sponsor-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('expires an active coupon', async () => {

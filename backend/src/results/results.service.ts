@@ -251,23 +251,28 @@ export class ResultsService {
   }
 
   async createResult(dto: CreateResultDto, recordedBy: string) {
-    const scoring = await this.resolveScoring(this.prisma, dto.sportId, dto.teamId, dto.position);
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const scoring = await this.resolveScoring(tx, dto.sportId, dto.teamId, dto.position);
+      const created = await tx.result.create({
+        data: {
+          sportId: dto.sportId,
+          teamId: dto.teamId,
+          position: dto.position,
+          rawScore: dto.rawScore,
+          calculatedPoints: scoring?.points ?? 0,
+          resultDate: new Date(dto.resultDate),
+          notes: dto.notes,
+          recordedBy,
+        },
+        include: {
+          sport: true,
+          team: true,
+        },
+      });
 
-    const result = await this.prisma.result.create({
-      data: {
-        sportId: dto.sportId,
-        teamId: dto.teamId,
-        position: dto.position,
-        rawScore: dto.rawScore,
-        calculatedPoints: scoring?.points ?? 0,
-        resultDate: new Date(dto.resultDate),
-        notes: dto.notes,
-        recordedBy,
-      },
-      include: {
-        sport: true,
-        team: true,
-      },
+      await this.syncTeamTotals(tx, [dto.teamId]);
+
+      return created;
     });
 
     await this.publishRankingUpdate();
@@ -278,6 +283,7 @@ export class ResultsService {
   async createBulkResults(items: CreateResultDto[], recordedBy: string) {
     const created = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const created: ResultWithRelations[] = [];
+      const touchedTeamIds = new Set<string>();
 
       for (const item of items) {
         const scoring = await this.resolveScoring(tx, item.sportId, item.teamId, item.position);
@@ -299,7 +305,10 @@ export class ResultsService {
         });
 
         created.push(result as ResultWithRelations);
+        touchedTeamIds.add(item.teamId);
       }
+
+      await this.syncTeamTotals(tx, [...touchedTeamIds]);
 
       return created;
     });
@@ -384,6 +393,8 @@ export class ResultsService {
         });
       }
 
+      await this.syncTeamTotals(tx, [existing.teamId, teamId].filter((value): value is string => Boolean(value)));
+
       return updated;
     });
 
@@ -397,6 +408,46 @@ export class ResultsService {
       type: 'ranking-updated',
       timestamp: new Date().toISOString(),
     });
+  }
+
+  private async syncTeamTotals(
+    tx: Pick<Prisma.TransactionClient, 'result' | 'team'>,
+    teamIds: string[],
+  ) {
+    const uniqueTeamIds = [...new Set(teamIds.filter(Boolean))];
+
+    if (uniqueTeamIds.length === 0) {
+      return;
+    }
+
+    const totals = await tx.result.groupBy({
+      by: ['teamId'],
+      _sum: {
+        calculatedPoints: true,
+      },
+      where: {
+        teamId: {
+          in: uniqueTeamIds,
+        },
+      },
+    });
+
+    const totalsByTeam = new Map(
+      totals
+        .filter((row) => row.teamId)
+        .map((row) => [row.teamId as string, row._sum.calculatedPoints ?? 0]),
+    );
+
+    await Promise.all(
+      uniqueTeamIds.map((teamId) =>
+        tx.team.update({
+          where: { id: teamId },
+          data: {
+            totalScore: totalsByTeam.get(teamId) ?? 0,
+          },
+        }),
+      ),
+    );
   }
 
   private async resolveScoring(

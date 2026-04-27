@@ -592,6 +592,10 @@ export class SponsorshipService {
       };
     }
 
+    if (sponsor.status === SponsorStatus.inactive) {
+      await this.ensureQuotaCapacity(sponsor.quota.id, sponsor.id);
+    }
+
     const existingCouponCount = sponsor.coupons.length;
     const missingCoupons = Math.max(sponsor.quota.courtesyCount - existingCouponCount, 0);
 
@@ -672,6 +676,9 @@ export class SponsorshipService {
       throw new BadRequestException('Patrocinador invalido');
     }
 
+    const nextQuotaId = input.quotaId ?? sponsor.quotaId;
+    const nextStatus = input.status ?? sponsor.status;
+
     if (input.quotaId) {
       const quota = await this.prisma.sponsorshipQuota.findUnique({
         where: { id: input.quotaId },
@@ -681,6 +688,10 @@ export class SponsorshipService {
       if (!quota) {
         throw new BadRequestException('Cota de patrocinio invalida');
       }
+    }
+
+    if (nextStatus === SponsorStatus.pending || nextStatus === SponsorStatus.active) {
+      await this.ensureQuotaCapacity(nextQuotaId, sponsorId);
     }
 
     const updated = await this.prisma.sponsor.update({
@@ -758,6 +769,12 @@ export class SponsorshipService {
         quota: {
           select: {
             level: true,
+            courtesyCount: true,
+          },
+        },
+        coupons: {
+          select: {
+            id: true,
           },
         },
       },
@@ -765,6 +782,10 @@ export class SponsorshipService {
 
     if (!sponsor) {
       throw new BadRequestException('Patrocinador invalido');
+    }
+
+    if (sponsor.coupons.length >= sponsor.quota.courtesyCount) {
+      throw new BadRequestException('Patrocinador ja possui todos os cupons de cortesia');
     }
 
     let code = this.generateCouponCode(sponsor.quota.level);
@@ -838,6 +859,34 @@ export class SponsorshipService {
         },
       },
     });
+  }
+
+  private async ensureQuotaCapacity(quotaId: string, sponsorId: string) {
+    const quota = await this.prisma.sponsorshipQuota.findUnique({
+      where: { id: quotaId },
+      include: {
+        sponsors: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!quota) {
+      throw new BadRequestException('Cota de patrocinio invalida');
+    }
+
+    const occupiedSlots = quota.sponsors.filter(
+      (sponsor) =>
+        sponsor.id !== sponsorId &&
+        ['pending', 'active'].includes(sponsor.status),
+    ).length;
+
+    if (occupiedSlots >= quota.maxSlots) {
+      throw new BadRequestException('Esta cota nao possui vagas disponiveis');
+    }
   }
 }
 
