@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
@@ -17,5 +19,29 @@ export class AuthController {
   me(@Req() request: { user: { sub: string } }) {
     return this.authService.me(request.user.sub);
   }
-}
 
+  @UseGuards(JwtAuthGuard)
+  @Get('admin-users')
+  listAdminUsers(@Req() request: { user: { role: 'admin' | 'superadmin' } }) {
+    return this.authService.listAdminUsers(request.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('admin-users')
+  createAdminUser(
+    @Body() dto: CreateAdminUserDto,
+    @Req() request: { user: { role: 'admin' | 'superadmin' } },
+  ) {
+    return this.authService.createAdminUser(dto, request.user.role);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('admin-users/:id')
+  updateAdminUser(
+    @Param('id') id: string,
+    @Body() dto: UpdateAdminUserDto,
+    @Req() request: { user: { sub: string; role: 'admin' | 'superadmin' } },
+  ) {
+    return this.authService.updateAdminUser(id, dto, request.user.role, request.user.sub);
+  }
+}

@@ -5,6 +5,16 @@ export type TeamSummary = {
   totalScore: number;
 };
 
+export type AdminUserSummary = {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'superadmin';
+  isActive: boolean;
+  createdAt: string;
+  lastLoginAt?: string | null;
+};
+
 export type TeamDetailSummary = TeamSummary & {
   athletesCount: number;
 };
@@ -292,6 +302,20 @@ export type CreateScoringConfigInput = {
   category: 'coletiva' | 'individual' | 'dupla' | 'fitness';
   position: number;
   points: number;
+};
+
+export type CreateAdminUserInput = {
+  email: string;
+  name: string;
+  role: 'admin' | 'superadmin';
+  password: string;
+};
+
+export type UpdateAdminUserInput = {
+  name?: string;
+  role?: 'admin' | 'superadmin';
+  isActive?: boolean;
+  password?: string;
 };
 
 export type UpdateTeamInput = {
@@ -669,6 +693,58 @@ export function adminGetLgpdDeletionRequests(status?: string) {
   return adminFetchJson<LgpdDeletionRequestSummary[]>(
     `/lgpd/deletion-requests${buildQuery({ status })}`,
   );
+}
+
+export function adminGetAdminUsers() {
+  return adminFetchJson<AdminUserSummary[]>('/auth/admin-users');
+}
+
+export function adminCreateAdminUser(input: CreateAdminUserInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/auth/admin-users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao criar usuario administrativo');
+    }
+
+    return (await response.json()) as AdminUserSummary;
+  });
+}
+
+export function adminUpdateAdminUser(userId: string, input: UpdateAdminUserInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const token = getAdminTokenFromCookie();
+
+  return fetch(`${apiBase}/auth/admin-users/${userId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as
+        | { message?: string | string[] }
+        | null;
+      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+      throw new Error(message ?? 'Falha ao atualizar usuario administrativo');
+    }
+
+    return (await response.json()) as AdminUserSummary;
+  });
 }
 
 export function adminUpdateLgpdDeletionRequest(

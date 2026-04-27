@@ -200,7 +200,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
 | Login Admin | Autenticação JWT para membros da Comissão | ✅ Implementado |
-| Gerenciamento de Admins | Cadastro e remoção de membros da Comissão (superadmin) | ❌ Pendente |
+| Gerenciamento de Admins | Cadastro e remoção de membros da Comissão (superadmin) | 🟡 Parcial; listagem, criação e manutenção implementadas |
 | Proteção de Rotas | Middleware de autenticação em todas as rotas /admin | ✅ Implementado |
 | Recuperação de Senha | Fluxo de reset via e-mail | ❌ Pendente |
 

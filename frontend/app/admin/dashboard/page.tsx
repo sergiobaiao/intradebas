@@ -57,6 +57,9 @@ export default async function AdminDashboardPage() {
           <a className="button secondary" href="/admin/lgpd">
             LGPD
           </a>
+          <a className="button secondary" href="/admin/usuarios">
+            Usuarios admin
+          </a>
           <a className="button secondary" href="/admin/backdrop">
             Backdrop
           </a>

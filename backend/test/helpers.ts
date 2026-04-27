@@ -1,6 +1,7 @@
 export function createPrismaMock() {
   return {
     user: {
+      create: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
