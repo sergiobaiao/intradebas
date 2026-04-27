@@ -87,6 +87,77 @@ describe('ResultsService', () => {
     expect(result.calculatedPoints).toBe(5);
   });
 
+  it('lists ALDEBARUN results for the public race ranking', async () => {
+    prisma.result.findMany.mockResolvedValue([
+      {
+        id: 'result-1',
+        position: 1,
+        rawScore: 1480,
+        calculatedPoints: 3,
+        resultDate: new Date('2026-05-01T09:00:00Z'),
+        notes: 'Percurso principal',
+        sport: {
+          id: 'sport-2',
+          name: 'ALDEBARUN 5K',
+          category: 'individual',
+          description: 'Corrida da familia',
+          scheduleDate: new Date('2026-05-01T07:00:00Z'),
+          scheduleNotes: 'Arena central',
+        },
+        team: {
+          id: 'team-1',
+          name: 'Mucura',
+          color: '#E63946',
+          totalScore: 0,
+        },
+      },
+    ]);
+
+    const result = await service.listAldebarunResults();
+
+    expect(prisma.result.findMany).toHaveBeenCalledWith({
+      where: {
+        sport: {
+          isAldebarun: true,
+          isActive: true,
+        },
+      },
+      select: {
+        id: true,
+        position: true,
+        rawScore: true,
+        calculatedPoints: true,
+        resultDate: true,
+        notes: true,
+        sport: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            description: true,
+            scheduleDate: true,
+            scheduleNotes: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
+      },
+      orderBy: [
+        { sport: { name: 'asc' } },
+        { position: 'asc' },
+        { rawScore: 'asc' },
+        { resultDate: 'desc' },
+      ],
+    });
+    expect(result[0].sport.name).toBe('ALDEBARUN 5K');
+  });
+
   it('creates results in bulk within a transaction', async () => {
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({

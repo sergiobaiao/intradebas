@@ -14,6 +14,11 @@ export class ResultsController {
     return this.resultsService.listResults();
   }
 
+  @Get('aldebarun')
+  listAldebarunResults() {
+    return this.resultsService.listAldebarunResults();
+  }
+
   @Get('admin')
   @UseGuards(JwtAuthGuard)
   listAdminResults(

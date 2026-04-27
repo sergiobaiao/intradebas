@@ -48,6 +48,42 @@ describe('SportsService', () => {
     );
   });
 
+  it('lists active ALDEBARUN sports', async () => {
+    prisma.sport.findMany.mockResolvedValue([
+      {
+        id: 'sport-2',
+        name: 'ALDEBARUN 10K',
+        category: 'individual',
+        description: 'Percurso principal',
+        isAldebarun: true,
+        isActive: true,
+        scheduleDate: new Date('2026-05-02T06:00:00Z'),
+        scheduleNotes: 'Largada principal',
+      },
+    ]);
+
+    const result = await service.findAldebarun();
+
+    expect(prisma.sport.findMany).toHaveBeenCalledWith({
+      where: {
+        isAldebarun: true,
+        isActive: true,
+      },
+      orderBy: [{ scheduleDate: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        description: true,
+        isAldebarun: true,
+        isActive: true,
+        scheduleDate: true,
+        scheduleNotes: true,
+      },
+    });
+    expect(result[0].name).toBe('ALDEBARUN 10K');
+  });
+
   it('creates a sport', async () => {
     prisma.sport.create.mockResolvedValue({
       id: 'sport-2',

@@ -62,6 +62,26 @@ export class SportsService {
     });
   }
 
+  async findAldebarun() {
+    return this.prisma.sport.findMany({
+      where: {
+        isAldebarun: true,
+        isActive: true,
+      },
+      orderBy: [{ scheduleDate: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        description: true,
+        isAldebarun: true,
+        isActive: true,
+        scheduleDate: true,
+        scheduleNotes: true,
+      },
+    });
+  }
+
   async findOne(id: string) {
     const sport = await this.prisma.sport.findUnique({
       where: { id },

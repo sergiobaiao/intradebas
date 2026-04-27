@@ -13,6 +13,11 @@ export class SportsController {
     return this.sportsService.findAll();
   }
 
+  @Get('aldebarun')
+  findAldebarun() {
+    return this.sportsService.findAldebarun();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.sportsService.findOne(id);

@@ -51,6 +51,49 @@ export class ResultsService {
     });
   }
 
+  async listAldebarunResults() {
+    return this.prisma.result.findMany({
+      where: {
+        sport: {
+          isAldebarun: true,
+          isActive: true,
+        },
+      },
+      select: {
+        id: true,
+        position: true,
+        rawScore: true,
+        calculatedPoints: true,
+        resultDate: true,
+        notes: true,
+        sport: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            description: true,
+            scheduleDate: true,
+            scheduleNotes: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
+      },
+      orderBy: [
+        { sport: { name: 'asc' } },
+        { position: 'asc' },
+        { rawScore: 'asc' },
+        { resultDate: 'desc' },
+      ],
+    });
+  }
+
   async listAdminResults(query: {
     page?: string;
     pageSize?: string;

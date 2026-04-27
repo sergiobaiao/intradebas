@@ -175,7 +175,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe e modalidades | ✅ Implementado |
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
 | Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | 🟡 Implementado com polling/refresh, sem WebSocket/SSE |
-| ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | ❌ Pendente |
+| ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | 🟡 Parcial (página dedicada com dados reais; categorias/faixas ainda pendentes de regulamento) |
 | Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
 | Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial |
 | Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) | ✅ Implementado |
@@ -1507,7 +1507,7 @@ Duração estimada: 3 semanas
 ### Semana 7 — Galeria de Mídia e ALDEBARUN
 - [x] Upload e gestão de fotos (MinIO)
 - [x] Integração de vídeos YouTube/Vimeo (embed)
-- [ ] Página dedicada ALDEBARUN II com ranking de tempos de corrida
+- [~] Página dedicada ALDEBARUN II com ranking de tempos de corrida
 - [x] Logs de auditoria de resultados
 - [~] Feed unificado de auditoria para dados críticos do Admin
 
@@ -1605,7 +1605,7 @@ Duração estimada: 2 semanas
 - ❌ Live Score via WebSocket/SSE (substituído por polling no MVP)
 - 🟡 Backdrop Digital dinâmico com rotação
 - 🟡 Galeria de fotos e vídeos
-- ❌ Página dedicada ALDEBARUN II com ranking de corrida
+- 🟡 Página dedicada ALDEBARUN II com ranking de corrida (sem faixas etárias/sexo definidas)
 - ✅ Upload de fotos do evento
 - ✅ Logs de auditoria de resultados com interface
 - 🟡 Mecanismo de exclusão de dados LGPD (solicitação)
@@ -1621,7 +1621,7 @@ Duração estimada: 2 semanas
 | LGPD completo | 🟡 Parcial |
 | Autenticação completa (refresh/reset/admin management) | ✅ Implementado |
 | Portal público premium completo | 🟡 Parcial |
-| ALDEBARUN II dedicado | ❌ Pendente |
+| ALDEBARUN II dedicado | 🟡 Parcial |
 | Homologação/produção real ativada | ❌ Pendente |
 
 ## Fase 2 — Completude

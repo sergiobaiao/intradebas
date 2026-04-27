@@ -162,6 +162,29 @@ export type ResultSummary = {
   team: { id: string; name: string; color: string; totalScore: number };
 };
 
+export type AldebarunResultSummary = {
+  id: string;
+  position: number;
+  rawScore?: number | null;
+  calculatedPoints?: number | null;
+  resultDate: string;
+  notes?: string | null;
+  sport: {
+    id: string;
+    name: string;
+    category: string;
+    description?: string | null;
+    scheduleDate?: string | null;
+    scheduleNotes?: string | null;
+  };
+  team?: {
+    id: string;
+    name: string;
+    color: string;
+    totalScore: number;
+  } | null;
+};
+
 export type ResultInput = {
   sportId: string;
   teamId: string;
@@ -487,6 +510,14 @@ export function getSponsorshipQuotas() {
 
 export function getSports() {
   return fetchJson<SportSummary[]>('/sports', []);
+}
+
+export function getAldebarunSports() {
+  return fetchJson<SportSummary[]>('/sports/aldebarun', []);
+}
+
+export function getAldebarunResults() {
+  return fetchJson<AldebarunResultSummary[]>('/results/aldebarun', []);
 }
 
 export function getBackdropSponsors() {
