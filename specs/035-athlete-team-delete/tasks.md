@@ -10,9 +10,9 @@
 
 ## Phase 2: Implementation
 
-- [ ] T003 Add safe athlete and team delete flows in the backend
-- [ ] T004 Add backend tests for delete success and blocked deletion
-- [ ] T005 Add delete controls to the admin athlete and team screens
+- [x] T003 Add safe athlete and team delete flows in the backend
+- [x] T004 Add backend tests for delete success and blocked deletion
+- [x] T005 Add delete controls to the admin athlete and team screens
 
 ## Phase 3: Validation
 
