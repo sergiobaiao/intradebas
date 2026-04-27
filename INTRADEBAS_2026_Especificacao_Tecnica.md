@@ -1470,7 +1470,7 @@ Duração estimada: 1 semana
 Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
-- [~] Módulo de autenticação (login, JWT e recuperação de senha implementados; refresh pendente)
+- [x] Módulo de autenticação (login, JWT, refresh e recuperação de senha implementados)
 - [~] Layout público (footer WhatsApp implementado; navbar dedicada ainda pendente)
 - [ ] Sidebar do Admin adaptada (template customizado)
 - [x] Dashboard Admin com KPIs reais
@@ -1619,7 +1619,7 @@ Duração estimada: 2 semanas
 | Painel administrativo operacional | ✅ Forte |
 | Tempo real pleno (SSE/WebSocket + Redis) | ❌ Pendente |
 | LGPD completo | 🟡 Parcial |
-| Autenticação completa (refresh/reset/admin management) | 🟡 Parcial |
+| Autenticação completa (refresh/reset/admin management) | ✅ Implementado |
 | Portal público premium completo | 🟡 Parcial |
 | ALDEBARUN II dedicado | ❌ Pendente |
 | Homologação/produção real ativada | ❌ Pendente |

@@ -6,8 +6,9 @@ export function middleware(request: NextRequest) {
   }
 
   const token = request.cookies.get('intradebas_admin_token')?.value;
+  const refreshToken = request.cookies.get('intradebas_admin_refresh_token')?.value;
 
-  if (token) {
+  if (token || refreshToken) {
     return NextResponse.next();
   }
 
@@ -19,4 +20,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*'],
 };
-

@@ -14,6 +14,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 
@@ -56,8 +57,12 @@ export class AuthService {
       name: user.name,
     };
 
+    const accessToken = await this.jwtService.signAsync(payload);
+    const refreshToken = await this.issueRefreshToken(user.id, payload);
+
     return {
-      accessToken: await this.jwtService.signAsync(payload),
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -65,6 +70,52 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async refresh(dto: RefreshTokenDto) {
+    const payload = await this.verifyRefreshToken(dto.refreshToken);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Sessao invalida');
+    }
+
+    const sessionPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    };
+
+    const accessToken = await this.jwtService.signAsync(sessionPayload);
+    const refreshToken = await this.rotateRefreshToken(dto.refreshToken, user.id, sessionPayload);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
+  }
+
+  async logout(dto: RefreshTokenDto) {
+    const tokenHash = this.hashResetToken(dto.refreshToken);
+
+    await this.prisma.$executeRaw(Prisma.sql`
+      UPDATE "refresh_tokens"
+      SET "revoked_at" = NOW()
+      WHERE "token_hash" = ${tokenHash}
+        AND "revoked_at" IS NULL
+    `);
+
+    return { success: true };
   }
 
   async me(userId: string) {
@@ -321,5 +372,102 @@ export class AuthService {
 
   private hashResetToken(value: string) {
     return createHash('sha256').update(value).digest('hex');
+  }
+
+  private async issueRefreshToken(
+    userId: string,
+    payload: { sub: string; email: string; role: UserRole; name: string },
+  ) {
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as any,
+    });
+    const tokenHash = this.hashResetToken(refreshToken);
+    const expiresAt = this.decodeRefreshTokenExpiry(refreshToken);
+
+    await this.prisma.$executeRaw(Prisma.sql`
+      INSERT INTO "refresh_tokens" (
+        "id",
+        "user_id",
+        "token_hash",
+        "expires_at",
+        "created_at"
+      )
+      VALUES (
+        gen_random_uuid()::text,
+        ${userId},
+        ${tokenHash},
+        ${expiresAt},
+        NOW()
+      )
+    `);
+
+    return refreshToken;
+  }
+
+  private async rotateRefreshToken(
+    previousToken: string,
+    userId: string,
+    payload: { sub: string; email: string; role: UserRole; name: string },
+  ) {
+    const previousHash = this.hashResetToken(previousToken);
+
+    await this.prisma.$executeRaw(Prisma.sql`
+      UPDATE "refresh_tokens"
+      SET "revoked_at" = NOW()
+      WHERE "token_hash" = ${previousHash}
+        AND "revoked_at" IS NULL
+    `);
+
+    return this.issueRefreshToken(userId, payload);
+  }
+
+  private async verifyRefreshToken(refreshToken: string) {
+    let decoded: { sub: string };
+
+    try {
+      decoded = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+    } catch {
+      throw new UnauthorizedException('Refresh token invalido ou expirado');
+    }
+
+    const tokenHash = this.hashResetToken(refreshToken);
+    const rows = await this.prisma.$queryRaw<Array<{
+      userId: string;
+      expiresAt: Date;
+      revokedAt: Date | null;
+    }>>(Prisma.sql`
+      SELECT
+        "user_id" AS "userId",
+        "expires_at" AS "expiresAt",
+        "revoked_at" AS "revokedAt"
+      FROM "refresh_tokens"
+      WHERE "token_hash" = ${tokenHash}
+      LIMIT 1
+    `);
+
+    const stored = rows[0];
+
+    if (!stored || stored.revokedAt || new Date(stored.expiresAt).getTime() < Date.now()) {
+      throw new UnauthorizedException('Refresh token invalido ou expirado');
+    }
+
+    if (stored.userId !== decoded.sub) {
+      throw new UnauthorizedException('Refresh token invalido');
+    }
+
+    return decoded;
+  }
+
+  private decodeRefreshTokenExpiry(refreshToken: string) {
+    const decoded = this.jwtService.decode(refreshToken) as { exp?: number } | null;
+
+    if (!decoded?.exp) {
+      return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
+
+    return new Date(decoded.exp * 1000);
   }
 }

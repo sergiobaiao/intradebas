@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateAdminUserDto } from './dto/update-admin-user.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -14,6 +15,16 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('refresh')
+  refresh(@Body() dto: RefreshTokenDto) {
+    return this.authService.refresh(dto);
+  }
+
+  @Post('logout')
+  logout(@Body() dto: RefreshTokenDto) {
+    return this.authService.logout(dto);
   }
 
   @Post('forgot-password')

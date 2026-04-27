@@ -368,6 +368,75 @@ function getAdminTokenFromCookie() {
   return entry ? decodeURIComponent(entry.split('=').slice(1).join('=')) : null;
 }
 
+function getAdminRefreshTokenFromCookie() {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const entry = document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith('intradebas_admin_refresh_token='));
+
+  return entry ? decodeURIComponent(entry.split('=').slice(1).join('=')) : null;
+}
+
+function setAdminSessionCookies(input: { accessToken: string; refreshToken: string }) {
+  document.cookie = `intradebas_admin_token=${encodeURIComponent(input.accessToken)}; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
+  document.cookie = `intradebas_admin_refresh_token=${encodeURIComponent(input.refreshToken)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
+}
+
+async function refreshAdminSession() {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const refreshToken = getAdminRefreshTokenFromCookie();
+
+  if (!refreshToken) {
+    return false;
+  }
+
+  const response = await fetch(`${apiBase}/auth/refresh`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const body = (await response.json()) as { accessToken: string; refreshToken: string };
+  setAdminSessionCookies(body);
+  return true;
+}
+
+async function adminApiFetch(path: string, init?: RequestInit) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  let token = getAdminTokenFromCookie();
+
+  const doRequest = (accessToken: string | null) =>
+    fetch(`${apiBase}${path}`, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    });
+
+  let response = await doRequest(token);
+
+  if (response.status === 401) {
+    const refreshed = await refreshAdminSession();
+
+    if (refreshed) {
+      token = getAdminTokenFromCookie();
+      response = await doRequest(token);
+    }
+  }
+
+  return response;
+}
+
 async function fetchJson<T>(path: string, emptyValue: T): Promise<T> {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
@@ -551,16 +620,8 @@ export async function submitPasswordReset(input: ResetPasswordInput) {
 }
 
 export async function adminFetchJson<T>(path: string): Promise<T> {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  const response = await fetch(`${apiBase}${path}`, {
+  const response = await adminApiFetch(path, {
     cache: 'no-store',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
   });
 
   if (!response.ok) {

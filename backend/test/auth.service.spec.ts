@@ -41,8 +41,12 @@ describe('AuthService', () => {
       passwordHash: 'hashed',
     });
     (compare as jest.Mock).mockResolvedValue(true);
-    (jwtService.signAsync as jest.Mock).mockResolvedValue('token-123');
+    (jwtService.signAsync as jest.Mock)
+      .mockResolvedValueOnce('token-123')
+      .mockResolvedValueOnce('refresh-token-123');
+    (jwtService.decode as any) = jest.fn().mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 3600 });
     prisma.user.update.mockResolvedValue({});
+    prisma.$executeRaw.mockResolvedValue(1);
 
     const result = await service.login({
       email: 'ADMIN@INTRADEBAS.LOCAL',
@@ -53,6 +57,7 @@ describe('AuthService', () => {
       where: { email: 'admin@intradebas.local' },
     });
     expect(result.accessToken).toBe('token-123');
+    expect(result.refreshToken).toBe('refresh-token-123');
     expect(result.user.email).toBe('admin@intradebas.local');
   });
 
@@ -280,5 +285,56 @@ describe('AuthService', () => {
         password: 'nova123',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('refreshes session with valid refresh token', async () => {
+    (jwtService.verifyAsync as any) = jest.fn().mockResolvedValue({ sub: 'user-1' });
+    (jwtService.signAsync as jest.Mock)
+      .mockResolvedValueOnce('new-access-token')
+      .mockResolvedValueOnce('new-refresh-token');
+    (jwtService.decode as any) = jest.fn().mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 3600 });
+    prisma.$queryRaw.mockResolvedValue([
+      {
+        userId: 'user-1',
+        expiresAt: new Date(Date.now() + 60_000),
+        revokedAt: null,
+      },
+    ]);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      email: 'admin@intradebas.local',
+      name: 'Administrador',
+      role: UserRole.superadmin,
+      isActive: true,
+    });
+    prisma.$executeRaw.mockResolvedValue(1);
+
+    const result = await service.refresh({
+      refreshToken: 'refresh-token',
+    });
+
+    expect(result.accessToken).toBe('new-access-token');
+    expect(result.refreshToken).toBe('new-refresh-token');
+  });
+
+  it('rejects invalid refresh token', async () => {
+    (jwtService.verifyAsync as any) = jest.fn().mockRejectedValue(new Error('invalid'));
+
+    await expect(
+      service.refresh({
+        refreshToken: 'invalid',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('revokes refresh token on logout', async () => {
+    prisma.$executeRaw.mockResolvedValue(1);
+
+    const result = await service.logout({
+      refreshToken: 'refresh-token',
+    });
+
+    expect(prisma.$executeRaw).toHaveBeenCalled();
+    expect(result).toEqual({ success: true });
   });
 });
