@@ -1,13 +1,19 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { from, interval, map, Observable, startWith, switchMap } from 'rxjs';
+import { from, map, Observable, startWith, switchMap } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisPubSubService } from '../realtime/redis-pubsub.service';
 import { CreateResultDto } from './dto/create-result.dto';
 import { UpdateResultDto } from './dto/update-result.dto';
 
 @Injectable()
 export class ResultsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private static readonly rankingChannel = 'intradebas:results:ranking-updated';
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisPubSub: RedisPubSubService,
+  ) {}
 
   private normalizePage(value?: string) {
     const parsed = Number(value ?? 1);
@@ -232,9 +238,13 @@ export class ResultsService {
       });
   }
 
-  streamRanking(intervalMs = 5000): Observable<{ data: RankingRow[] }> {
-    return interval(intervalMs).pipe(
-      startWith(0),
+  async streamRanking(): Promise<Observable<{ data: RankingRow[] }>> {
+    const events$ = await this.redisPubSub.subscribe<{ type: string }>(
+      ResultsService.rankingChannel,
+    );
+
+    return events$.pipe(
+      startWith({ type: 'initial' }),
       switchMap(() => from(this.getRanking())),
       map((data) => ({ data })),
     );
@@ -260,11 +270,13 @@ export class ResultsService {
       },
     });
 
+    await this.publishRankingUpdate();
+
     return result;
   }
 
   async createBulkResults(items: CreateResultDto[], recordedBy: string) {
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const created = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const created: ResultWithRelations[] = [];
 
       for (const item of items) {
@@ -291,6 +303,10 @@ export class ResultsService {
 
       return created;
     });
+
+    await this.publishRankingUpdate();
+
+    return created;
   }
 
   async updateResult(id: string, dto: UpdateResultDto, recordedBy: string) {
@@ -337,7 +353,7 @@ export class ResultsService {
       notes: nextNotes,
     });
 
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const updated = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.result.update({
         where: { id },
         data: {
@@ -369,6 +385,17 @@ export class ResultsService {
       }
 
       return updated;
+    });
+
+    await this.publishRankingUpdate();
+
+    return updated;
+  }
+
+  private async publishRankingUpdate() {
+    await this.redisPubSub.publish(ResultsService.rankingChannel, {
+      type: 'ranking-updated',
+      timestamp: new Date().toISOString(),
     });
   }
 

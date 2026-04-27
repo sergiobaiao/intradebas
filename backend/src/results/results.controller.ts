@@ -42,7 +42,7 @@ export class ResultsController {
   }
 
   @Sse('ranking/live')
-  streamRanking(): Observable<MessageEvent> {
+  async streamRanking(): Promise<Observable<MessageEvent>> {
     return this.resultsService.streamRanking();
   }
 

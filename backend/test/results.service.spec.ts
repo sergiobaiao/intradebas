@@ -1,14 +1,20 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { firstValueFrom, take } from 'rxjs';
+import { firstValueFrom, of, Subject, take } from 'rxjs';
+import { RedisPubSubService } from '../src/realtime/redis-pubsub.service';
 import { ResultsService } from '../src/results/results.service';
 import { createPrismaMock } from './helpers';
 
 describe('ResultsService', () => {
   const prisma = createPrismaMock();
-  const service = new ResultsService(prisma as any);
+  const redisPubSub = {
+    publish: jest.fn(),
+    subscribe: jest.fn(),
+  } as unknown as RedisPubSubService;
+  const service = new ResultsService(prisma as any, redisPubSub);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (redisPubSub.subscribe as jest.Mock).mockResolvedValue(of({ type: 'ranking-updated' }));
   });
 
   it('aggregates ranking totals by team and sorts descending', async () => {
@@ -86,6 +92,10 @@ describe('ResultsService', () => {
 
     expect(prisma.result.create).toHaveBeenCalled();
     expect(result.calculatedPoints).toBe(5);
+    expect(redisPubSub.publish).toHaveBeenCalledWith(
+      'intradebas:results:ranking-updated',
+      expect.objectContaining({ type: 'ranking-updated' }),
+    );
   });
 
   it('streams the ranking payload for SSE consumers', async () => {
@@ -105,7 +115,12 @@ describe('ResultsService', () => {
       },
     ]);
 
-    const event = await firstValueFrom(service.streamRanking(1).pipe(take(1)));
+    const bus$ = new Subject<{ type: string }>();
+    (redisPubSub.subscribe as jest.Mock).mockResolvedValue(bus$);
+
+    const eventPromise = firstValueFrom((await service.streamRanking()).pipe(take(1)));
+    bus$.next({ type: 'ranking-updated' });
+    const event = await eventPromise;
 
     expect(event).toEqual({
       data: [{ id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 5 }],
@@ -244,6 +259,10 @@ describe('ResultsService', () => {
 
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result).toHaveLength(2);
+    expect(redisPubSub.publish).toHaveBeenCalledWith(
+      'intradebas:results:ranking-updated',
+      expect.objectContaining({ type: 'ranking-updated' }),
+    );
   });
 
   it('rejects bulk creation without partial persistence when a row is invalid', async () => {
@@ -354,6 +373,10 @@ describe('ResultsService', () => {
 
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.calculatedPoints).toBe(3);
+    expect(redisPubSub.publish).toHaveBeenCalledWith(
+      'intradebas:results:ranking-updated',
+      expect.objectContaining({ type: 'ranking-updated' }),
+    );
   });
 
   it('rejects result update when the result does not exist', async () => {
