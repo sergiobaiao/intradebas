@@ -202,7 +202,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Login Admin | Autenticação JWT para membros da Comissão | ✅ Implementado |
 | Gerenciamento de Admins | Cadastro e remoção de membros da Comissão (superadmin) | 🟡 Parcial; listagem, criação e manutenção implementadas |
 | Proteção de Rotas | Middleware de autenticação em todas as rotas /admin | ✅ Implementado |
-| Recuperação de Senha | Fluxo de reset via e-mail | ❌ Pendente |
+| Recuperação de Senha | Fluxo de reset via e-mail | ✅ Implementado |
 
 ## Módulo 4 — Motor de Resultados e Tempo Real
 
@@ -1351,8 +1351,8 @@ PUT    /api/v1/backdrop/order        [Admin] Reordenar logos
 POST   /api/v1/auth/login            Login do Admin
 POST   /api/v1/auth/refresh          Renovação do token
 POST   /api/v1/auth/logout           Logout (invalida refresh token)
-POST   /api/v1/auth/recover          Solicitar reset de senha
-POST   /api/v1/auth/reset            Resetar senha com token
+POST   /api/v1/auth/forgot-password  Solicitar reset de senha
+POST   /api/v1/auth/reset-password   Resetar senha com token
 ```
 
 ### Saúde
@@ -1470,7 +1470,7 @@ Duração estimada: 1 semana
 Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
-- [~] Módulo de autenticação (login e JWT implementados; refresh e recuperação de senha pendentes)
+- [~] Módulo de autenticação (login, JWT e recuperação de senha implementados; refresh pendente)
 - [~] Layout público (footer WhatsApp implementado; navbar dedicada ainda pendente)
 - [ ] Sidebar do Admin adaptada (template customizado)
 - [x] Dashboard Admin com KPIs reais
@@ -1514,7 +1514,7 @@ Duração estimada: 3 semanas
 ### Semana 8 — LGPD, UX e E-mail
 - [x] Página de Política de Privacidade
 - [~] Mecanismo de solicitação de exclusão de dados
-- [ ] Envio de e-mail (confirmação de inscrição, cupons, reset de senha)
+- [~] Envio de e-mail (reset de senha implementado; confirmações e cupons pendentes)
 - [ ] Ajustes de UX Mobile (testes em dispositivos reais)
 - [~] Página pública Home / Landing Page completa
 
@@ -1609,9 +1609,9 @@ Duração estimada: 2 semanas
 - ✅ Upload de fotos do evento
 - ✅ Logs de auditoria de resultados com interface
 - 🟡 Mecanismo de exclusão de dados LGPD (solicitação)
-- ❌ E-mails automáticos (confirmações, cupons)
+- [~] E-mails automáticos (reset de senha implementado; confirmações e cupons pendentes)
 
-## Status Geral Atual (Atualizado em 24/04/2026)
+## Status Geral Atual (Atualizado em 27/04/2026)
 
 | Bloco | Situação |
 |---|---|

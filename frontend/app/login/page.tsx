@@ -76,6 +76,9 @@ export default function LoginPage() {
               <button className="button primary" type="submit" disabled={submitting}>
                 {submitting ? 'Entrando...' : 'Entrar'}
               </button>
+              <a className="button secondary" href="/recuperar-senha">
+                Esqueci minha senha
+              </a>
             </div>
           </form>
         </div>

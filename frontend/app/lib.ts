@@ -318,6 +318,15 @@ export type UpdateAdminUserInput = {
   password?: string;
 };
 
+export type ForgotPasswordInput = {
+  email: string;
+};
+
+export type ResetPasswordInput = {
+  token: string;
+  password: string;
+};
+
 export type UpdateTeamInput = {
   name?: string;
   color?: string;
@@ -495,6 +504,50 @@ export async function createLgpdDeletionRequest(input: CreateLgpdDeletionRequest
   }
 
   return (await response.json()) as LgpdDeletionRequestSummary;
+}
+
+export async function requestPasswordReset(input: ForgotPasswordInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/auth/forgot-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao solicitar recuperacao de senha');
+  }
+
+  return (await response.json()) as { success: true };
+}
+
+export async function submitPasswordReset(input: ResetPasswordInput) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/auth/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao redefinir senha');
+  }
+
+  return (await response.json()) as { success: true };
 }
 
 export async function adminFetchJson<T>(path: string): Promise<T> {

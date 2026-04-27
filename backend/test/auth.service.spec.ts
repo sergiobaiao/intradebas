@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRole } from '@prisma/client';
 import { compare, hash } from 'bcryptjs';
 import { AuthService } from '../src/auth/auth.service';
+import { MailService } from '../src/mail/mail.service';
 import { createPrismaMock } from './helpers';
 
 jest.mock('bcryptjs', () => ({
@@ -20,8 +21,11 @@ describe('AuthService', () => {
   const jwtService = {
     signAsync: jest.fn(),
   } as unknown as JwtService;
+  const mailService = {
+    sendPasswordResetEmail: jest.fn(),
+  } as unknown as MailService;
 
-  const service = new AuthService(prisma as any, jwtService);
+  const service = new AuthService(prisma as any, jwtService, mailService);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -202,5 +206,79 @@ describe('AuthService', () => {
         'user-1',
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('creates reset token and sends e-mail for valid admin account', async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      email: 'admin@intradebas.local',
+      name: 'Administrador',
+      role: UserRole.superadmin,
+      isActive: true,
+    });
+    prisma.$executeRaw.mockResolvedValue(1);
+    (mailService.sendPasswordResetEmail as jest.Mock).mockResolvedValue(undefined);
+
+    const result = await service.forgotPassword({
+      email: 'ADMIN@INTRADEBAS.LOCAL',
+    });
+
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
+    expect(mailService.sendPasswordResetEmail).toHaveBeenCalled();
+    expect(result).toEqual({ success: true });
+  });
+
+  it('returns generic success for unknown forgot-password email', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    const result = await service.forgotPassword({
+      email: 'missing@intradebas.local',
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(prisma.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  it('resets password when token is valid', async () => {
+    prisma.$queryRaw.mockResolvedValue([
+      {
+        id: 'reset-1',
+        userId: 'user-1',
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+        isActive: true,
+      },
+    ]);
+    (hash as jest.Mock).mockResolvedValue('hashed-reset-password');
+    prisma.user.update.mockResolvedValue({});
+    prisma.$executeRaw.mockResolvedValue(1);
+    prisma.$transaction.mockResolvedValue([{}, 1]);
+
+    const result = await service.resetPassword({
+      token: 'plain-token',
+      password: 'nova123',
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(result).toEqual({ success: true });
+  });
+
+  it('rejects expired reset token', async () => {
+    prisma.$queryRaw.mockResolvedValue([
+      {
+        id: 'reset-1',
+        userId: 'user-1',
+        usedAt: null,
+        expiresAt: new Date(Date.now() - 60_000),
+        isActive: true,
+      },
+    ]);
+
+    await expect(
+      service.resetPassword({
+        token: 'plain-token',
+        password: 'nova123',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

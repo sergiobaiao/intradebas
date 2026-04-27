@@ -7,6 +7,12 @@ export function createPrismaMock() {
       update: jest.fn(),
       upsert: jest.fn(),
     },
+    passwordResetToken: {
+      create: jest.fn(),
+      deleteMany: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
     athlete: {
       count: jest.fn(),
       delete: jest.fn(),
@@ -94,6 +100,7 @@ export function createPrismaMock() {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    $executeRaw: jest.fn(),
     $queryRaw: jest.fn(),
     $transaction: jest.fn(),
   };

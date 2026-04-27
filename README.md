@@ -83,6 +83,8 @@ Consulte `credentials.md` no ambiente local.
 ## Rotas admin iniciais
 
 - `/login`
+- `/recuperar-senha`
+- `/redefinir-senha`
 - `/admin/dashboard`
 - `/admin/atletas`
 
