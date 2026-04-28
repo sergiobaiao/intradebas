@@ -9,6 +9,8 @@ import { UpdateResultDto } from './dto/update-result.dto';
 @Injectable()
 export class ResultsService {
   private static readonly rankingChannel = 'intradebas:results:ranking-updated';
+  private static readonly rankingCacheKey = 'intradebas:results:ranking';
+  private static readonly rankingCacheTtlSeconds = 30;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -192,6 +194,14 @@ export class ResultsService {
   }
 
   async getRanking() {
+    const cached = await this.redisPubSub.getJson<RankingRow[]>(
+      ResultsService.rankingCacheKey,
+    );
+
+    if (cached) {
+      return cached;
+    }
+
     const [aggregated, teams] = await Promise.all([
       this.prisma.result.groupBy({
         by: ['teamId'],
@@ -222,7 +232,7 @@ export class ResultsService {
         .map((row) => [row.teamId as string, row._sum.calculatedPoints ?? 0]),
     );
 
-    return teams
+    const ranking = teams
       .map((team) => ({
         id: team.id,
         name: team.name,
@@ -236,6 +246,14 @@ export class ResultsService {
 
         return left.name.localeCompare(right.name);
       });
+
+    await this.redisPubSub.setJson(
+      ResultsService.rankingCacheKey,
+      ranking,
+      ResultsService.rankingCacheTtlSeconds,
+    );
+
+    return ranking;
   }
 
   async streamRanking(): Promise<Observable<{ data: RankingRow[] }>> {
@@ -404,6 +422,7 @@ export class ResultsService {
   }
 
   private async publishRankingUpdate() {
+    await this.redisPubSub.deleteCache(ResultsService.rankingCacheKey);
     await this.redisPubSub.publish(ResultsService.rankingChannel, {
       type: 'ranking-updated',
       timestamp: new Date().toISOString(),

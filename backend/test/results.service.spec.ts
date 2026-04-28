@@ -7,13 +7,17 @@ import { createPrismaMock } from './helpers';
 describe('ResultsService', () => {
   const prisma = createPrismaMock();
   const redisPubSub = {
+    deleteCache: jest.fn(),
+    getJson: jest.fn(),
     publish: jest.fn(),
+    setJson: jest.fn(),
     subscribe: jest.fn(),
   } as unknown as RedisPubSubService;
   const service = new ResultsService(prisma as any, redisPubSub);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (redisPubSub.getJson as jest.Mock).mockResolvedValue(null);
     (redisPubSub.subscribe as jest.Mock).mockResolvedValue(of({ type: 'ranking-updated' }));
   });
 

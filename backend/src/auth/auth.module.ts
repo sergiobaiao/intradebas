@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import type { JwtSignOptions } from '@nestjs/jwt';
 import { JwtModule } from '@nestjs/jwt';
 import { MailModule } from '../mail/mail.module';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -13,7 +14,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: {
-        expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as any,
+        expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as JwtSignOptions['expiresIn'],
       },
     }),
   ],

@@ -63,6 +63,30 @@ export class SponsorshipService {
     return Math.min(Math.floor(parsed), 50);
   }
 
+  private parseSponsorStatus(value?: string): SponsorStatus | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    if (Object.values(SponsorStatus).includes(value as SponsorStatus)) {
+      return value as SponsorStatus;
+    }
+
+    throw new BadRequestException('Status de patrocinador invalido');
+  }
+
+  private parseCouponStatus(value?: string): CouponStatus | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    if (Object.values(CouponStatus).includes(value as CouponStatus)) {
+      return value as CouponStatus;
+    }
+
+    throw new BadRequestException('Status de cupom invalido');
+  }
+
   private generateCouponCode(level: string) {
     const randomPart = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
     return `${level.toUpperCase()}-${randomPart}`;
@@ -388,8 +412,9 @@ export class SponsorshipService {
   }) {
     const page = this.normalizePage(query.page);
     const pageSize = this.normalizePageSize(query.pageSize);
+    const status = this.parseSponsorStatus(query.status);
     const where: Prisma.SponsorWhereInput = {
-      ...(query.status ? { status: query.status as any } : {}),
+      ...(status ? { status } : {}),
     };
 
     const [total, items] = await Promise.all([
@@ -481,8 +506,9 @@ export class SponsorshipService {
   }) {
     const page = this.normalizePage(query.page);
     const pageSize = this.normalizePageSize(query.pageSize);
+    const status = this.parseCouponStatus(query.status);
     const where: Prisma.CouponWhereInput = {
-      ...(query.status ? { status: query.status as any } : {}),
+      ...(status ? { status } : {}),
       ...(query.sponsorId ? { sponsorId: query.sponsorId } : {}),
     };
 

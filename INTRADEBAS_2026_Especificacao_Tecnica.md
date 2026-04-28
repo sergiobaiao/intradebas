@@ -210,8 +210,8 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
 | Serviço de Cálculo | Worker que recalcula pontuação após cada input de resultado | ✅ Implementado no serviço principal |
-| WebSocket / SSE | Canal de comunicação para atualização em tempo real no frontend | ❌ Pendente |
-| Cache de Ranking | Cache Redis do placar atual para alta performance | ❌ Pendente |
+| WebSocket / SSE | Canal de comunicação para atualização em tempo real no frontend | ✅ Implementado via SSE + Redis Pub/Sub |
+| Cache de Ranking | Cache Redis do placar atual para alta performance | ✅ Implementado com invalidação após mutações de resultados |
 
 ## Módulo 5 — Conformidade LGPD
 
@@ -1595,7 +1595,7 @@ Duração estimada: 2 semanas
 - ✅ Venda de cotas de patrocínio com controle de limite
 - ✅ Geração e resgate de cupons
 - ✅ Lançamento de resultados pelo Admin
-- ✅ Placar consolidado das equipes (via polling — sem WebSocket)
+- ✅ Placar consolidado das equipes (SSE + Redis Pub/Sub)
 - ✅ Cadastro de modalidades
 - ✅ Motor de pontuação básico
 - 🟡 Home/Landing Page informativa
@@ -1621,6 +1621,9 @@ Duração estimada: 2 semanas
 | Tempo real pleno (SSE/WebSocket + Redis) | ✅ Implementado |
 | LGPD completo | 🟡 Parcial |
 | Autenticação completa (refresh/reset/admin management) | ✅ Implementado |
+| Hardening de segurança e configuração | ✅ Implementado |
+| Testes E2E públicos críticos | ✅ Implementado |
+| Runbook e compose produção endurecido | ✅ Implementado |
 | Portal público premium completo | 🟡 Parcial |
 | ALDEBARUN II dedicado | 🟡 Parcial |
 | Homologação/produção real ativada | ❌ Pendente |

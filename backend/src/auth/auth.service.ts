@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { JwtSignOptions } from '@nestjs/jwt';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma, UserRole } from '@prisma/client';
 import { compare, hash } from 'bcryptjs';
@@ -380,7 +381,7 @@ export class AuthService {
   ) {
     const refreshToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as any,
+      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as JwtSignOptions['expiresIn'],
     });
     const tokenHash = this.hashResetToken(refreshToken);
     const expiresAt = this.decodeRefreshTokenExpiry(refreshToken);

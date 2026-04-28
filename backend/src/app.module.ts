@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuditModule } from './audit/audit.module';
 import { AthletesModule } from './athletes/athletes.module';
 import { AuthModule } from './auth/auth.module';
+import { envValidationSchema } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { LgpdModule } from './lgpd/lgpd.module';
 import { MediaModule } from './media/media.module';
@@ -15,6 +19,16 @@ import { TeamsModule } from './teams/teams.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+    }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 120,
+      },
+    ]),
     PrismaModule,
     RealtimeModule,
     AuthModule,
@@ -28,6 +42,12 @@ import { TeamsModule } from './teams/teams.module';
     TeamsModule,
     AthletesModule,
     SponsorshipModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
