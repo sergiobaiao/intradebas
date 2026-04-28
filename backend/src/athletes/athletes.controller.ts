@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AthletesService } from './athletes.service';
+import { ConfirmAthleteEmailDto } from './dto/confirm-athlete-email.dto';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
+import { GetAthletePortalSessionDto } from './dto/get-athlete-portal-session.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
 import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 
@@ -48,6 +50,16 @@ export class AthletesController {
   @Post()
   create(@Body() dto: CreateAthleteDto) {
     return this.athletesService.create(dto);
+  }
+
+  @Post('portal/confirm-email')
+  confirmEmail(@Body() dto: ConfirmAthleteEmailDto) {
+    return this.athletesService.confirmEmail(dto.token);
+  }
+
+  @Post('portal/session')
+  getPortalSession(@Body() dto: GetAthletePortalSessionDto) {
+    return this.athletesService.getPortalSession(dto.token);
   }
 
   @Patch(':id')

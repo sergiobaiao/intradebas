@@ -19,4 +19,5 @@ export const envValidationSchema = Joi.object({
   MINIO_ACCESS_KEY: Joi.string().default('minioadmin'),
   MINIO_SECRET_KEY: Joi.string().default('minioadmin'),
   MINIO_BUCKET: Joi.string().default('intradebas'),
+  RECAPTCHA_SECRET_KEY: Joi.string().allow('', null),
 }).unknown(true);

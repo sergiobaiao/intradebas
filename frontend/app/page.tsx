@@ -37,6 +37,9 @@ export default function HomePage() {
                 <a className="button secondary" href="/resultados">
                   Ver resultados
                 </a>
+                <a className="button secondary" href="/atleta">
+                  Area do atleta
+                </a>
                 <a className="button secondary" href="/aldebarun">
                   Ver ALDEBARUN
                 </a>

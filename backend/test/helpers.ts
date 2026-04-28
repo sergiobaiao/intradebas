@@ -15,8 +15,15 @@ export function createPrismaMock() {
     },
     athlete: {
       count: jest.fn(),
+      create: jest.fn(),
       delete: jest.fn(),
       findMany: jest.fn(),
+      findUnique: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
+      update: jest.fn(),
+    },
+    athletePortalToken: {
+      create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
     },

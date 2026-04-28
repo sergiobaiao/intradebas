@@ -172,7 +172,8 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
 | Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial |
-| Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe e modalidades | ✅ Implementado |
+| Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe, modalidades, reCAPTCHA configurável e confirmação por e-mail | ✅ Implementado |
+| Área do Atleta | Acesso por link de confirmação de e-mail para ver cadastro, modalidades, resultados e LGPD | ✅ Implementado |
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
 | Portal do Patrocinador | Acesso por link de e-mail para status da cota e cupons | ✅ Implementado |
 | Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | ✅ Implementado |
@@ -230,7 +231,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Perfil | Descrição | Acesso |
 |---|---|---|
 | **Visitante** | Qualquer pessoa sem cadastro | Portal público: Home, Resultados, Patrocínio (consulta), ALDEBARUN |
-| **Atleta** | Morador, Familiar ou Convidado inscrito | Portal público + área do atleta (ver própria inscrição, modalidades, equipe) |
+| **Atleta** | Morador, Familiar ou Convidado inscrito | Portal público + área do atleta confirmada por e-mail (ver própria inscrição, modalidades, resultados e LGPD) |
 | **Patrocinador** | Empresa/pessoa com cota ativa | Área de patrocinador implementada (ver cupons, status da cota) |
 | **Admin Operacional** | Membro da Comissão Organizadora | Painel Admin completo exceto configurações críticas e gestão de admins |
 | **Superadmin** | Responsável técnico/chefe da Comissão | Acesso total, incluindo configurações, exclusão de dados e gestão de admins |
@@ -1289,6 +1290,8 @@ find /backups -name "intradebas_backup_*.sql.gz" \
 
 ```
 POST   /api/v1/athletes              Inscrição pública de atleta
+POST   /api/v1/athletes/portal/confirm-email  Confirma e-mail e abre área do atleta
+POST   /api/v1/athletes/portal/session        Sessão da área do atleta por token
 GET    /api/v1/athletes              [Admin] Lista de atletas (filtros, paginação)
 GET    /api/v1/athletes/:id          [Admin+Atleta] Perfil do atleta
 PATCH  /api/v1/athletes/:id          [Admin] Atualizar atleta
@@ -1477,7 +1480,8 @@ Duração estimada: 4 semanas
 - [x] Dashboard Admin com KPIs reais
 
 ### Semana 3 — Atletas e Inscrições
-- [~] Formulário público de inscrição de atleta (com LGPD)
+- [x] Formulário público de inscrição de atleta (com LGPD, reCAPTCHA configurável e confirmação por e-mail)
+- [x] Área do atleta com cadastro, modalidades, resultados e LGPD
 - [x] Gestão de atletas no Admin (lista, aprovar convidados, filtros)
 - [x] Módulo de equipes (Mucura, Jacaré, Capivara) com badges coloridos
 - [x] Exportação CSV de atletas
@@ -1620,6 +1624,7 @@ Duração estimada: 2 semanas
 | Painel administrativo operacional | ✅ Forte |
 | Tempo real pleno (SSE/WebSocket + Redis) | ✅ Implementado |
 | LGPD completo | 🟡 Parcial |
+| Área do atleta | ✅ Implementado |
 | Autenticação completa (refresh/reset/admin management) | ✅ Implementado |
 | Hardening de segurança e configuração | ✅ Implementado |
 | Testes E2E públicos críticos | ✅ Implementado |

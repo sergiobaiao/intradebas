@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import {
   AthleteStatus,
+  AthletePortalTokenPurpose,
   AthleteType,
   CouponStatus,
   Prisma,
   ShirtSize,
 } from '@prisma/client';
+import { createHash, randomBytes } from 'crypto';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
@@ -18,7 +21,10 @@ import { UpdateAthleteStatusDto } from './dto/update-athlete-status.dto';
 
 @Injectable()
 export class AthletesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   private toAuditValue(value: unknown) {
     if (value === null || value === undefined) {
@@ -73,6 +79,45 @@ export class AthletesService {
     }
 
     return Math.min(Math.floor(parsed), 50);
+  }
+
+  private hashPortalToken(value: string) {
+    return createHash('sha256').update(value).digest('hex');
+  }
+
+  private createPortalToken() {
+    return randomBytes(32).toString('base64url');
+  }
+
+  private async verifyRecaptcha(token?: string) {
+    const secret = process.env.RECAPTCHA_SECRET_KEY;
+
+    if (!secret) {
+      return;
+    }
+
+    if (!token) {
+      throw new BadRequestException('Validacao reCAPTCHA obrigatoria');
+    }
+
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret,
+        response: token,
+      }),
+    });
+
+    const body = (await response.json().catch(() => null)) as
+      | { success?: boolean; score?: number }
+      | null;
+
+    if (!body?.success || (typeof body.score === 'number' && body.score < 0.5)) {
+      throw new BadRequestException('Validacao reCAPTCHA invalida');
+    }
   }
 
   private toResponse(athlete: AthleteWithRelations) {
@@ -343,6 +388,10 @@ export class AthletesService {
       throw new BadRequestException('Aceite LGPD e obrigatorio');
     }
 
+    await this.verifyRecaptcha(dto.recaptchaToken);
+
+    const email = dto.email.toLowerCase();
+
     const duplicate = await this.prisma.athlete.findUnique({
       where: { cpf: dto.cpf },
       select: { id: true },
@@ -418,7 +467,7 @@ export class AthletesService {
         data: {
           name: dto.name,
           cpf: dto.cpf,
-          email: dto.email,
+          email,
           phone: dto.phone,
           birthDate: new Date(dto.birthDate),
           unit: dto.unit,
@@ -473,7 +522,183 @@ export class AthletesService {
       });
     });
 
+    await this.sendRegistrationConfirmation(athlete.id, athlete.name, email);
+
     return this.toResponse(athlete);
+  }
+
+  async confirmEmail(token: string) {
+    const tokenHash = this.hashPortalToken(token);
+    const now = new Date();
+
+    const portalToken = await this.prisma.athletePortalToken.findUnique({
+      where: { tokenHash },
+      include: {
+        athlete: {
+          include: {
+            team: true,
+            registrations: {
+              include: {
+                sport: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (
+      !portalToken ||
+      portalToken.purpose !== AthletePortalTokenPurpose.email_confirmation ||
+      portalToken.expiresAt.getTime() < now.getTime()
+    ) {
+      throw new BadRequestException('Token de confirmacao invalido ou expirado');
+    }
+
+    await this.prisma.athlete.update({
+      where: { id: portalToken.athleteId },
+      data: { emailVerifiedAt: now },
+    });
+
+    await this.prisma.athletePortalToken.update({
+      where: { id: portalToken.id },
+      data: { lastAccessedAt: now },
+    });
+
+    return this.buildPortalSession(portalToken.athleteId);
+  }
+
+  async getPortalSession(token: string) {
+    const tokenHash = this.hashPortalToken(token);
+    const now = new Date();
+
+    const portalToken = await this.prisma.athletePortalToken.findUnique({
+      where: { tokenHash },
+      select: {
+        id: true,
+        athleteId: true,
+        purpose: true,
+        expiresAt: true,
+        athlete: {
+          select: {
+            emailVerifiedAt: true,
+          },
+        },
+      },
+    });
+
+    if (
+      !portalToken ||
+      portalToken.expiresAt.getTime() < now.getTime() ||
+      !portalToken.athlete.emailVerifiedAt
+    ) {
+      throw new BadRequestException('Acesso do atleta invalido ou expirado');
+    }
+
+    await this.prisma.athletePortalToken.update({
+      where: { id: portalToken.id },
+      data: { lastAccessedAt: now },
+    });
+
+    return this.buildPortalSession(portalToken.athleteId);
+  }
+
+  private async sendRegistrationConfirmation(
+    athleteId: string,
+    athleteName: string,
+    email: string,
+  ) {
+    const token = this.createPortalToken();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+
+    await this.prisma.athletePortalToken.create({
+      data: {
+        athleteId,
+        tokenHash: this.hashPortalToken(token),
+        purpose: AthletePortalTokenPurpose.email_confirmation,
+        expiresAt,
+      },
+    });
+
+    const frontendBaseUrl = process.env.FRONTEND_BASE_URL ?? 'http://localhost:3000';
+    const confirmationUrl = `${frontendBaseUrl}/atleta?token=${encodeURIComponent(token)}`;
+
+    await this.mailService.sendAthleteRegistrationConfirmationEmail({
+      to: email,
+      name: athleteName,
+      confirmationUrl,
+    });
+  }
+
+  private async buildPortalSession(athleteId: string) {
+    const athlete = await this.prisma.athlete.findUnique({
+      where: { id: athleteId },
+      include: {
+        team: true,
+        registrations: {
+          include: {
+            sport: true,
+          },
+        },
+        results: {
+          include: {
+            sport: true,
+            team: true,
+          },
+          orderBy: [{ resultDate: 'desc' }, { createdAt: 'desc' }],
+        },
+        redeemedCoupons: {
+          select: {
+            id: true,
+            code: true,
+            status: true,
+            redeemedAt: true,
+            sponsor: {
+              select: {
+                id: true,
+                companyName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!athlete) {
+      throw new NotFoundException('Atleta nao encontrado');
+    }
+
+    return {
+      athlete: this.toResponse(athlete),
+      emailVerifiedAt: athlete.emailVerifiedAt,
+      lgpd: {
+        consent: athlete.lgpdConsent,
+        consentAt: athlete.lgpdConsentAt,
+        policyVersion: 'v1.0',
+      },
+      results: athlete.results.map((result) => ({
+        id: result.id,
+        position: result.position,
+        rawScore: result.rawScore ? Number(result.rawScore) : null,
+        calculatedPoints: result.calculatedPoints,
+        resultDate: result.resultDate,
+        notes: result.notes,
+        sport: {
+          id: result.sport.id,
+          name: result.sport.name,
+          category: result.sport.category,
+        },
+        team: result.team
+          ? {
+              id: result.team.id,
+              name: result.team.name,
+              color: result.team.color,
+              totalScore: result.team.totalScore,
+            }
+          : null,
+      })),
+      coupons: athlete.redeemedCoupons,
+    };
   }
 
   async update(id: string, dto: UpdateAthleteDto, changedBy?: string) {

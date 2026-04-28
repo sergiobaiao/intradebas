@@ -25,9 +25,8 @@ export class CreateAthleteDto {
   })
   cpf!: string;
 
-  @IsOptional()
   @IsEmail()
-  email?: string;
+  email!: string;
 
   @IsOptional()
   @IsString()
@@ -67,4 +66,9 @@ export class CreateAthleteDto {
   @IsString()
   @IsNotEmpty()
   couponCode?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  recaptchaToken?: string;
 }

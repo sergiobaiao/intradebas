@@ -16,6 +16,8 @@ test('submits a public athlete registration', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Enviar inscricao' }).click();
 
-  await expect(page.getByText('Inscricao concluida com sucesso.')).toBeVisible();
+  await expect(
+    page.getByText('Inscricao recebida. Confirme seu e-mail para liberar a area do atleta.'),
+  ).toBeVisible();
   await expect(page.getByText(/Protocolo:/)).toContainText('athlete-1');
 });

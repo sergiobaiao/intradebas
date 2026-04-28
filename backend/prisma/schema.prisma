@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -56,6 +57,11 @@ enum CouponStatus {
   active
   used
   expired
+}
+
+enum AthletePortalTokenPurpose {
+  email_confirmation
+  portal_access
 }
 
 enum MediaType {
@@ -137,6 +143,7 @@ model Athlete {
   lgpdConsent   Boolean       @default(false) @map("lgpd_consent")
   lgpdConsentAt DateTime?     @map("lgpd_consent_at")
   lgpdConsentIp String?       @map("lgpd_consent_ip")
+  emailVerifiedAt DateTime?   @map("email_verified_at")
   notes         String?
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
@@ -149,11 +156,28 @@ model Athlete {
   results       Result[]
   redeemedCoupons Coupon[]    @relation("coupon_redeemed_by")
   lgpdDeletionRequests LgpdDeletionRequest[]
+  portalTokens AthletePortalToken[]
 
   @@index([teamId, status, createdAt])
   @@index([status, createdAt])
   @@index([titularId])
   @@map("athletes")
+}
+
+model AthletePortalToken {
+  id             String    @id @default(uuid())
+  athleteId      String    @map("athlete_id")
+  tokenHash      String    @unique @map("token_hash")
+  purpose        AthletePortalTokenPurpose
+  expiresAt      DateTime  @map("expires_at")
+  lastAccessedAt DateTime? @map("last_accessed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  athlete Athlete @relation(fields: [athleteId], references: [id])
+
+  @@index([athleteId, purpose, expiresAt])
+  @@index([expiresAt, lastAccessedAt])
+  @@map("athlete_portal_tokens")
 }
 
 model Sport {

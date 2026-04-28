@@ -61,4 +61,33 @@ export class MailService {
       `,
     });
   }
+
+  async sendAthleteRegistrationConfirmationEmail(input: {
+    to: string;
+    name: string;
+    confirmationUrl: string;
+  }) {
+    const from = process.env.MAIL_FROM ?? 'noreply@intradebas.local';
+
+    await this.transporter.sendMail({
+      from,
+      to: input.to,
+      subject: 'Confirme sua inscricao - INTRADEBAS 2026',
+      text: [
+        `Ola, ${input.name}.`,
+        '',
+        'Recebemos sua inscricao no INTRADEBAS 2026.',
+        'Confirme seu e-mail para liberar sua area do atleta:',
+        input.confirmationUrl,
+        '',
+        'Se voce nao fez esta inscricao, ignore este e-mail.',
+      ].join('\n'),
+      html: `
+        <p>Ola, ${input.name}.</p>
+        <p>Recebemos sua inscricao no INTRADEBAS 2026.</p>
+        <p><a href="${input.confirmationUrl}">Confirmar inscricao e abrir area do atleta</a></p>
+        <p>Se voce nao fez esta inscricao, ignore este e-mail.</p>
+      `,
+    });
+  }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   AthleteSummary,
   CreateAthleteInput,
@@ -10,6 +10,16 @@ import {
 } from '../lib';
 
 const shirtSizes: CreateAthleteInput['shirtSize'][] = ['PP', 'P', 'M', 'G', 'GG', 'XGG'];
+const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      ready: (callback: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
+    };
+  }
+}
 
 type InscricaoFormProps = {
   teams: TeamSummary[];
@@ -35,19 +45,33 @@ export function InscricaoForm({ teams, sports }: InscricaoFormProps) {
   const [createdAthlete, setCreatedAthlete] = useState<AthleteSummary | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (!recaptchaSiteKey || document.querySelector('[data-recaptcha-script="true"]')) {
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.recaptchaScript = 'true';
+    document.head.appendChild(script);
+  }, []);
+
   const requiresTitular = type !== 'titular';
   const canSubmit = useMemo(
     () =>
       Boolean(
         name &&
           cpf &&
+          email &&
           birthDate &&
           teamId &&
           selectedSports.length > 0 &&
           lgpdConsent &&
           (!requiresTitular || titularId),
       ),
-    [birthDate, cpf, lgpdConsent, name, requiresTitular, selectedSports.length, teamId, titularId],
+    [birthDate, cpf, email, lgpdConsent, name, requiresTitular, selectedSports.length, teamId, titularId],
   );
 
   function toggleSport(sportId: string) {
@@ -65,10 +89,25 @@ export function InscricaoForm({ teams, sports }: InscricaoFormProps) {
     setMessage(null);
 
     try {
+      const recaptchaToken = recaptchaSiteKey
+        ? await new Promise<string>((resolve, reject) => {
+            if (!window.grecaptcha) {
+              reject(new Error('reCAPTCHA ainda nao carregou. Tente novamente.'));
+              return;
+            }
+
+            window.grecaptcha?.ready(() => {
+              window.grecaptcha
+                ?.execute(recaptchaSiteKey, { action: 'athlete_registration' })
+                .then(resolve)
+                .catch(reject);
+            });
+          })
+        : undefined;
       const athlete = await createAthleteRegistration({
         name,
         cpf,
-        email: email || undefined,
+        email,
         phone: phone || undefined,
         birthDate,
         unit: unit || undefined,
@@ -79,13 +118,14 @@ export function InscricaoForm({ teams, sports }: InscricaoFormProps) {
         sports: selectedSports,
         lgpdConsent,
         couponCode: couponCode || undefined,
+        recaptchaToken,
       });
 
       setCreatedAthlete(athlete);
       setMessage(
         couponCode
-          ? 'Inscricao concluida e cupom resgatado com sucesso.'
-          : 'Inscricao concluida com sucesso.',
+          ? 'Inscricao recebida, cupom resgatado e e-mail de confirmacao enviado.'
+          : 'Inscricao recebida. Confirme seu e-mail para liberar a area do atleta.',
       );
       setName('');
       setCpf('');

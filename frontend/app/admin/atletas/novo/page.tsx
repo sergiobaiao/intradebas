@@ -61,7 +61,7 @@ export default function AdminNovoAtletaPage() {
       await createAthleteRegistration({
         name,
         cpf,
-        email: email || undefined,
+        email,
         phone: phone || undefined,
         birthDate,
         type: 'titular',

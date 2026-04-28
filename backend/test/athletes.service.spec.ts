@@ -9,7 +9,10 @@ import { createPrismaMock } from './helpers';
 
 describe('AthletesService', () => {
   const prisma = createPrismaMock();
-  const service = new AthletesService(prisma as any);
+  const mailService = {
+    sendAthleteRegistrationConfirmationEmail: jest.fn(),
+  };
+  const service = new AthletesService(prisma as any, mailService as any);
 
   const validDto = {
     name: 'Joao Silva',
@@ -27,6 +30,8 @@ describe('AthletesService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    delete process.env.RECAPTCHA_SECRET_KEY;
+    process.env.FRONTEND_BASE_URL = 'http://localhost:3000';
   });
 
   it('rejects duplicate CPF', async () => {
@@ -43,6 +48,8 @@ describe('AthletesService', () => {
       .mockResolvedValueOnce({ id: 'titular-1', type: AthleteType.titular });
     prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
     prisma.sport.findMany.mockResolvedValue([{ id: 'sport-1' }]);
+    prisma.athletePortalToken.create.mockResolvedValue({ id: 'portal-token-1' });
+    mailService.sendAthleteRegistrationConfirmationEmail.mockResolvedValue(undefined);
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         athlete: {
@@ -85,6 +92,13 @@ describe('AthletesService', () => {
     });
 
     expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.athletePortalToken.create).toHaveBeenCalled();
+    expect(mailService.sendAthleteRegistrationConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'joao@example.com',
+        confirmationUrl: expect.stringContaining('/atleta?token='),
+      }),
+    );
     expect(result.status).toBe('pending');
   });
 
@@ -94,6 +108,8 @@ describe('AthletesService', () => {
       .mockResolvedValueOnce({ id: 'titular-1', type: AthleteType.titular });
     prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
     prisma.sport.findMany.mockResolvedValue([{ id: 'sport-1' }]);
+    prisma.athletePortalToken.create.mockResolvedValue({ id: 'portal-token-2' });
+    mailService.sendAthleteRegistrationConfirmationEmail.mockResolvedValue(undefined);
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
         athlete: {
@@ -141,6 +157,87 @@ describe('AthletesService', () => {
 
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.status).toBe('active');
+  });
+
+  it('rejects registration when configured reCAPTCHA validation fails', async () => {
+    process.env.RECAPTCHA_SECRET_KEY = 'secret';
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({
+        json: jest.fn().mockResolvedValue({ success: false }),
+      } as unknown as Response);
+
+    await expect(
+      service.create({
+        ...validDto,
+        recaptchaToken: 'invalid-token',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(fetchMock).toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('confirms athlete email and returns the personal portal session', async () => {
+    const athlete = {
+      id: 'athlete-1',
+      name: 'Joao Silva',
+      cpf: '123.456.789-00',
+      email: 'joao@example.com',
+      phone: '86999999999',
+      birthDate: new Date('1990-01-01'),
+      type: AthleteType.titular,
+      status: AthleteStatus.active,
+      unit: 'Bloco A',
+      shirtSize: ShirtSize.M,
+      createdAt: new Date('2026-04-17T00:00:00Z'),
+      emailVerifiedAt: null,
+      lgpdConsent: true,
+      lgpdConsentAt: new Date('2026-04-17T00:00:00Z'),
+      team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 10 },
+      registrations: [
+        { sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' } },
+      ],
+      results: [
+        {
+          id: 'result-1',
+          position: 1,
+          rawScore: null,
+          calculatedPoints: 5,
+          resultDate: new Date('2026-04-20T10:00:00Z'),
+          notes: null,
+          sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
+          team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 10 },
+        },
+      ],
+      redeemedCoupons: [],
+    };
+
+    prisma.athletePortalToken.findUnique.mockResolvedValue({
+      id: 'token-1',
+      athleteId: 'athlete-1',
+      purpose: 'email_confirmation',
+      expiresAt: new Date(Date.now() + 60_000),
+      athlete,
+    });
+    prisma.athlete.update.mockResolvedValue({ id: 'athlete-1' });
+    prisma.athletePortalToken.update.mockResolvedValue({ id: 'token-1' });
+    prisma.athlete.findUnique.mockResolvedValue({
+      ...athlete,
+      emailVerifiedAt: new Date('2026-04-17T00:01:00Z'),
+    });
+
+    const result = await service.confirmEmail('valid-token');
+
+    expect(prisma.athlete.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'athlete-1' },
+        data: { emailVerifiedAt: expect.any(Date) },
+      }),
+    );
+    expect(result.athlete.id).toBe('athlete-1');
+    expect(result.results).toHaveLength(1);
+    expect(result.lgpd.consent).toBe(true);
   });
 
   it('rejects registration with an invalid or used coupon', async () => {

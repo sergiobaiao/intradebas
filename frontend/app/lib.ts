@@ -37,7 +37,7 @@ export type AthleteSummary = {
 export type CreateAthleteInput = {
   name: string;
   cpf: string;
-  email?: string;
+  email: string;
   phone?: string;
   birthDate: string;
   unit?: string;
@@ -48,6 +48,7 @@ export type CreateAthleteInput = {
   sports: string[];
   lgpdConsent: boolean;
   couponCode?: string;
+  recaptchaToken?: string;
 };
 
 export type UpdateAthleteInput = {
@@ -59,6 +60,33 @@ export type UpdateAthleteInput = {
   teamId?: string;
   shirtSize?: 'PP' | 'P' | 'M' | 'G' | 'GG' | 'XGG';
   sports?: string[];
+};
+
+export type AthletePortalSession = {
+  athlete: AthleteSummary;
+  emailVerifiedAt?: string | null;
+  lgpd: {
+    consent: boolean;
+    consentAt?: string | null;
+    policyVersion: string;
+  };
+  results: Array<{
+    id: string;
+    position?: number | null;
+    rawScore?: number | null;
+    calculatedPoints?: number | null;
+    resultDate: string;
+    notes?: string | null;
+    sport: { id: string; name: string; category: string };
+    team?: { id: string; name: string; color?: string | null; totalScore: number } | null;
+  }>;
+  coupons: Array<{
+    id: string;
+    code: string;
+    status: 'active' | 'used' | 'expired';
+    redeemedAt?: string | null;
+    sponsor: { id: string; companyName: string };
+  }>;
 };
 
 export type SponsorshipQuotaSummary = {
@@ -664,6 +692,50 @@ export async function createAthleteRegistration(input: CreateAthleteInput) {
   }
 
   return (await response.json()) as AthleteSummary;
+}
+
+export async function confirmAthleteEmail(token: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/athletes/portal/confirm-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao confirmar cadastro');
+  }
+
+  return (await response.json()) as AthletePortalSession;
+}
+
+export async function getAthletePortalSession(token: string) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${apiBase}/athletes/portal/session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? 'Falha ao abrir area do atleta');
+  }
+
+  return (await response.json()) as AthletePortalSession;
 }
 
 export async function createLgpdDeletionRequest(input: CreateLgpdDeletionRequestInput) {
