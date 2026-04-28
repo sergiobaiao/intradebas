@@ -27,7 +27,7 @@ services:
       dockerfile: Dockerfile
       target: deps
     container_name: intradebas-backend
-    command: npm run start:dev
+    command: sh -c "npm run prisma:generate && npm run start:dev"
     env_file:
       - .env
     environment:
