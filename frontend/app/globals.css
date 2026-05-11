@@ -456,6 +456,57 @@ main {
   padding: 28px;
 }
 
+.admin-screen-content > .section {
+  min-height: auto;
+  padding: 0;
+}
+
+.admin-screen-content > .section > .shell {
+  width: 100%;
+  margin: 0;
+}
+
+.admin-screen-content .eyebrow {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+
+.admin-screen-content > .section h1 {
+  margin: 10px 0 12px;
+  color: #111827;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.admin-screen-content > .section > .shell > p {
+  max-width: 74ch;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.admin-screen-content .card {
+  background: #fff;
+  border-color: rgba(17, 24, 39, 0.08);
+  box-shadow: 0 18px 50px rgba(17, 24, 39, 0.06);
+}
+
+.admin-screen-content .review-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-screen-content .ranking-list,
+.admin-screen-content .review-grid,
+.admin-screen-content .sponsorship-grid {
+  margin-top: 22px;
+}
+
 .admin-topbar {
   display: flex;
   align-items: center;

@@ -9,9 +9,9 @@
 
 **Purpose**: Inventory current admin screens and prepare shared styling/testing.
 
-- [ ] T001 Review current admin list/form routes under `frontend/app/admin/` against `specs/052-admin-screens-redesign/contracts/admin-screens-ui.md`
+- [X] T001 Review current admin list/form routes under `frontend/app/admin/` against `specs/052-admin-screens-redesign/contracts/admin-screens-ui.md`
 - [ ] T002 [P] Create representative E2E scaffold in `frontend/e2e/admin-screens.spec.ts`
-- [ ] T003 [P] Identify reusable admin screen classes to extend in `frontend/app/globals.css`
+- [X] T003 [P] Identify reusable admin screen classes to extend in `frontend/app/globals.css`
 
 ---
 
@@ -19,8 +19,8 @@
 
 **Purpose**: Shared visual primitives for route-level redesign.
 
-- [ ] T004 Add reusable admin page header, action row, section card, table wrapper and form section CSS in `frontend/app/globals.css`
-- [ ] T005 Add admin empty-state and responsive utility CSS in `frontend/app/globals.css`
+- [X] T004 Add reusable admin page header, action row, section card, table wrapper and form section CSS in `frontend/app/globals.css`
+- [X] T005 Add admin empty-state and responsive utility CSS in `frontend/app/globals.css`
 - [ ] T006 Define representative E2E admin session setup in `frontend/e2e/admin-screens.spec.ts`
 
 ---

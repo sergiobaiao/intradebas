@@ -10,11 +10,6 @@ import {
   SportSummary,
 } from '../../lib';
 
-type NavigationGroup = {
-  label: string;
-  items: { label: string; href: string; badge?: string }[];
-};
-
 type DashboardMetric = {
   label: string;
   value: string;
@@ -30,45 +25,6 @@ type OperationalRecord = {
   description: string;
   href: string;
 };
-
-const navigationGroups: NavigationGroup[] = [
-  {
-    label: 'Operacao',
-    items: [
-      { label: 'Dashboard', href: '/admin/dashboard' },
-      { label: 'Revisar atletas', href: '/admin/atletas' },
-      { label: 'Gerenciar resultados', href: '/admin/resultados' },
-      { label: 'Ranking', href: '/admin/ranking' },
-    ],
-  },
-  {
-    label: 'Cadastros',
-    items: [
-      { label: 'Equipes', href: '/admin/equipes' },
-      { label: 'Nova equipe', href: '/admin/equipes/nova' },
-      { label: 'Modalidades', href: '/admin/modalidades' },
-      { label: 'Nova modalidade', href: '/admin/modalidades/nova' },
-    ],
-  },
-  {
-    label: 'Patrocinio e midia',
-    items: [
-      { label: 'Gerenciar patrocinio', href: '/admin/patrocinio' },
-      { label: 'Backdrop', href: '/admin/backdrop' },
-      { label: 'Midia', href: '/admin/midia' },
-      { label: 'Nova midia', href: '/admin/midia/nova' },
-    ],
-  },
-  {
-    label: 'Governanca',
-    items: [
-      { label: 'LGPD', href: '/admin/lgpd' },
-      { label: 'Auditoria', href: '/admin/auditoria' },
-      { label: 'Usuarios admin', href: '/admin/usuarios' },
-      { label: 'Configuracoes', href: '/admin/configuracoes' },
-    ],
-  },
-];
 
 const statusLabels: Record<string, string> = {
   active: 'Ativo',
@@ -215,40 +171,7 @@ export default async function AdminDashboardPage() {
   const maxScore = Math.max(...performanceRows.map((team) => team.totalScore), 0);
 
   return (
-    <main className="admin-dashboard-shell">
-      <aside className="admin-sidebar" aria-label="Navegacao administrativa">
-        <div className="admin-brand">
-          <span className="admin-brand-mark">IN</span>
-          <div>
-            <strong>INTRADEBAS</strong>
-            <small>Studio Admin</small>
-          </div>
-        </div>
-
-        <a className="admin-quick-action" href="/admin/atletas">
-          Revisar inscricoes
-        </a>
-
-        <nav className="admin-nav" aria-label="Navegacao administrativa">
-          {navigationGroups.map((group) => (
-            <section key={group.label} className="admin-nav-group">
-              <span>{group.label}</span>
-              {group.items.map((item) => (
-                <a
-                  key={item.href}
-                  className={item.href === '/admin/dashboard' ? 'active' : undefined}
-                  href={item.href}
-                >
-                  {item.label}
-                  {item.badge ? <small>{item.badge}</small> : null}
-                </a>
-              ))}
-            </section>
-          ))}
-        </nav>
-      </aside>
-
-      <section className="admin-dashboard-main">
+    <>
         <header className="admin-topbar">
           <div>
             <span className="admin-kicker">Painel administrativo</span>
@@ -385,7 +308,6 @@ export default async function AdminDashboardPage() {
             />
           )}
         </section>
-      </section>
-    </main>
+    </>
   );
 }
