@@ -17,9 +17,9 @@
 
 **Purpose**: Prepare the frontend dashboard work without changing backend contracts.
 
-- [ ] T001 Review current admin route coverage in `frontend/app/admin/dashboard/page.tsx` against `specs/051-admin-dashboard-redesign/contracts/admin-dashboard-ui.md`
-- [ ] T002 [P] Create dashboard E2E test scaffold in `frontend/e2e/admin-dashboard.spec.ts`
-- [ ] T003 [P] Identify reusable admin CSS namespace additions needed in `frontend/app/globals.css`
+- [X] T001 Review current admin route coverage in `frontend/app/admin/dashboard/page.tsx` against `specs/051-admin-dashboard-redesign/contracts/admin-dashboard-ui.md`
+- [X] T002 [P] Create dashboard E2E test scaffold in `frontend/e2e/admin-dashboard.spec.ts`
+- [X] T003 [P] Identify reusable admin CSS namespace additions needed in `frontend/app/globals.css`
 
 ---
 
@@ -29,10 +29,10 @@
 
 **CRITICAL**: No user story implementation should begin until these tasks are complete.
 
-- [ ] T004 Define admin navigation groups and route metadata in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T005 Define dashboard metric derivation helpers using existing real data in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T006 Define empty-state and safe formatting helpers in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T007 Add base admin shell, sidebar, topbar, card, table and responsive CSS classes in `frontend/app/globals.css`
+- [X] T004 Define admin navigation groups and route metadata in `frontend/app/admin/dashboard/page.tsx`
+- [X] T005 Define dashboard metric derivation helpers using existing real data in `frontend/app/admin/dashboard/page.tsx`
+- [X] T006 Define empty-state and safe formatting helpers in `frontend/app/admin/dashboard/page.tsx`
+- [X] T007 Add base admin shell, sidebar, topbar, card, table and responsive CSS classes in `frontend/app/globals.css`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -46,14 +46,14 @@
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Add Playwright assertions for sidebar/topbar and required admin links in `frontend/e2e/admin-dashboard.spec.ts`
+- [X] T008 [P] [US1] Add Playwright assertions for sidebar/topbar and required admin links in `frontend/e2e/admin-dashboard.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Replace button grid with admin dashboard shell structure in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T010 [US1] Render grouped sidebar navigation for all routes from the UI contract in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T011 [US1] Render topbar with page context and real operational status labels in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T012 [US1] Style desktop sidebar, topbar and main content hierarchy in `frontend/app/globals.css`
+- [X] T009 [US1] Replace button grid with admin dashboard shell structure in `frontend/app/admin/dashboard/page.tsx`
+- [X] T010 [US1] Render grouped sidebar navigation for all routes from the UI contract in `frontend/app/admin/dashboard/page.tsx`
+- [X] T011 [US1] Render topbar with page context and real operational status labels in `frontend/app/admin/dashboard/page.tsx`
+- [X] T012 [US1] Style desktop sidebar, topbar and main content hierarchy in `frontend/app/globals.css`
 
 **Checkpoint**: User Story 1 should be fully functional and testable independently.
 
@@ -67,17 +67,17 @@
 
 ### Tests for User Story 2
 
-- [ ] T013 [P] [US2] Add Playwright assertions that dashboard does not render reference/mock strings in `frontend/e2e/admin-dashboard.spec.ts`
-- [ ] T014 [P] [US2] Add Playwright assertions for real metric headings and empty-state behavior in `frontend/e2e/admin-dashboard.spec.ts`
+- [X] T013 [P] [US2] Add Playwright assertions that dashboard does not render reference/mock strings in `frontend/e2e/admin-dashboard.spec.ts`
+- [X] T014 [P] [US2] Add Playwright assertions for real metric headings and empty-state behavior in `frontend/e2e/admin-dashboard.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Fetch existing real data for teams, athletes, sports, results, ranking and sponsorship quotas in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T016 [US2] Render metric cards calculated from real data in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T017 [US2] Render team performance or ranking panel using real team/ranking data in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T018 [US2] Render operational records table/list from real athletes, results, sports or sponsorship data in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T019 [US2] Render explicit empty/error states for missing data in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T020 [US2] Style metric cards, performance panel and operational table/list in `frontend/app/globals.css`
+- [X] T015 [US2] Fetch existing real data for teams, athletes, sports, results, ranking and sponsorship quotas in `frontend/app/admin/dashboard/page.tsx`
+- [X] T016 [US2] Render metric cards calculated from real data in `frontend/app/admin/dashboard/page.tsx`
+- [X] T017 [US2] Render team performance or ranking panel using real team/ranking data in `frontend/app/admin/dashboard/page.tsx`
+- [X] T018 [US2] Render operational records table/list from real athletes, results, sports or sponsorship data in `frontend/app/admin/dashboard/page.tsx`
+- [X] T019 [US2] Render explicit empty/error states for missing data in `frontend/app/admin/dashboard/page.tsx`
+- [X] T020 [US2] Style metric cards, performance panel and operational table/list in `frontend/app/globals.css`
 
 **Checkpoint**: User Story 2 should show useful real dashboard content without fake values.
 
@@ -91,13 +91,13 @@
 
 ### Tests for User Story 3
 
-- [ ] T021 [P] [US3] Add Playwright viewport checks for desktop, tablet and mobile dashboard rendering in `frontend/e2e/admin-dashboard.spec.ts`
+- [X] T021 [P] [US3] Add Playwright viewport checks for desktop, tablet and mobile dashboard rendering in `frontend/e2e/admin-dashboard.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Add responsive sidebar/topbar behavior in `frontend/app/globals.css`
-- [ ] T023 [US3] Add responsive dashboard card and panel grids in `frontend/app/globals.css`
-- [ ] T024 [US3] Add responsive table/list overflow handling in `frontend/app/globals.css`
+- [X] T022 [US3] Add responsive sidebar/topbar behavior in `frontend/app/globals.css`
+- [X] T023 [US3] Add responsive dashboard card and panel grids in `frontend/app/globals.css`
+- [X] T024 [US3] Add responsive table/list overflow handling in `frontend/app/globals.css`
 
 **Checkpoint**: User Story 3 should be independently verifiable through viewport checks.
 
@@ -111,9 +111,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T025 [US4] Tune visual spacing, borders, density and hierarchy in `frontend/app/globals.css`
-- [ ] T026 [US4] Tune dashboard copy to match INTRADEBAS terminology and avoid copied reference labels in `frontend/app/admin/dashboard/page.tsx`
-- [ ] T027 [US4] Verify no customer/revenue/reference-domain content appears in `frontend/app/admin/dashboard/page.tsx`
+- [X] T025 [US4] Tune visual spacing, borders, density and hierarchy in `frontend/app/globals.css`
+- [X] T026 [US4] Tune dashboard copy to match INTRADEBAS terminology and avoid copied reference labels in `frontend/app/admin/dashboard/page.tsx`
+- [X] T027 [US4] Verify no customer/revenue/reference-domain content appears in `frontend/app/admin/dashboard/page.tsx`
 
 **Checkpoint**: User Story 4 should satisfy visual review against the reference without copying its fake data.
 
@@ -123,11 +123,11 @@
 
 **Purpose**: Validate, document and prepare the feature for implementation closure.
 
-- [ ] T028 [P] Update `INTRADEBAS_2026_Especificacao_Tecnica.md` to mark the admin dashboard redesign progress
-- [ ] T029 Run `npm run build` in `frontend/`
-- [ ] T030 Run `npm run test:e2e` in `frontend/`
-- [ ] T031 [P] Review `specs/051-admin-dashboard-redesign/quickstart.md` against actual validation steps
-- [ ] T032 Commit and push completed feature changes on branch `051-admin-dashboard-redesign`
+- [X] T028 [P] Update `INTRADEBAS_2026_Especificacao_Tecnica.md` to mark the admin dashboard redesign progress
+- [X] T029 Run `npm run build` in `frontend/`
+- [X] T030 Run `npm run test:e2e` in `frontend/`
+- [X] T031 [P] Review `specs/051-admin-dashboard-redesign/quickstart.md` against actual validation steps
+- [X] T032 Commit and push completed feature changes on branch `051-admin-dashboard-redesign`
 
 ---
 

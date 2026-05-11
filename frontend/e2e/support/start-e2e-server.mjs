@@ -22,6 +22,42 @@ const sports = [
   },
 ];
 
+const athletes = [
+  {
+    id: 'athlete-1',
+    name: 'Joao Silva Santos',
+    cpf: '000.000.000-00',
+    type: 'titular',
+    status: 'pending',
+    shirtSize: 'M',
+    sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletivo' }],
+    team: teams[0],
+  },
+  {
+    id: 'athlete-2',
+    name: 'Maria Alves',
+    cpf: '111.111.111-11',
+    type: 'titular',
+    status: 'active',
+    shirtSize: 'G',
+    sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletivo' }],
+    team: teams[0],
+  },
+];
+
+const results = [
+  {
+    id: 'result-1',
+    position: 1,
+    rawScore: null,
+    calculatedPoints: 5,
+    resultDate: '2026-04-28T12:00:00.000Z',
+    notes: null,
+    sport: { id: 'sport-1', name: 'Futsal', category: 'coletivo' },
+    team: teams[0],
+  },
+];
+
 const ranking = [
   {
     id: 'team-1',
@@ -34,6 +70,20 @@ const ranking = [
     name: 'Guara',
     color: '#2A9D8F',
     totalScore: 8,
+  },
+];
+
+const sponsorshipQuotas = [
+  {
+    id: 'quota-1',
+    level: 'bronze',
+    price: 350,
+    maxSlots: 8,
+    usedSlots: 2,
+    remainingSlots: 6,
+    courtesyCount: 2,
+    benefits: 'Costas camisa + Backdrop',
+    backdropPriority: 1,
   },
 ];
 
@@ -60,8 +110,23 @@ const api = createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/v1/athletes') {
+    sendJson(response, athletes);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/results') {
+    sendJson(response, results);
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/v1/results/ranking') {
     sendJson(response, ranking);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/sponsorship/quotas') {
+    sendJson(response, sponsorshipQuotas);
     return;
   }
 
@@ -81,16 +146,7 @@ const api = createServer(async (request, response) => {
       // drain request body
     }
 
-    sendJson(response, {
-      id: 'athlete-1',
-      name: 'Joao Silva Santos',
-      cpf: '000.000.000-00',
-      type: 'titular',
-      status: 'pending',
-      shirtSize: 'M',
-      sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletivo' }],
-      team: teams[0],
-    });
+    sendJson(response, athletes[0]);
     return;
   }
 

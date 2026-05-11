@@ -186,7 +186,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
-| Dashboard Principal | KPIs: total de atletas, cotas vendidas, pontuação das equipes, modalidades ativas | ✅ Implementado |
+| Dashboard Principal | KPIs reais, navegação lateral/topbar, pontuação das equipes, modalidades e registros operacionais | 🟡 Em redesenho visual na feature 051 |
 | Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV | ✅ Implementado |
 | Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | 🟡 Parcial; limites de participantes pendentes |
 | Gestão de Patrocínio | Controle de cotas vendidas, geração/listagem de cupons, status de pagamento | ✅ Implementado |
@@ -1464,7 +1464,7 @@ Duração estimada: 1 semana
 
 - [x] Configurar repositório Git (monorepo ou multi-repo)
 - [x] Setup do ambiente Docker de desenvolvimento
-- [ ] Clonar e configurar o template next-shadcn-admin-dashboard
+- [~] Adaptar padrão visual do next-shadcn-admin-dashboard ao painel admin (feature 051 em andamento)
 - [x] Configurar Prisma + PostgreSQL + primeiras migrations
 - [x] Configurar NestJS com módulos base
 - [x] Definir CI/CD básico (GitHub Actions)
@@ -1476,8 +1476,8 @@ Duração estimada: 4 semanas
 ### Semana 2 — Auth + Estrutura Base
 - [x] Módulo de autenticação (login, JWT, refresh e recuperação de senha implementados)
 - [~] Layout público (footer WhatsApp implementado; navbar dedicada ainda pendente)
-- [ ] Sidebar do Admin adaptada (template customizado)
-- [x] Dashboard Admin com KPIs reais
+- [~] Sidebar do Admin adaptada (feature 051 em andamento)
+- [~] Dashboard Admin com KPIs reais e padrão Studio Admin (feature 051 em andamento)
 
 ### Semana 3 — Atletas e Inscrições
 - [x] Formulário público de inscrição de atleta (com LGPD, reCAPTCHA configurável e confirmação por e-mail)
