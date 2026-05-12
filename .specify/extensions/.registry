@@ -18,6 +18,90 @@
       },
       "registered_skills": [],
       "installed_at": "2026-04-17T02:43:28.764527+00:00"
+    },
+    "cleanup": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:b15a5e3b4e5b43f867c093d962492f502b01503d0ec174611d0797854b017578",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "agy": [
+          "speckit.cleanup.run",
+          "speckit.cleanup"
+        ],
+        "codex": [
+          "speckit.cleanup.run",
+          "speckit.cleanup"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T17:06:06.956844+00:00"
+    },
+    "cost": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:366789e598074aac218bc4a1aecc910049bef03d2e06bdf0bbb0a74d3a2bdffd",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "agy": [
+          "speckit.cost.track",
+          "speckit.cost.report",
+          "speckit.cost.budget",
+          "speckit.cost.compare",
+          "speckit.cost.export"
+        ],
+        "codex": [
+          "speckit.cost.track",
+          "speckit.cost.report",
+          "speckit.cost.budget",
+          "speckit.cost.compare",
+          "speckit.cost.export"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T17:07:06.676865+00:00"
+    },
+    "fixit": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:cd7575705b5b8ad6c421840e3bd7dcf3260523b7f7709500bb16afef03515a30",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "agy": [
+          "speckit.fixit.run"
+        ],
+        "codex": [
+          "speckit.fixit.run"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T17:21:00.712642+00:00"
+    },
+    "orchestrator": {
+      "version": "1.0.0",
+      "source": "local",
+      "manifest_hash": "sha256:160a5a7c80d6a1c4d618389be48836c696aa9ec1c2a5777f1e307f1909d2d81c",
+      "enabled": true,
+      "priority": 10,
+      "registered_commands": {
+        "agy": [
+          "speckit.orchestrator.status",
+          "speckit.orchestrator.next",
+          "speckit.orchestrator.conflicts",
+          "speckit.orchestrator.sync"
+        ],
+        "codex": [
+          "speckit.orchestrator.status",
+          "speckit.orchestrator.next",
+          "speckit.orchestrator.conflicts",
+          "speckit.orchestrator.sync"
+        ]
+      },
+      "registered_skills": [],
+      "installed_at": "2026-05-12T17:43:09.112123+00:00"
     }
   }
 }
