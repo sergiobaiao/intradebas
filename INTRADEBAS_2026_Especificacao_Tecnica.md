@@ -171,7 +171,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
-| Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial |
+| Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial; shell público e home institucional com dados reais implementados, countdown ainda pendente |
 | Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe, modalidades, reCAPTCHA configurável e confirmação por e-mail | ✅ Implementado |
 | Área do Atleta | Acesso por link de confirmação de e-mail para ver cadastro, modalidades, resultados e LGPD | ✅ Implementado |
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
@@ -216,6 +216,13 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 - Foram introduzidos primitives reutilizáveis em `frontend/components/ui` e componentes semânticos em `frontend/components/admin`.
 - Dashboard, listagens principais e formulários centrais de atletas, equipes e modalidades foram migrados para essa base compartilhada.
 - A shell administrativa manteve dados reais e comportamento responsivo, sem retorno a conteúdo mockado.
+
+### Atualização de Progresso — Feature 056
+
+- O portal público passou a ter header e footer compartilhados para as rotas principais.
+- A home deixou de ser placeholder técnico e passou a exibir hero, fluxos principais e indicadores baseados em dados reais de atletas, equipes, modalidades, cotas e backdrop.
+- O shell público continua isolado das rotas administrativas e do login admin.
+- O frontend foi validado com `npm run build` e `npm run test:e2e`, incluindo cobertura específica para o novo layout público.
 
 ## Módulo 3 — Sistema de Autenticação
 
@@ -1491,7 +1498,7 @@ Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
 - [x] Módulo de autenticação (login, JWT, refresh e recuperação de senha implementados)
-- [~] Layout público (footer WhatsApp implementado; navbar dedicada ainda pendente)
+- [~] Layout público (shell compartilhado e navbar dedicados implementados; countdown e refinamentos de páginas secundárias ainda pendentes)
 - [x] Sidebar do Admin adaptada
 - [x] Dashboard Admin com KPIs reais e padrão Studio Admin
 

@@ -2,17 +2,22 @@
 
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
-import { PublicFooter } from './public-footer';
+import { SiteFooter } from '@/components/public/site-footer';
+import { SiteHeader } from '@/components/public/site-header';
+
+function shouldHidePublicShell(pathname: string) {
+  return pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/api');
+}
 
 export function BodyShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const hidePublicFooter =
-    pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/api');
+  const hidePublicShell = shouldHidePublicShell(pathname);
 
   return (
     <>
+      {hidePublicShell ? null : <SiteHeader />}
       {children}
-      {hidePublicFooter ? null : <PublicFooter />}
+      {hidePublicShell ? null : <SiteFooter />}
     </>
   );
 }
