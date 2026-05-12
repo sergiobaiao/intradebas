@@ -50,59 +50,116 @@ export default function AdminNovaModalidadePage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Modalidades</span>
-        <h1>Nova modalidade</h1>
-        <p>Cadastre novas provas e mantenha a agenda do evento atualizada sem editar o banco manualmente.</p>
-        {error ? <p className="error-text">{error}</p> : null}
-        <div className="card">
-          <form className="form-grid" onSubmit={handleSubmit}>
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Competicao</span>
+          <h1>Nova modalidade</h1>
+        </div>
+      </header>
+
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <div className="admin-content-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+             <h2>Configuracao da Prova</h2>
+             <p>Cadastre novas provas e mantenha a agenda do evento atualizada.</p>
+          </div>
+          <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
             <label>
-              <span>Nome</span>
-              <input value={name} onChange={(event) => setName(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome da modalidade</span>
+              <input 
+                style={{ minHeight: '40px', borderRadius: '10px' }}
+                value={name} 
+                onChange={(event) => setName(event.target.value)} 
+                placeholder="Ex: Futebol Society"
+              />
             </label>
             <label>
-              <span>Categoria</span>
-              <select value={category} onChange={(event) => setCategory(event.target.value as CreateSportInput['category'])}>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Categoria</span>
+              <select 
+                style={{ minHeight: '40px', borderRadius: '10px' }}
+                value={category} 
+                onChange={(event) => setCategory(event.target.value as CreateSportInput['category'])}
+              >
                 {categories.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {item.charAt(0).toUpperCase() + item.slice(1)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="field-span">
-              <span>Descricao</span>
-              <input value={description} onChange={(event) => setDescription(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Descricao (opcional)</span>
+              <input 
+                style={{ minHeight: '40px', borderRadius: '10px' }}
+                value={description} 
+                onChange={(event) => setDescription(event.target.value)} 
+              />
             </label>
             <label>
-              <span>Data/hora</span>
-              <input type="datetime-local" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data/hora prevista</span>
+              <input 
+                style={{ minHeight: '40px', borderRadius: '10px' }}
+                type="datetime-local" 
+                value={scheduleDate} 
+                onChange={(event) => setScheduleDate(event.target.value)} 
+              />
             </label>
             <label>
-              <span>Notas de agenda</span>
-              <input value={scheduleNotes} onChange={(event) => setScheduleNotes(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Notas de agenda</span>
+              <input 
+                style={{ minHeight: '40px', borderRadius: '10px' }}
+                value={scheduleNotes} 
+                onChange={(event) => setScheduleNotes(event.target.value)} 
+                placeholder="Ex: Quadra 2"
+              />
             </label>
-            <label className="checkbox-row field-span">
-              <input type="checkbox" checked={isAldebarun} onChange={(event) => setIsAldebarun(event.target.checked)} />
-              <span>Esta modalidade pertence ao ALDEBARUN</span>
-            </label>
-            <label className="checkbox-row field-span">
-              <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-              <span>Modalidade ativa para inscricao/operacao</span>
-            </label>
-            <div className="field-span cta-row">
-              <a className="button secondary" href="/admin/modalidades">
-                Cancelar
-              </a>
-              <button className="button primary" type="submit" disabled={submitting || name.trim().length < 2}>
+            
+            <div className="field-span admin-status-stack" style={{ marginTop: '10px' }}>
+              <label className="checkbox-row" style={{ background: 'rgba(17,24,39,0.03)', padding: '12px', borderRadius: '10px' }}>
+                <input type="checkbox" checked={isAldebarun} onChange={(event) => setIsAldebarun(event.target.checked)} />
+                <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Esta modalidade pertence ao <strong>ALDEBARUN</strong></span>
+              </label>
+              <label className="checkbox-row" style={{ background: 'rgba(17,24,39,0.03)', padding: '12px', borderRadius: '10px', marginTop: '8px' }}>
+                <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+                <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Modalidade <strong>ativa</strong> para inscricao e operacao</span>
+              </label>
+            </div>
+
+            <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
+              <button 
+                className="admin-quick-action" 
+                style={{ minHeight: '40px', padding: '0 20px' }}
+                type="submit" 
+                disabled={submitting || name.trim().length < 2}
+              >
                 {submitting ? 'Salvando...' : 'Criar modalidade'}
               </button>
+              <a className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} href="/admin/modalidades">
+                Cancelar
+              </a>
             </div>
           </form>
-        </div>
+        </section>
+
+        <section className="admin-panel">
+           <div className="admin-panel-header">
+             <h2>Contexto</h2>
+           </div>
+           <p className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem', color: '#4b5563' }}>
+             Modalidades sao o nucleo da competicao. Cada modalidade deve pertencer a uma categoria (coletiva, individual, etc) para o calculo correto do ranking.
+           </p>
+           <p className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem', color: '#4b5563', marginTop: '12px' }}>
+             O flag <strong>ALDEBARUN</strong> indica que a prova faz parte do modulo especial de integracao.
+           </p>
+        </section>
       </div>
-    </main>
+    </div>
   );
 }

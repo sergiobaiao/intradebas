@@ -126,64 +126,104 @@ export default function AdminUsuariosPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Usuarios admin</span>
-        <h1>Gestao de acessos administrativos</h1>
-        <p>Fluxo de superadmin para criar, ajustar papel e ativar ou desativar contas da comissao.</p>
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Sessao de Seguranca</span>
+          <h1>Usuarios do sistema</h1>
+        </div>
+      </header>
 
-        <div className="card" style={{ marginBottom: '24px' }}>
-          <h2>Novo usuario administrativo</h2>
-          <div className="form-grid">
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <div className="admin-content-grid">
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+             <h2>Novo usuario administrativo</h2>
+          </div>
+          <div className="form-grid" style={{ marginTop: 0 }}>
             <label>
-              <span>Nome</span>
-              <input value={name} onChange={(event) => setName(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome Completo</span>
+              <input style={{ minHeight: '38px', borderRadius: '10px' }} value={name} onChange={(event) => setName(event.target.value)} />
             </label>
             <label>
-              <span>E-mail</span>
-              <input value={email} onChange={(event) => setEmail(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>E-mail de acesso</span>
+              <input style={{ minHeight: '38px', borderRadius: '10px' }} value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
             </label>
             <label>
-              <span>Papel</span>
-              <select value={role} onChange={(event) => setRole(event.target.value as 'admin' | 'superadmin')}>
-                <option value="admin">admin</option>
-                <option value="superadmin">superadmin</option>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Papel</span>
+              <select style={{ minHeight: '38px', borderRadius: '10px' }} value={role} onChange={(event) => setRole(event.target.value as 'admin' | 'superadmin')}>
+                <option value="admin">Admin Operacional</option>
+                <option value="superadmin">Superadmin</option>
               </select>
             </label>
             <label>
-              <span>Senha inicial</span>
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Senha Inicial</span>
+              <input style={{ minHeight: '38px', borderRadius: '10px' }} type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
             </label>
-            <div className="cta-row field-span">
-              <button className="button primary" type="button" onClick={() => void createUser()} disabled={creating}>
+            <div className="admin-topbar-actions field-span" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
+              <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 20px' }} type="button" onClick={() => void createUser()} disabled={creating}>
                 {creating ? 'Criando...' : 'Criar usuario'}
               </button>
             </div>
           </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+             <h2>Resumo de acessos</h2>
+          </div>
+          <div className="admin-status-stack">
+             <div>
+               <span>Total de Contas</span>
+               <strong>{users.length}</strong>
+             </div>
+             <div>
+               <span>Ativas</span>
+               <strong>{users.filter(u => u.isActive).length}</strong>
+             </div>
+             <div>
+               <span>Superadmins</span>
+               <strong>{users.filter(u => u.role === 'superadmin').length}</strong>
+             </div>
+          </div>
+        </section>
+      </div>
+
+      {loading ? (
+        <div className="admin-empty-state">
+          <strong>Carregando...</strong>
         </div>
+      ) : null}
 
-        {error ? <p className="error-text">{error}</p> : null}
-        {loading ? <p>Carregando usuarios...</p> : null}
+      {!loading && users.length > 0 ? (
+        <div className="review-grid">
+          {users.map((user) => {
+            const draft = drafts[user.id];
 
-        {!loading ? (
-          <div className="review-grid">
-            {users.map((user) => {
-              const draft = drafts[user.id];
-
-              return (
-                <article key={user.id} className="card review-card">
-                  <div className="review-header">
-                    <div>
-                      <h3>{user.email}</h3>
-                      <small>Criado em {new Date(user.createdAt).toLocaleDateString('pt-BR')}</small>
-                    </div>
-                    <span className={`status-pill ${draft?.isActive ? 'active' : 'rejected'}`}>
-                      {draft?.isActive ? 'ativo' : 'inativo'}
-                    </span>
+            return (
+              <article key={user.id} className="admin-panel" style={{ padding: '18px', background: '#fcfcfc' }}>
+                <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {user.email}
+                    </h3>
+                    <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>Criado em {new Date(user.createdAt).toLocaleDateString('pt-BR')}</span>
                   </div>
-                  <label>
-                    <span>Nome</span>
+                  <span className={`admin-table-status ${draft?.isActive ? 'success' : 'rejected'}`} style={{ background: draft?.isActive ? 'rgba(45, 106, 79, 0.1)' : 'rgba(230, 57, 70, 0.1)', color: draft?.isActive ? '#2d6a4f' : '#e63946' }}>
+                    {draft?.isActive ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+
+                <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
+                  <label className="field-span">
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Nome</span>
                     <input
+                      style={{ minHeight: '34px', borderRadius: '8px', fontSize: '0.85rem' }}
                       value={draft?.name ?? ''}
                       onChange={(event) =>
                         setDrafts((current) => ({
@@ -202,8 +242,9 @@ export default function AdminUsuariosPage() {
                     />
                   </label>
                   <label>
-                    <span>Papel</span>
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Papel</span>
                     <select
+                      style={{ minHeight: '34px', borderRadius: '8px', fontSize: '0.85rem' }}
                       value={draft?.role ?? user.role}
                       onChange={(event) =>
                         setDrafts((current) => ({
@@ -225,8 +266,9 @@ export default function AdminUsuariosPage() {
                     </select>
                   </label>
                   <label>
-                    <span>Novo status</span>
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Status</span>
                     <select
+                      style={{ minHeight: '34px', borderRadius: '8px', fontSize: '0.85rem' }}
                       value={(draft?.isActive ?? user.isActive) ? 'ativo' : 'inativo'}
                       onChange={(event) =>
                         setDrafts((current) => ({
@@ -247,9 +289,10 @@ export default function AdminUsuariosPage() {
                       <option value="inativo">inativo</option>
                     </select>
                   </label>
-                  <label>
-                    <span>Redefinir senha</span>
+                  <label className="field-span">
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Redefinir senha (deixe vazio para manter)</span>
                     <input
+                      style={{ minHeight: '34px', borderRadius: '8px', fontSize: '0.85rem' }}
                       type="password"
                       value={draft?.password ?? ''}
                       onChange={(event) =>
@@ -268,23 +311,30 @@ export default function AdminUsuariosPage() {
                       }
                     />
                   </label>
-                  <p>Ultimo login: {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('pt-BR') : 'ainda nao acessou'}</p>
-                  <div className="cta-row">
-                    <button
-                      className="button primary"
-                      type="button"
-                      onClick={() => void saveUser(user.id)}
-                      disabled={savingId === user.id}
-                    >
-                      {savingId === user.id ? 'Salvando...' : 'Salvar alteracoes'}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
-    </main>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                   <span className="admin-kicker" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
+                    Ultimo acesso: {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString('pt-BR') : 'nunca'}
+                  </span>
+                </div>
+
+                <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
+                  <button
+                    className="admin-topbar-actions a"
+                    style={{ minHeight: '32px', padding: '0 12px', fontSize: '0.85rem', background: '#111827', color: '#fff' }}
+                    type="button"
+                    onClick={() => void saveUser(user.id)}
+                    disabled={savingId === user.id}
+                  >
+                    {savingId === user.id ? '...' : 'Salvar alteracoes'}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }

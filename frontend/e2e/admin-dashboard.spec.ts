@@ -35,7 +35,7 @@ test('shows the redesigned admin dashboard with real operational sections', asyn
 test('keeps athletes under Cadastros and exposes creation inside the page', async ({ page }) => {
   await page.goto('/admin/atletas');
 
-  await expect(page.getByRole('heading', { name: 'Atletas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atletas', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Atletas' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Novo atleta' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Nova equipe' })).toHaveCount(0);

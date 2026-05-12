@@ -186,16 +186,29 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
-| Dashboard Principal | KPIs reais, navegação lateral/topbar, pontuação das equipes, modalidades e registros operacionais | 🟡 Em redesenho visual na feature 051 |
+| Dashboard Principal | KPIs reais, navegação lateral/topbar, pontuação das equipes, modalidades e registros operacionais | ✅ Implementado |
 | Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV | ✅ Implementado |
-| Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | 🟡 Parcial; limites de participantes pendentes |
+| Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | 🟡 Parcial; interface administrativa padronizada, limites de participantes pendentes |
 | Gestão de Patrocínio | Controle de cotas vendidas, geração/listagem de cupons, status de pagamento | ✅ Implementado |
 | Input de Resultados | Formulário de lançamento de resultados por modalidade | ✅ Implementado |
 | Gestão de Ranking | Visualização e auditoria do placar consolidado | ✅ Implementado |
 | Gestão de Mídia | Upload de fotos, cadastro de URLs de vídeo | ✅ Implementado |
-| Gestão de Backdrop | Cadastro e ordenação de logos de patrocinadores | 🟡 Parcial |
-| Configurações | Tabela de pesos de pontuação, limites, regras de desempate | 🟡 Parcial; pesos implementados, limites/regras pendentes |
-| Logs de Auditoria | Histórico de alterações em resultados e dados críticos | 🟡 Parcial; resultados, atletas, equipes, modalidades e patrocinadores implementados |
+| Gestão de Backdrop | Cadastro e ordenação de logos de patrocinadores | 🟡 Parcial; interface administrativa padronizada |
+| Configurações | Tabela de pesos de pontuação, limites, regras de desempate | 🟡 Parcial; interface administrativa padronizada, pesos implementados, limites/regras pendentes |
+| Logs de Auditoria | Histórico de alterações em resultados e dados críticos | 🟡 Parcial; interface administrativa padronizada, resultados, atletas, equipes, modalidades e patrocinadores implementados |
+
+### Atualização de Progresso — Features 051 e 052
+
+- O shell administrativo compartilhado com sidebar persistente foi consolidado nas rotas `/admin`.
+- O dashboard principal e as telas administrativas de atletas, equipes, modalidades, resultados, patrocínio, mídia, LGPD, auditoria, usuários e configurações passaram a seguir o mesmo padrão visual operacional.
+- As telas redesenhadas usam dados reais das APIs existentes ou estados vazios explícitos, sem conteúdo mockado da referência visual.
+- Validações automatizadas do frontend passaram com `npm run build` e `npm run test:e2e`.
+
+### Atualização de Progresso — Feature 053
+
+- O menu administrativo deixou de expor itens redundantes de criação para Equipes e Modalidades.
+- Atletas foi consolidado no grupo de Cadastros da navegação lateral.
+- A inclusão de atletas permanece disponível dentro da própria página de gestão de atletas.
 
 ## Módulo 3 — Sistema de Autenticação
 

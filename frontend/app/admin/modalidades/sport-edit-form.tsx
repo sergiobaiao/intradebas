@@ -73,59 +73,100 @@ export function SportEditForm({ sport }: SportEditFormProps) {
   }
 
   return (
-    <div className="card" style={{ marginTop: '24px' }}>
-      <h2>Editar modalidade</h2>
-      {error ? <p className="error-text">{error}</p> : null}
-      {message ? <p className="success-text">{message}</p> : null}
-      <form className="form-grid" onSubmit={handleSubmit}>
-        <label>
-          <span>Nome</span>
-          <input value={name} onChange={(event) => setName(event.target.value)} />
-        </label>
-        <label className="field-span">
-          <span>Descricao</span>
-          <input
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
-        </label>
-        <label>
-          <span>Data/hora</span>
-          <input
-            type="datetime-local"
-            value={scheduleDate}
-            onChange={(event) => setScheduleDate(event.target.value)}
-          />
-        </label>
-        <label className="field-span">
-          <span>Notas</span>
-          <input
-            value={scheduleNotes}
-            onChange={(event) => setScheduleNotes(event.target.value)}
-          />
-        </label>
-        <label className="checkbox-row field-span">
-          <input
-            type="checkbox"
-            checked={isActive}
-            onChange={(event) => setIsActive(event.target.checked)}
-          />
-          <span>Modalidade ativa</span>
-        </label>
-        <div className="field-span cta-row">
-          <button className="button primary" type="submit" disabled={submitting}>
-            {submitting ? 'Salvando...' : 'Salvar alteracoes'}
-          </button>
-          <button
-            className="button secondary"
-            type="button"
-            onClick={handleDelete}
-            disabled={deleting || submitting}
-          >
-            {deleting ? 'Removendo...' : 'Excluir modalidade'}
-          </button>
+    <div className="admin-content-grid" style={{ gridTemplateColumns: '1fr 0.6fr', alignItems: 'start' }}>
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+           <h2>Configuracao da Prova</h2>
+           <p>Ajuste os dados operacionais e de agenda da modalidade.</p>
         </div>
-      </form>
+
+        {error ? (
+          <div style={{ marginBottom: '20px' }}>
+            <p className="error-text">{error}</p>
+          </div>
+        ) : null}
+        {message ? (
+          <div style={{ marginBottom: '20px' }}>
+            <p className="success-text">{message}</p>
+          </div>
+        ) : null}
+
+        <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
+          <label className="field-span">
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome</span>
+            <input style={{ minHeight: '40px', borderRadius: '10px' }} value={name} onChange={(event) => setName(event.target.value)} />
+          </label>
+          <label className="field-span">
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Descricao</span>
+            <input
+              style={{ minHeight: '40px', borderRadius: '10px' }}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
+          </label>
+          <label>
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data/hora prevista</span>
+            <input
+              style={{ minHeight: '40px', borderRadius: '10px' }}
+              type="datetime-local"
+              value={scheduleDate}
+              onChange={(event) => setScheduleDate(event.target.value)}
+            />
+          </label>
+          <label>
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Local / Notas</span>
+            <input
+              style={{ minHeight: '40px', borderRadius: '10px' }}
+              value={scheduleNotes}
+              onChange={(event) => setScheduleNotes(event.target.value)}
+            />
+          </label>
+          
+          <div className="field-span admin-status-stack" style={{ marginTop: '10px' }}>
+            <label className="checkbox-row" style={{ background: 'rgba(17,24,39,0.03)', padding: '12px', borderRadius: '10px' }}>
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(event) => setIsActive(event.target.checked)}
+              />
+              <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Modalidade <strong>ativa</strong> para inscricao e operacao</span>
+            </label>
+          </div>
+
+          <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
+            <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 30px' }} type="submit" disabled={submitting}>
+              {submitting ? 'Salvando...' : 'Salvar alteracoes'}
+            </button>
+            <button
+              className="admin-topbar-actions a"
+              style={{ minHeight: '40px', padding: '0 20px', borderColor: 'rgba(230, 57, 70, 0.2)' }}
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting || submitting}
+            >
+              {deleting ? 'Removendo...' : 'Excluir modalidade'}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="admin-panel">
+         <div className="admin-panel-header">
+           <h2>Status Operacional</h2>
+         </div>
+         <div className="admin-status-stack">
+            <div>
+              <span>Resultados Lancados</span>
+              <strong>{sport.results.length}</strong>
+            </div>
+         </div>
+         <div style={{ marginTop: '22px' }}>
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Categoria</span>
+            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#4b5563', textTransform: 'capitalize' }}>
+              {sport.category}
+            </p>
+         </div>
+      </section>
     </div>
   );
 }

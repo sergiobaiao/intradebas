@@ -215,260 +215,286 @@ export default function AdminPatrocinioPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Patrocinio</span>
-        <h1>Gestao comercial e cupons</h1>
-        <p>Visualizacao operacional de patrocinadores, cotas contratadas e status dos cupons de cortesia.</p>
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Comercial</span>
+          <h1>Patrocinio</h1>
+        </div>
+      </header>
 
-        <div className="cta-row">
-          <a className="button secondary" href="/admin/dashboard">
-            Voltar ao dashboard
-          </a>
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <div className="admin-metric-grid">
+         <article className="admin-metric-card">
+           <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Total Patrocinadores</span>
+           <strong>{sponsors.length}</strong>
+           <p>Empresas cadastradas no sistema.</p>
+         </article>
+         <article className="admin-metric-card success">
+           <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Cupons Ativos</span>
+           <strong>{allCoupons.filter(c => c.status === 'active').length}</strong>
+           <p>Disponiveis para resgate.</p>
+         </article>
+         <article className="admin-metric-card attention">
+           <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Cupons Usados</span>
+           <strong>{allCoupons.filter(c => c.status === 'used').length}</strong>
+           <p>Inscricoes realizadas via cortesia.</p>
+         </article>
+      </div>
+
+      <div className="admin-content-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+            <div>
+              <h2>Lista de Patrocinadores</h2>
+              <p>Gerencie empresas e ativacao de cotas.</p>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '18px' }}>
+             <label>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Filtrar por Status</span>
+              <select
+                style={{ width: '100%', minHeight: '36px', borderRadius: '10px', marginTop: '4px' }}
+                value={sponsorStatusFilter}
+                onChange={(event) => {
+                  setSponsorPage(1);
+                  setSponsorStatusFilter(event.target.value);
+                }}
+              >
+                <option value="">Todos</option>
+                <option value="pending">Pendentes</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+            </label>
+          </div>
+
+          {loading ? (
+             <div className="admin-empty-state"><strong>Carregando...</strong></div>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Cota</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sponsors.map((sponsor) => (
+                    <tr key={sponsor.id} style={{ background: selectedSponsorId === sponsor.id ? '#f7f7f5' : 'transparent' }}>
+                      <td>
+                        <button 
+                          style={{ background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', padding: 0 }}
+                          onClick={() => setSelectedSponsorId(sponsor.id)}
+                        >
+                          <strong>{sponsor.companyName}</strong><br/>
+                          <small style={{ color: '#6b7280' }}>{sponsor.contactName}</small>
+                        </button>
+                      </td>
+                      <td>{sponsor.quota.level.toUpperCase()}</td>
+                      <td>
+                        <span className={`admin-table-status status-pill ${sponsor.status}`}>
+                          {sponsor.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                          <button 
+                            className="admin-topbar-actions a" 
+                            style={{ minHeight: '30px', padding: '0 8px', fontSize: '0.8rem' }}
+                            onClick={() => setSelectedSponsorId(sponsor.id)}
+                          >
+                            Ver
+                          </button>
+                          {sponsor.status === 'pending' ? (
+                            <button
+                              className="admin-topbar-actions a"
+                              style={{ minHeight: '30px', padding: '0 8px', fontSize: '0.8rem', background: '#111827', color: '#fff' }}
+                              type="button"
+                              onClick={() => void activateSponsor(sponsor.id)}
+                              disabled={activatingSponsorId === sponsor.id}
+                            >
+                              {activatingSponsorId === sponsor.id ? '...' : 'Ativar'}
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="admin-topbar-actions" style={{ marginTop: '16px', justifyContent: 'center' }}>
+            <button
+              className="admin-topbar-actions a"
+              style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+              type="button"
+              disabled={sponsorPage <= 1 || loading}
+              onClick={() => setSponsorPage((current) => Math.max(current - 1, 1))}
+            >
+              Anterior
+            </button>
+            <span className="admin-kicker">Pagina {sponsorPage} de {sponsorTotalPages}</span>
+            <button
+              className="admin-topbar-actions a"
+              style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+              type="button"
+              disabled={sponsorPage >= sponsorTotalPages || loading}
+              onClick={() => setSponsorPage((current) => current + 1)}
+            >
+              Proxima
+            </button>
+          </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+            <h2>Edicao do Patrocinador</h2>
+          </div>
+          {!selectedSponsor ? (
+            <div className="admin-empty-state">
+               <span>Selecione um patrocinador na lista ao lado para editar.</span>
+            </div>
+          ) : (
+            <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSponsorSave}>
+              <label className="field-span">
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Empresa</span>
+                <input style={{ minHeight: '38px', borderRadius: '10px' }} value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
+              </label>
+              <label>
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Contato</span>
+                <input style={{ minHeight: '38px', borderRadius: '10px' }} value={contactName} onChange={(event) => setContactName(event.target.value)} />
+              </label>
+              <label>
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>E-mail</span>
+                <input style={{ minHeight: '38px', borderRadius: '10px' }} value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
+              </label>
+              <label>
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Telefone</span>
+                <input style={{ minHeight: '38px', borderRadius: '10px' }} value={phone} onChange={(event) => setPhone(event.target.value)} />
+              </label>
+              <label>
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Status</span>
+                <select
+                  style={{ minHeight: '38px', borderRadius: '10px' }}
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value as SponsorAdminSummary['status'])}
+                >
+                  <option value="pending">Pendente</option>
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </label>
+              <label className="field-span">
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Cota</span>
+                <select style={{ minHeight: '38px', borderRadius: '10px' }} value={quotaId} onChange={(event) => setQuotaId(event.target.value)}>
+                  {quotas.map((quota) => (
+                    <option key={quota.id} value={quota.id}>
+                      {quota.level.toUpperCase()} · {quota.courtesyCount} cortesias
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="admin-topbar-actions field-span" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
+                <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 20px' }} type="submit" disabled={savingSponsor || !quotaId}>
+                  {savingSponsor ? 'Salvando...' : 'Salvar alteracoes'}
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+      </div>
+
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <div>
+            <h2>Cupons de Cortesia</h2>
+            <p>{selectedSponsor ? `Cupons gerados para ${selectedSponsor.companyName}` : 'Selecione um patrocinador para ver os cupons.'}</p>
+          </div>
+          {selectedSponsor ? (
+            <div className="admin-topbar-actions" style={{ marginTop: 0 }}>
+              <button
+                className="admin-quick-action"
+                style={{ minHeight: '34px', padding: '0 14px', fontSize: '0.85rem' }}
+                type="button"
+                onClick={() => createCoupon()}
+                disabled={creatingCoupon}
+              >
+                {creatingCoupon ? '...' : 'Gerar cupom extra'}
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        {error ? <p className="error-text">{error}</p> : null}
-        {loading ? <p>Carregando patrocinadores...</p> : null}
-
-        {!loading ? (
-          <>
-            <div className="card" style={{ marginTop: '24px' }}>
-              <div className="form-grid">
-                <label>
-                  <span>Status de patrocinador</span>
-                  <select
-                    value={sponsorStatusFilter}
-                    onChange={(event) => {
-                      setSponsorPage(1);
-                      setSponsorStatusFilter(event.target.value);
-                    }}
-                  >
-                    <option value="">Todos</option>
-                    <option value="pending">pending</option>
-                    <option value="active">active</option>
-                    <option value="inactive">inactive</option>
-                  </select>
-                </label>
-                <label>
-                  <span>Status de cupom</span>
-                  <select
-                    value={couponStatusFilter}
-                    onChange={(event) => {
-                      setCouponPage(1);
-                      setCouponStatusFilter(event.target.value);
-                    }}
-                  >
-                    <option value="">Todos</option>
-                    <option value="active">active</option>
-                    <option value="used">used</option>
-                    <option value="expired">expired</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <div className="review-grid" style={{ marginTop: '24px' }}>
-              {sponsors.map((sponsor) => (
-                <article key={sponsor.id} className="card review-card">
-                  <div className="review-header">
-                    <div>
-                      <h3>{sponsor.companyName}</h3>
-                      <small>{sponsor.contactName}</small>
-                    </div>
-                    <span className={`status-pill ${sponsor.status}`}>{sponsor.status}</span>
-                  </div>
-                  <p>E-mail: {sponsor.email}</p>
-                  <p>Cota: {sponsor.quota.level.toUpperCase()} · {sponsor.quota.courtesyCount} cortesias</p>
-                  <p>Cupons gerados: {sponsor.couponCount}</p>
-                  <div className="cta-row">
-                    <button
-                      className="button secondary"
-                      type="button"
-                      onClick={() => setSelectedSponsorId(sponsor.id)}
-                    >
-                      Ver cupons
-                    </button>
-                    {sponsor.status === 'pending' ? (
-                      <button
-                        className="button"
-                        type="button"
-                        onClick={() => void activateSponsor(sponsor.id)}
-                        disabled={activatingSponsorId === sponsor.id}
-                      >
-                        {activatingSponsorId === sponsor.id ? 'Ativando...' : 'Ativar'}
-                      </button>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="cta-row" style={{ marginTop: '24px' }}>
-              <button
-                className="button secondary"
-                type="button"
-                disabled={sponsorPage <= 1 || loading}
-                onClick={() => setSponsorPage((current) => Math.max(current - 1, 1))}
-              >
-                Patrocinadores anteriores
-              </button>
-              <span>Pagina {sponsorPage} de {sponsorTotalPages}</span>
-              <button
-                className="button secondary"
-                type="button"
-                disabled={sponsorPage >= sponsorTotalPages || loading}
-                onClick={() => setSponsorPage((current) => current + 1)}
-              >
-                Proximos patrocinadores
-              </button>
-            </div>
-
-            <div className="card" style={{ marginTop: '24px' }}>
-              <h2>Edicao do patrocinador selecionado</h2>
-              {!selectedSponsor ? <p>Selecione um patrocinador para editar.</p> : null}
-              {selectedSponsor ? (
-                <form className="form-grid" onSubmit={handleSponsorSave}>
-                  <label>
-                    Empresa
-                    <input value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
-                  </label>
-                  <label>
-                    Contato
-                    <input value={contactName} onChange={(event) => setContactName(event.target.value)} />
-                  </label>
-                  <label>
-                    E-mail
-                    <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
-                  </label>
-                  <label>
-                    Telefone
-                    <input value={phone} onChange={(event) => setPhone(event.target.value)} />
-                  </label>
-                  <label className="field-span">
-                    Logo URL
-                    <input value={logoUrl} onChange={(event) => setLogoUrl(event.target.value)} />
-                  </label>
-                  <label>
-                    Cota
-                    <select value={quotaId} onChange={(event) => setQuotaId(event.target.value)}>
-                      {quotas.map((quota) => (
-                        <option key={quota.id} value={quota.id}>
-                          {quota.level.toUpperCase()} · {quota.courtesyCount} cortesias
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Status
-                    <select
-                      value={status}
-                      onChange={(event) => setStatus(event.target.value as SponsorAdminSummary['status'])}
-                    >
-                      <option value="pending">pending</option>
-                      <option value="active">active</option>
-                      <option value="inactive">inactive</option>
-                    </select>
-                  </label>
-                  <div className="cta-row field-span">
-                    <button className="button" type="submit" disabled={savingSponsor || !quotaId}>
-                      {savingSponsor ? 'Salvando...' : 'Salvar patrocinador'}
-                    </button>
-                  </div>
-                </form>
-              ) : null}
-            </div>
-
-            <div className="card" style={{ marginTop: '24px' }}>
-              <h2>Resumo geral de cupons</h2>
-              <p>Total monitorado: {allCoupons.length}</p>
-              <p>
-                Ativos: {allCoupons.filter((coupon) => coupon.status === 'active').length} · Usados:{' '}
-                {allCoupons.filter((coupon) => coupon.status === 'used').length}
-              </p>
-            </div>
-
-            <div className="card" style={{ marginTop: '24px' }}>
-              <h2>
-                {selectedSponsor
-                  ? `Cupons de ${selectedSponsor.companyName}`
-                  : 'Selecione um patrocinador para ver os cupons'}
-              </h2>
-              {selectedSponsor ? (
-                <div className="cta-row" style={{ marginBottom: '16px' }}>
-                  <button
-                    className="button"
-                    type="button"
-                    onClick={() => createCoupon()}
-                    disabled={creatingCoupon}
-                  >
-                    {creatingCoupon ? 'Gerando...' : 'Gerar cupom extra'}
-                  </button>
-                </div>
-              ) : null}
-              {couponLoading ? <p>Carregando cupons...</p> : null}
-              {!couponLoading && selectedCoupons.length === 0 ? (
-                <p>Nenhum cupom encontrado para este patrocinador.</p>
-              ) : null}
-              {!couponLoading && selectedCoupons.length > 0 ? (
-                <div className="review-grid">
-                  {selectedCoupons.map((coupon) => (
-                    <article key={coupon.id} className="card review-card">
-                      <div className="review-header">
-                        <div>
-                          <h3>{coupon.code}</h3>
-                          <small>{coupon.sponsor.companyName}</small>
-                        </div>
-                        <span className={`status-pill ${coupon.status}`}>{coupon.status}</span>
-                      </div>
-                      <p>Gerado em: {new Date(coupon.createdAt).toLocaleString('pt-BR')}</p>
-                      <p>
-                        Resgatado por:{' '}
-                        {coupon.athlete ? `${coupon.athlete.name} (${coupon.athlete.cpf})` : 'Nao utilizado'}
-                      </p>
-                      <p>
-                        Data de uso:{' '}
-                        {coupon.redeemedAt
-                          ? new Date(coupon.redeemedAt).toLocaleString('pt-BR')
-                          : 'Nao utilizada'}
-                      </p>
-                      {coupon.status === 'active' ? (
-                        <div className="cta-row">
-                          <button
-                            className="button secondary"
-                            type="button"
-                            onClick={() => expireCoupon(coupon.id)}
-                            disabled={expiringCouponId === coupon.id}
-                          >
-                            {expiringCouponId === coupon.id ? 'Expirando...' : 'Expirar'}
-                          </button>
-                        </div>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-              ) : null}
-              <div className="cta-row" style={{ marginTop: '16px' }}>
-                <button
-                  className="button secondary"
-                  type="button"
-                  disabled={couponPage <= 1 || loading}
-                  onClick={() => setCouponPage((current) => Math.max(current - 1, 1))}
-                >
-                  Cupons anteriores
-                </button>
-                <span>Pagina {couponPage} de {couponTotalPages}</span>
-                <button
-                  className="button secondary"
-                  type="button"
-                  disabled={couponPage >= couponTotalPages || loading}
-                  onClick={() => setCouponPage((current) => current + 1)}
-                >
-                  Proximos cupons
-                </button>
-              </div>
-            </div>
-          </>
+        {couponLoading ? (
+           <div className="admin-empty-state"><strong>Carregando cupons...</strong></div>
         ) : null}
-      </div>
-    </main>
+
+        {!couponLoading && selectedCoupons.length === 0 && selectedSponsor ? (
+          <div className="admin-empty-state">
+            <span>Nenhum cupom gerado para este patrocinador.</span>
+          </div>
+        ) : null}
+
+        {!couponLoading && selectedCoupons.length > 0 ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Status</th>
+                  <th>Resgatado por</th>
+                  <th>Data de Uso</th>
+                  <th style={{ textAlign: 'right' }}>Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedCoupons.map((coupon) => (
+                  <tr key={coupon.id}>
+                    <td><strong>{coupon.code}</strong></td>
+                    <td>
+                      <span className={`admin-table-status status-pill ${coupon.status}`}>
+                        {coupon.status}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {coupon.athlete ? (
+                        <a href={`/admin/atletas/${coupon.athlete.id}`}>{coupon.athlete.name}</a>
+                      ) : '—'}
+                    </td>
+                    <td style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+                      {coupon.redeemedAt ? new Date(coupon.redeemedAt).toLocaleString('pt-BR') : '—'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {coupon.status === 'active' ? (
+                        <button
+                          className="admin-topbar-actions a"
+                          style={{ minHeight: '30px', padding: '0 8px', fontSize: '0.8rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
+                          type="button"
+                          onClick={() => expireCoupon(coupon.id)}
+                          disabled={expiringCouponId === coupon.id}
+                        >
+                          {expiringCouponId === coupon.id ? '...' : 'Expirar'}
+                        </button>
+                      ) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </section>
+    </div>
   );
 }

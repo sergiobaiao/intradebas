@@ -77,6 +77,7 @@ export default function AdminNovoAtletaPage() {
       setPhone('');
       setBirthDate('');
       setSelectedSports([]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Falha ao criar atleta');
     } finally {
@@ -85,77 +86,116 @@ export default function AdminNovoAtletaPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Atletas</span>
-        <h1>Cadastro manual de atleta</h1>
-        <p>Fluxo administrativo para registrar atletas diretamente no painel.</p>
-        {error ? <p className="error-text">{error}</p> : null}
-        {message ? <p className="success-text">{message}</p> : null}
-        {loading ? <p>Carregando formulario...</p> : null}
-        {!loading ? (
-          <div className="card">
-            <form className="form-grid" onSubmit={handleSubmit}>
-              <label>
-                <span>Nome completo</span>
-                <input value={name} onChange={(event) => setName(event.target.value)} />
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Gestao de Atletas</span>
+          <h1>Novo atleta</h1>
+        </div>
+      </header>
+
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      {message ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(45, 106, 79, 0.3)', marginBottom: '22px' }}>
+          <p className="success-text">{message}</p>
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="admin-empty-state">
+           <strong>Carregando formulario...</strong>
+        </div>
+      ) : (
+        <form className="admin-content-grid" style={{ gridTemplateColumns: '1fr 0.6fr', alignItems: 'start' }} onSubmit={handleSubmit}>
+          <section className="admin-panel">
+            <div className="admin-panel-header">
+               <h2>Dados Pessoais</h2>
+               <p>Informacoes obrigatorias para registro do atleta.</p>
+            </div>
+            
+            <div className="form-grid" style={{ marginTop: 0 }}>
+              <label className="field-span">
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome completo</span>
+                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Joao Silva" />
               </label>
               <label>
-                <span>CPF</span>
-                <input value={cpf} onChange={(event) => setCpf(event.target.value)} />
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>CPF</span>
+                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={cpf} onChange={(event) => setCpf(event.target.value)} placeholder="000.000.000-00" />
               </label>
               <label>
-                <span>E-mail</span>
-                <input value={email} onChange={(event) => setEmail(event.target.value)} />
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data de nascimento</span>
+                <input style={{ minHeight: '40px', borderRadius: '10px' }} type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} />
               </label>
               <label>
-                <span>Telefone</span>
-                <input value={phone} onChange={(event) => setPhone(event.target.value)} />
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>E-mail</span>
+                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="joao@exemplo.com" />
               </label>
               <label>
-                <span>Data de nascimento</span>
-                <input type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} />
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Telefone</span>
+                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="(00) 00000-0000" />
               </label>
+            </div>
+
+            <div className="admin-panel-header" style={{ marginTop: '30px' }}>
+               <h2>Vinculo e Kit</h2>
+            </div>
+            <div className="form-grid" style={{ marginTop: 0 }}>
               <label>
-                <span>Equipe</span>
-                <select value={teamId} onChange={(event) => setTeamId(event.target.value)}>
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Equipe</span>
+                <select style={{ minHeight: '40px', borderRadius: '10px' }} value={teamId} onChange={(event) => setTeamId(event.target.value)}>
                   {teams.map((team) => (
                     <option key={team.id} value={team.id}>{team.name}</option>
                   ))}
                 </select>
               </label>
               <label>
-                <span>Tamanho da camiseta</span>
-                <select value={shirtSize} onChange={(event) => setShirtSize(event.target.value as CreateAthleteInput['shirtSize'])}>
+                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Tamanho da camiseta</span>
+                <select style={{ minHeight: '40px', borderRadius: '10px' }} value={shirtSize} onChange={(event) => setShirtSize(event.target.value as CreateAthleteInput['shirtSize'])}>
                   {shirtSizes.map((size) => (
                     <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
               </label>
-              <fieldset className="field-span">
-                <legend>Modalidades</legend>
-                <div className="checkbox-grid">
-                  {sports.map((sport) => (
-                    <label key={sport.id} className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={selectedSports.includes(sport.id)}
-                        onChange={() => toggleSport(sport.id)}
-                      />
-                      <span>{sport.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="field-span cta-row">
-                <button className="button primary" type="submit" disabled={submitting || selectedSports.length === 0}>
-                  {submitting ? 'Salvando...' : 'Criar atleta'}
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : null}
-      </div>
-    </main>
+            </div>
+
+            <div className="admin-topbar-actions field-span" style={{ justifyContent: 'flex-start', marginTop: '30px' }}>
+               <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 30px' }} type="submit" disabled={submitting || selectedSports.length === 0}>
+                {submitting ? 'Salvando...' : 'Criar atleta'}
+              </button>
+              <a className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} href="/admin/atletas">
+                Cancelar
+              </a>
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <div className="admin-panel-header">
+               <h2>Modalidades</h2>
+               <p>Selecione pelo menos uma prova.</p>
+            </div>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {sports.map((sport) => (
+                <label key={sport.id} className="checkbox-row" style={{ background: selectedSports.includes(sport.id) ? 'rgba(45, 106, 79, 0.05)' : 'transparent', padding: '10px', borderRadius: '8px', border: '1px solid rgba(17, 24, 39, 0.05)' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedSports.includes(sport.id)}
+                    onChange={() => toggleSport(sport.id)}
+                  />
+                  <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>{sport.name}</span>
+                </label>
+              ))}
+            </div>
+            {selectedSports.length === 0 && (
+               <p style={{ marginTop: '12px', fontSize: '0.75rem', color: '#e63946' }}>* Selecione pelo menos uma modalidade.</p>
+            )}
+          </section>
+        </form>
+      )}
+    </div>
   );
 }

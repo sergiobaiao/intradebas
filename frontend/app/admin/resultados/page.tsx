@@ -218,33 +218,44 @@ export default function AdminResultadosPage() {
     setNotes(result.notes ?? '');
     setMessage(null);
     setError(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Resultados</span>
-        <h1>Lancamento e correcao de resultados</h1>
-        <p>Use este painel para registrar resultados e corrigir operacoes antes do fechamento do placar.</p>
-
-        <div className="cta-row">
-          <a className="button secondary" href="/admin/dashboard">
-            Voltar ao dashboard
-          </a>
-          <a className="button secondary" href="/admin/resultados/novo">
-            Abrir lancamento dedicado
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Competicao</span>
+          <h1>Resultados operacionais</h1>
+        </div>
+        <div className="admin-topbar-actions">
+           <a className="admin-quick-action" style={{ minHeight: '38px', padding: '0 14px' }} href="/admin/resultados/novo">
+            Novo lancamento
           </a>
         </div>
+      </header>
 
-        {error ? <p className="error-text">{error}</p> : null}
-        {message ? <p className="success-text">{message}</p> : null}
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
 
-        <div className="card" style={{ marginTop: '24px' }}>
-          <h2>{editingId ? 'Corrigir resultado' : 'Novo resultado'}</h2>
-          <form className="form-grid" onSubmit={handleSubmit}>
+      {message ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(45, 106, 79, 0.3)', marginBottom: '22px' }}>
+          <p className="success-text">{message}</p>
+        </div>
+      ) : null}
+
+      <div className="admin-content-grid">
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+             <h2>{editingId ? 'Corrigir resultado' : 'Lancar resultado'}</h2>
+          </div>
+          <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
             <label>
-              <span>Modalidade</span>
-              <select value={sportId} onChange={(event) => setSportId(event.target.value)}>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Modalidade</span>
+              <select style={{ minHeight: '40px', borderRadius: '10px' }} value={sportId} onChange={(event) => setSportId(event.target.value)}>
                 {sports.map((sport) => (
                   <option key={sport.id} value={sport.id}>
                     {sport.name}
@@ -254,8 +265,8 @@ export default function AdminResultadosPage() {
             </label>
 
             <label>
-              <span>Equipe</span>
-              <select value={teamId} onChange={(event) => setTeamId(event.target.value)}>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Equipe</span>
+              <select style={{ minHeight: '40px', borderRadius: '10px' }} value={teamId} onChange={(event) => setTeamId(event.target.value)}>
                 {teams.map((team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
@@ -265,8 +276,9 @@ export default function AdminResultadosPage() {
             </label>
 
             <label>
-              <span>Posicao</span>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Posicao</span>
               <input
+                style={{ minHeight: '40px', borderRadius: '10px' }}
                 min={1}
                 type="number"
                 value={position}
@@ -275,18 +287,19 @@ export default function AdminResultadosPage() {
             </label>
 
             <label>
-              <span>Pontuacao bruta</span>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Score bruto (opcional)</span>
               <input
+                style={{ minHeight: '40px', borderRadius: '10px' }}
                 type="number"
                 value={rawScore}
                 onChange={(event) => setRawScore(event.target.value)}
-                placeholder="Opcional"
               />
             </label>
 
             <label>
-              <span>Data e hora</span>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data e hora</span>
               <input
+                style={{ minHeight: '40px', borderRadius: '10px' }}
                 type="datetime-local"
                 value={resultDate}
                 onChange={(event) => setResultDate(event.target.value)}
@@ -294,35 +307,203 @@ export default function AdminResultadosPage() {
             </label>
 
             <label className="field-span">
-              <span>Observacoes</span>
-              <input value={notes} onChange={(event) => setNotes(event.target.value)} />
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Observacoes</span>
+              <input 
+                style={{ minHeight: '40px', borderRadius: '10px' }}
+                value={notes} 
+                onChange={(event) => setNotes(event.target.value)} 
+              />
             </label>
 
-            <div className="field-span cta-row">
+            <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
               <button
-                className="button primary"
+                className="admin-quick-action"
+                style={{ minHeight: '40px', padding: '0 20px' }}
                 type="submit"
                 disabled={submitting || !sportId || !teamId || position < 1}
               >
                 {submitting ? 'Salvando...' : editingId ? 'Salvar correcao' : 'Lancar resultado'}
               </button>
               {editingId ? (
-                <button className="button secondary" type="button" onClick={resetForm}>
-                  Cancelar edicao
+                <button 
+                  className="admin-topbar-actions a" 
+                  style={{ minHeight: '40px', padding: '0 20px' }}
+                  type="button" 
+                  onClick={resetForm}
+                >
+                  Cancelar
                 </button>
               ) : null}
             </div>
           </form>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+            <h2>Filtros de lista</h2>
+          </div>
+          <div className="admin-status-stack">
+            <label>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Por Modalidade</span>
+              <select style={{ width: '100%', minHeight: '40px', borderRadius: '10px', marginTop: '4px' }} value={resultSportFilter} onChange={(event) => { setPage(1); setResultSportFilter(event.target.value); }}>
+                <option value="">Todas</option>
+                {sports.map((sport) => (
+                  <option key={sport.id} value={sport.id}>{sport.name}</option>
+                ))}
+              </select>
+            </label>
+            <label style={{ marginTop: '12px', display: 'block' }}>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Por Equipe</span>
+              <select style={{ width: '100%', minHeight: '40px', borderRadius: '10px', marginTop: '4px' }} value={resultTeamFilter} onChange={(event) => { setPage(1); setResultTeamFilter(event.target.value); }}>
+                <option value="">Todas</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <section className="admin-panel" style={{ marginBottom: '22px' }}>
+        <div className="admin-panel-header">
+          <div>
+            <h2>Historico de Resultados</h2>
+            <p>Resultados lancados no sistema ordenados por data.</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+             <span className="admin-kicker">Pagina {page} de {totalPages}</span>
+             <div className="admin-topbar-actions" style={{ marginTop: 0 }}>
+                <button
+                  className="admin-topbar-actions a"
+                  style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+                  type="button"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                >
+                  Anterior
+                </button>
+                <button
+                  className="admin-topbar-actions a"
+                  style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+                  type="button"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Proxima
+                </button>
+             </div>
+          </div>
         </div>
 
-        <div className="card" style={{ marginTop: '24px' }}>
-          <h2>Lancamento em lote</h2>
-          <p>Registre varias colocacoes em uma unica operacao transacional.</p>
+        {loading ? (
+          <div className="admin-empty-state">
+            <strong>Carregando...</strong>
+          </div>
+        ) : null}
 
-          <div className="form-grid">
+        {!loading && results.length === 0 ? (
+          <div className="admin-empty-state">
+            <strong>Nenhum resultado encontrado.</strong>
+          </div>
+        ) : null}
+
+        {!loading && results.length > 0 ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Modalidade</th>
+                  <th>Equipe</th>
+                  <th>Posicao</th>
+                  <th>Pontos</th>
+                  <th>Data</th>
+                  <th style={{ textAlign: 'right' }}>Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((result) => (
+                  <tr key={result.id}>
+                    <td>{result.sport.name}</td>
+                    <td>{result.team.name}</td>
+                    <td>{result.position}º</td>
+                    <td>
+                       <span className="admin-table-status" style={{ background: 'rgba(45, 106, 79, 0.1)', color: '#2d6a4f' }}>
+                        {result.calculatedPoints} pts
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+                      {new Date(result.resultDate).toLocaleString('pt-BR')}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button 
+                        className="admin-topbar-actions a" 
+                        style={{ minHeight: '30px', padding: '0 8px', fontSize: '0.8rem' }}
+                        type="button" 
+                        onClick={() => startEdit(result)}
+                      >
+                        Corrigir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="admin-panel" style={{ marginBottom: '22px' }}>
+        <div className="admin-panel-header">
+           <h2>Auditoria de correcoes</h2>
+           <p>Registro imutavel de alteracoes em resultados.</p>
+        </div>
+        
+        {auditLogs.length === 0 ? (
+          <div className="admin-empty-state">
+            <span>Nenhuma alteracao auditada.</span>
+          </div>
+        ) : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Modalidade</th>
+                  <th>Campo</th>
+                  <th>Antes</th>
+                  <th>Depois</th>
+                  <th>Responsavel</th>
+                  <th>Quando</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditLogs.map((audit) => (
+                  <tr key={audit.id}>
+                    <td>{audit.result.sport.name} <br/><small>{audit.result.team?.name}</small></td>
+                    <td><span className="admin-table-status">{audit.fieldChanged}</span></td>
+                    <td style={{ fontSize: '0.85rem' }}>{audit.oldValue || '—'}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{audit.newValue || '—'}</td>
+                    <td>{audit.changer.name}</td>
+                    <td style={{ fontSize: '0.85rem', color: '#4b5563' }}>{new Date(audit.changedAt).toLocaleString('pt-BR')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="admin-panel">
+         <div className="admin-panel-header">
+            <h2>Lancamento em lote</h2>
+            <p>Registre varias colocacoes em uma unica operacao.</p>
+         </div>
+
+         <div className="form-grid" style={{ marginTop: 0, marginBottom: '22px' }}>
             <label className="field-span">
-              <span>Data e hora do lote</span>
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data e hora do lote</span>
               <input
+                style={{ minHeight: '40px', borderRadius: '10px' }}
                 type="datetime-local"
                 value={bulkDate}
                 onChange={(event) => setBulkDate(event.target.value)}
@@ -330,20 +511,27 @@ export default function AdminResultadosPage() {
             </label>
           </div>
 
-          <div className="review-grid" style={{ marginTop: '16px' }}>
+          <div className="review-grid" style={{ marginTop: 0 }}>
             {bulkRows.map((row, index) => (
-              <article key={row.id} className="card review-card">
-                <div className="review-header">
-                  <div>
-                    <h3>Linha {index + 1}</h3>
-                    <small>Entrada em lote</small>
-                  </div>
+              <article key={row.id} className="admin-panel" style={{ padding: '16px', background: '#fcfcfc' }}>
+                <div className="admin-panel-header" style={{ marginBottom: '12px' }}>
+                   <h3 style={{ fontSize: '1rem', margin: 0 }}>Linha {index + 1}</h3>
+                   <button
+                    className="admin-topbar-actions a"
+                    style={{ minHeight: '28px', padding: '0 8px', fontSize: '0.75rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
+                    type="button"
+                    onClick={() => removeBulkRow(row.id)}
+                    disabled={bulkRows.length <= 1}
+                  >
+                    Remover
+                  </button>
                 </div>
 
-                <div className="form-grid">
+                <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: 0 }}>
                   <label>
-                    <span>Modalidade</span>
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Modalidade</span>
                     <select
+                      style={{ minHeight: '36px', borderRadius: '8px', fontSize: '0.85rem' }}
                       value={row.sportId}
                       onChange={(event) => updateBulkRow(row.id, { sportId: event.target.value })}
                     >
@@ -356,8 +544,9 @@ export default function AdminResultadosPage() {
                   </label>
 
                   <label>
-                    <span>Equipe</span>
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Equipe</span>
                     <select
+                      style={{ minHeight: '36px', borderRadius: '8px', fontSize: '0.85rem' }}
                       value={row.teamId}
                       onChange={(event) => updateBulkRow(row.id, { teamId: event.target.value })}
                     >
@@ -370,8 +559,9 @@ export default function AdminResultadosPage() {
                   </label>
 
                   <label>
-                    <span>Posicao</span>
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Posicao</span>
                     <input
+                      style={{ minHeight: '36px', borderRadius: '8px', fontSize: '0.85rem' }}
                       type="number"
                       min={1}
                       value={row.position}
@@ -382,43 +572,26 @@ export default function AdminResultadosPage() {
                   </label>
 
                   <label>
-                    <span>Score bruto</span>
+                    <span className="admin-kicker" style={{ fontSize: '0.65rem' }}>Score</span>
                     <input
+                      style={{ minHeight: '36px', borderRadius: '8px', fontSize: '0.85rem' }}
                       type="number"
                       value={row.rawScore}
                       onChange={(event) => updateBulkRow(row.id, { rawScore: event.target.value })}
                     />
                   </label>
-
-                  <label className="field-span">
-                    <span>Observacoes</span>
-                    <input
-                      value={row.notes}
-                      onChange={(event) => updateBulkRow(row.id, { notes: event.target.value })}
-                    />
-                  </label>
-                </div>
-
-                <div className="cta-row">
-                  <button
-                    className="button secondary"
-                    type="button"
-                    onClick={() => removeBulkRow(row.id)}
-                    disabled={bulkRows.length <= 1}
-                  >
-                    Remover linha
-                  </button>
                 </div>
               </article>
             ))}
           </div>
 
-          <div className="cta-row" style={{ marginTop: '16px' }}>
-            <button className="button secondary" type="button" onClick={addBulkRow}>
+          <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '22px' }}>
+            <button className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} type="button" onClick={addBulkRow}>
               Adicionar linha
             </button>
             <button
-              className="button primary"
+              className="admin-quick-action"
+              style={{ minHeight: '40px', padding: '0 20px' }}
               type="button"
               onClick={handleBulkSubmit}
               disabled={submitting}
@@ -426,105 +599,7 @@ export default function AdminResultadosPage() {
               {submitting ? 'Salvando lote...' : 'Lancar lote'}
             </button>
           </div>
-        </div>
-
-        {loading ? <p>Carregando resultados...</p> : null}
-
-        {!loading ? (
-          <>
-            <div className="card" style={{ marginTop: '24px' }}>
-              <div className="form-grid">
-                <label>
-                  <span>Filtrar por modalidade</span>
-                  <select value={resultSportFilter} onChange={(event) => { setPage(1); setResultSportFilter(event.target.value); }}>
-                    <option value="">Todas</option>
-                    {sports.map((sport) => (
-                      <option key={sport.id} value={sport.id}>{sport.name}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Filtrar por equipe</span>
-                  <select value={resultTeamFilter} onChange={(event) => { setPage(1); setResultTeamFilter(event.target.value); }}>
-                    <option value="">Todas</option>
-                    {teams.map((team) => (
-                      <option key={team.id} value={team.id}>{team.name}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </div>
-
-            <div className="review-grid" style={{ marginTop: '24px' }}>
-              {results.map((result) => (
-                <article key={result.id} className="card review-card">
-                  <div className="review-header">
-                    <div>
-                      <h3>{result.sport.name}</h3>
-                      <small>{result.team.name}</small>
-                    </div>
-                    <span className="status-pill active">{result.calculatedPoints ?? 0} pts</span>
-                  </div>
-
-                  <p>Posicao: {result.position}</p>
-                  <p>Data: {new Date(result.resultDate).toLocaleString('pt-BR')}</p>
-                  <p>Score bruto: {result.rawScore ?? 'Nao informado'}</p>
-                  <p>Observacoes: {result.notes ?? 'Sem observacoes'}</p>
-
-                  <div className="cta-row">
-                    <button className="button secondary" type="button" onClick={() => startEdit(result)}>
-                      Corrigir
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="cta-row" style={{ marginTop: '24px' }}>
-              <button className="button secondary" type="button" disabled={page <= 1 || loading} onClick={() => setPage((current) => Math.max(current - 1, 1))}>
-                Pagina anterior
-              </button>
-              <span>Pagina {page} de {totalPages}</span>
-              <button className="button secondary" type="button" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
-                Proxima pagina
-              </button>
-            </div>
-
-            <div className="card" style={{ marginTop: '24px' }}>
-              <h2>Auditoria recente</h2>
-              {auditLogs.length === 0 ? (
-                <p>Nenhuma alteracao de resultado foi auditada ainda.</p>
-              ) : (
-                <div className="review-grid">
-                  {auditLogs.map((audit) => (
-                    <article key={audit.id} className="card review-card">
-                      <div className="review-header">
-                        <div>
-                          <h3>{audit.result.sport.name}</h3>
-                          <small>{audit.result.team?.name ?? 'Sem equipe'}</small>
-                        </div>
-                        <span className="status-pill active">{audit.fieldChanged}</span>
-                      </div>
-                      <p>
-                        <strong>Antes:</strong> {audit.oldValue ?? 'vazio'}
-                      </p>
-                      <p>
-                        <strong>Depois:</strong> {audit.newValue ?? 'vazio'}
-                      </p>
-                      <p>
-                        <strong>Por:</strong> {audit.changer.name}
-                      </p>
-                      <p>
-                        <strong>Quando:</strong>{' '}
-                        {new Date(audit.changedAt).toLocaleString('pt-BR')}
-                      </p>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        ) : null}
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }
