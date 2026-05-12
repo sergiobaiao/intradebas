@@ -19,6 +19,7 @@ export class TeamsController {
   }
 
   @Get(':id/athletes')
+  @UseGuards(JwtAuthGuard)
   findAthletes(@Param('id') id: string) {
     return this.teamsService.findAthletes(id);
   }

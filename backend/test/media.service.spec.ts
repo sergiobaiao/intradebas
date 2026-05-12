@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { MediaStorageService } from '../src/media/media-storage.service';
 import { MediaService } from '../src/media/media.service';
 import { createPrismaMock } from './helpers';
@@ -214,6 +214,44 @@ describe('MediaService', () => {
       },
     });
     expect(result.url).toContain('/api/v1/media/files/');
+  });
+
+  it('rejects uploaded media with invalid mime type', async () => {
+    await expect(
+      service.createUploaded(
+        {
+          title: 'arquivo.exe',
+        },
+        {
+          buffer: Buffer.from('evil'),
+          mimetype: 'application/x-msdownload',
+          originalname: 'arquivo.exe',
+          size: 4,
+        },
+        'user-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mediaStorage.uploadObject).not.toHaveBeenCalled();
+  });
+
+  it('rejects uploaded media larger than 20 MB before storage', async () => {
+    await expect(
+      service.createUploaded(
+        {
+          title: 'grande.mp4',
+        },
+        {
+          buffer: Buffer.alloc(0),
+          mimetype: 'video/mp4',
+          originalname: 'grande.mp4',
+          size: 20 * 1024 * 1024 + 1,
+        },
+        'user-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mediaStorage.uploadObject).not.toHaveBeenCalled();
   });
 
   it('updates a media item when it exists', async () => {

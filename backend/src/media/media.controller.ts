@@ -20,6 +20,11 @@ import { Readable } from 'node:stream';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { CreateUploadedMediaDto } from './dto/create-uploaded-media.dto';
+import {
+  assertValidMediaUpload,
+  isAllowedMediaMimeType,
+  MAX_MEDIA_UPLOAD_SIZE,
+} from './media-upload';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { MediaService } from './media.service';
 
@@ -61,6 +66,17 @@ export class MediaController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
+      limits: {
+        fileSize: MAX_MEDIA_UPLOAD_SIZE,
+      },
+      fileFilter: (_request, file, callback) => {
+        if (!isAllowedMediaMimeType(file.mimetype)) {
+          callback(new BadRequestException('Tipo de arquivo nao permitido'), false);
+          return;
+        }
+
+        callback(null, true);
+      },
     }),
   )
   upload(
@@ -72,6 +88,7 @@ export class MediaController {
       throw new BadRequestException('Arquivo de midia e obrigatorio');
     }
 
+    assertValidMediaUpload(file);
     return this.mediaService.createUploaded(dto, file, request.user.sub);
   }
 

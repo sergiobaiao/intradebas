@@ -1,4 +1,4 @@
-import { getTeam, getTeamAthletes } from '../../../lib';
+import { getAdminTeam, getAdminTeamAthletes } from '../../admin-data';
 import { TeamEditForm } from '../team-edit-form';
 
 type AdminTeamDetailPageProps = {
@@ -9,7 +9,7 @@ export default async function AdminTeamDetailPage({
   params,
 }: AdminTeamDetailPageProps) {
   const { id } = await params;
-  const [team, athletes] = await Promise.all([getTeam(id), getTeamAthletes(id)]);
+  const [team, athletes] = await Promise.all([getAdminTeam(id), getAdminTeamAthletes(id)]);
 
   return (
     <main className="section">

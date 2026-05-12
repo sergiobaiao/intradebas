@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { CreateUploadedMediaDto } from './dto/create-uploaded-media.dto';
 import { MediaStorageService } from './media-storage.service';
+import { assertValidMediaUpload } from './media-upload';
 import { UpdateMediaDto } from './dto/update-media.dto';
 
 @Injectable()
@@ -113,9 +114,10 @@ export class MediaService {
 
   async createUploaded(
     dto: CreateUploadedMediaDto,
-    file: { buffer: Buffer; mimetype: string; originalname?: string },
+    file: { buffer: Buffer; mimetype: string; originalname?: string; size?: number },
     uploadedBy: string,
   ) {
+    assertValidMediaUpload(file);
     const type = file.mimetype.startsWith('video/') ? 'video' : 'photo';
     const stored = await this.mediaStorage.uploadObject(file);
 

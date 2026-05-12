@@ -240,6 +240,37 @@ describe('AthletesService', () => {
     expect(result.lgpd.consent).toBe(true);
   });
 
+  it('returns public athlete payload without cpf, email or phone', async () => {
+    prisma.athlete.findMany.mockResolvedValue([
+      {
+        id: 'athlete-1',
+        name: 'Joao Silva',
+        cpf: '123.456.789-00',
+        email: 'joao@example.com',
+        phone: '86999999999',
+        birthDate: new Date('1990-01-01'),
+        type: AthleteType.titular,
+        status: AthleteStatus.active,
+        unit: 'Bloco A',
+        shirtSize: ShirtSize.M,
+        createdAt: new Date('2026-04-17T00:00:00Z'),
+        team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 10 },
+        registrations: [{ sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' } }],
+      },
+    ]);
+
+    const result = await service.findPublic();
+
+    expect(result).toEqual([
+      {
+        id: 'athlete-1',
+        name: 'Joao Silva',
+        team: { id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 10 },
+        sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletiva' }],
+      },
+    ]);
+  });
+
   it('rejects registration with an invalid or used coupon', async () => {
     prisma.athlete.findUnique
       .mockResolvedValueOnce(null)

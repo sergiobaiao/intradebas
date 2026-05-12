@@ -1540,7 +1540,7 @@ Duração estimada: 3 semanas
 Duração estimada: 2 semanas
 
 - [ ] Testes de carga (500 usuários simultâneos)
-- [ ] Auditoria de segurança (OWASP básico)
+- [~] Auditoria de segurança (OWASP básico)
 - [ ] Setup de produção na VPS (Docker Compose prod)
 - [ ] Configuração SSL (Let's Encrypt via Certbot)
 - [ ] Configuração de backup automático
@@ -1629,7 +1629,7 @@ Duração estimada: 2 semanas
 - 🟡 Mecanismo de exclusão de dados LGPD (solicitação)
 - [~] E-mails automáticos (reset de senha implementado; confirmações e cupons pendentes)
 
-## Status Geral Atual (Atualizado em 27/04/2026)
+## Status Geral Atual (Atualizado em 12/05/2026)
 
 | Bloco | Situação |
 |---|---|

@@ -27,6 +27,7 @@ export default function LoginPage() {
       const response = await fetch(`${apiBase}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -36,9 +37,6 @@ export default function LoginPage() {
         return;
       }
 
-      const body = (await response.json()) as { accessToken: string; refreshToken: string };
-      document.cookie = `intradebas_admin_token=${body.accessToken}; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
-      document.cookie = `intradebas_admin_refresh_token=${body.refreshToken}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
       router.push(nextPath);
       router.refresh();
     } catch {

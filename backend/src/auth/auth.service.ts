@@ -9,7 +9,7 @@ import type { JwtSignOptions } from '@nestjs/jwt';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma, UserRole } from '@prisma/client';
 import { compare, hash } from 'bcryptjs';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
@@ -289,7 +289,7 @@ export class AuthService {
         "created_at"
       )
       VALUES (
-        gen_random_uuid()::text,
+        ${randomUUID()},
         ${user.id},
         ${tokenHash},
         ${expiresAt},
@@ -395,7 +395,7 @@ export class AuthService {
         "created_at"
       )
       VALUES (
-        gen_random_uuid()::text,
+        ${randomUUID()},
         ${userId},
         ${tokenHash},
         ${expiresAt},

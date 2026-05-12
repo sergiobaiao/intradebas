@@ -143,6 +143,20 @@ export class AthletesService {
     };
   }
 
+  private toPublicResponse(athlete: AthleteWithRelations) {
+    const sports = athlete.registrations.map(
+      (registration: AthleteWithRelations['registrations'][number]) =>
+        registration.sport,
+    );
+
+    return {
+      id: athlete.id,
+      name: athlete.name,
+      team: athlete.team,
+      sports,
+    };
+  }
+
   async findAll() {
     const athletes = await this.prisma.athlete.findMany({
       select: {
@@ -183,6 +197,53 @@ export class AthletesService {
     });
 
     return athletes.map((athlete: AthleteWithRelations) => this.toResponse(athlete));
+  }
+
+  async findPublic() {
+    const athletes = await this.prisma.athlete.findMany({
+      where: {
+        status: {
+          in: [AthleteStatus.active, AthleteStatus.pending],
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        cpf: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        type: true,
+        status: true,
+        unit: true,
+        shirtSize: true,
+        createdAt: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            totalScore: true,
+          },
+        },
+        registrations: {
+          select: {
+            sport: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return athletes.map((athlete: AthleteWithRelations) => this.toPublicResponse(athlete));
   }
 
   async exportCsv() {

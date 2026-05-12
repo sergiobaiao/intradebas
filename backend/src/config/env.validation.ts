@@ -16,8 +16,16 @@ export const envValidationSchema = Joi.object({
   MINIO_ENDPOINT: Joi.string().default('minio'),
   MINIO_PORT: Joi.number().port().default(9000),
   MINIO_USE_SSL: Joi.boolean().truthy('true').falsy('false').default(false),
-  MINIO_ACCESS_KEY: Joi.string().default('minioadmin'),
-  MINIO_SECRET_KEY: Joi.string().default('minioadmin'),
+  MINIO_ACCESS_KEY: Joi.when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().min(3).required(),
+    otherwise: Joi.string().default('minioadmin'),
+  }),
+  MINIO_SECRET_KEY: Joi.when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().min(8).required(),
+    otherwise: Joi.string().default('minioadmin'),
+  }),
   MINIO_BUCKET: Joi.string().default('intradebas'),
   RECAPTCHA_SECRET_KEY: Joi.string().allow('', null),
 }).unknown(true);

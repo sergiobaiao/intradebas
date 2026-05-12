@@ -34,6 +34,13 @@ export type AthleteSummary = {
   sports: { id: string; name: string; category: string }[];
 };
 
+export type PublicAthleteSummary = {
+  id: string;
+  name: string;
+  team?: TeamSummary;
+  sports: { id: string; name: string; category: string }[];
+};
+
 export type CreateAthleteInput = {
   name: string;
   cpf: string;
@@ -444,81 +451,42 @@ export type UpdateMediaInput = {
   sortOrder?: number;
 };
 
-function getAdminTokenFromCookie() {
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  const entry = document.cookie
-    .split('; ')
-    .find((cookie) => cookie.startsWith('intradebas_admin_token='));
-
-  return entry ? decodeURIComponent(entry.split('=').slice(1).join('=')) : null;
-}
-
-function getAdminRefreshTokenFromCookie() {
-  if (typeof document === 'undefined') {
-    return null;
-  }
-
-  const entry = document.cookie
-    .split('; ')
-    .find((cookie) => cookie.startsWith('intradebas_admin_refresh_token='));
-
-  return entry ? decodeURIComponent(entry.split('=').slice(1).join('=')) : null;
-}
-
-function setAdminSessionCookies(input: { accessToken: string; refreshToken: string }) {
-  document.cookie = `intradebas_admin_token=${encodeURIComponent(input.accessToken)}; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
-  document.cookie = `intradebas_admin_refresh_token=${encodeURIComponent(input.refreshToken)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
-}
-
 async function refreshAdminSession() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const refreshToken = getAdminRefreshTokenFromCookie();
-
-  if (!refreshToken) {
-    return false;
-  }
 
   const response = await fetch(`${apiBase}/auth/refresh`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ refreshToken }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     return false;
   }
 
-  const body = (await response.json()) as { accessToken: string; refreshToken: string };
-  setAdminSessionCookies(body);
   return true;
 }
 
 async function adminApiFetch(path: string, init?: RequestInit) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  let token = getAdminTokenFromCookie();
-
-  const doRequest = (accessToken: string | null) =>
+  const doRequest = () =>
     fetch(`${apiBase}${path}`, {
       ...init,
+      credentials: 'include',
       headers: {
         ...(init?.headers ?? {}),
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
     });
 
-  let response = await doRequest(token);
+  let response = await doRequest();
 
   if (response.status === 401) {
     const refreshed = await refreshAdminSession();
 
     if (refreshed) {
-      token = getAdminTokenFromCookie();
-      response = await doRequest(token);
+      response = await doRequest();
     }
   }
 
@@ -566,7 +534,7 @@ export function getResults() {
 }
 
 export function getAthletes() {
-  return fetchJson<AthleteSummary[]>('/athletes', []);
+  return fetchJson<PublicAthleteSummary[]>('/athletes/public', []);
 }
 
 export function getSponsorshipQuotas() {
@@ -819,6 +787,42 @@ export async function adminFetchJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function adminRequestJson<T>(
+  path: string,
+  init: RequestInit,
+  fallbackMessage: string,
+): Promise<T> {
+  const response = await adminApiFetch(path, init);
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? fallbackMessage);
+  }
+
+  return (await response.json()) as T;
+}
+
+async function adminRequestText(
+  path: string,
+  init: RequestInit,
+  fallbackMessage: string,
+) {
+  const response = await adminApiFetch(path, init);
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string | string[] }
+      | null;
+    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
+    throw new Error(message ?? fallbackMessage);
+  }
+
+  return response.text();
+}
+
 function buildQuery(params: Record<string, string | number | undefined | null>) {
   const query = new URLSearchParams();
 
@@ -838,144 +842,59 @@ export function adminUpdateAthleteStatus(
   athleteId: string,
   status: 'active' | 'rejected',
 ) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/athletes/${athleteId}/status`, {
+  return adminRequestJson<AthleteSummary>(`/athletes/${athleteId}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({ status }),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string }
-        | null;
-      throw new Error(body?.message ?? 'Falha ao atualizar status do atleta');
-    }
-
-    return (await response.json()) as AthleteSummary;
-  });
+  }, 'Falha ao atualizar status do atleta');
 }
 
 export function adminUpdateAthlete(athleteId: string, input: UpdateAthleteInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/athletes/${athleteId}`, {
+  return adminRequestJson<AthleteSummary>(`/athletes/${athleteId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar atleta');
-    }
-
-    return (await response.json()) as AthleteSummary;
-  });
+  }, 'Falha ao atualizar atleta');
 }
 
 export function adminDeleteAthlete(athleteId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/athletes/${athleteId}`, {
+  return adminRequestJson<{ id: string; deleted: true }>(`/athletes/${athleteId}`, {
     method: 'DELETE',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao excluir atleta');
-    }
-
-    return (await response.json()) as { id: string; deleted: true };
-  });
+  }, 'Falha ao excluir atleta');
 }
 
 export function adminCreateResult(input: ResultInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/results`, {
+  return adminRequestJson<ResultSummary>('/results', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao lancar resultado');
-    }
-
-    return (await response.json()) as ResultSummary;
-  });
+  }, 'Falha ao lancar resultado');
 }
 
 export function adminCreateResultsBulk(input: BulkResultInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/results/bulk`, {
+  return adminRequestJson<ResultSummary[]>('/results/bulk', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao lancar resultados em lote');
-    }
-
-    return (await response.json()) as ResultSummary[];
-  });
+  }, 'Falha ao lancar resultados em lote');
 }
 
 export function adminUpdateResult(resultId: string, input: Partial<ResultInput>) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/results/${resultId}`, {
+  return adminRequestJson<ResultSummary>(`/results/${resultId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao corrigir resultado');
-    }
-
-    return (await response.json()) as ResultSummary;
-  });
+  }, 'Falha ao corrigir resultado');
 }
 
 export function adminGetResultAuditLogs() {
@@ -999,51 +918,23 @@ export function adminGetAdminUsers() {
 }
 
 export function adminCreateAdminUser(input: CreateAdminUserInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/auth/admin-users`, {
+  return adminRequestJson<AdminUserSummary>('/auth/admin-users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao criar usuario administrativo');
-    }
-
-    return (await response.json()) as AdminUserSummary;
-  });
+  }, 'Falha ao criar usuario administrativo');
 }
 
 export function adminUpdateAdminUser(userId: string, input: UpdateAdminUserInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/auth/admin-users/${userId}`, {
+  return adminRequestJson<AdminUserSummary>(`/auth/admin-users/${userId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar usuario administrativo');
-    }
-
-    return (await response.json()) as AdminUserSummary;
-  });
+  }, 'Falha ao atualizar usuario administrativo');
 }
 
 export function adminUpdateLgpdDeletionRequest(
@@ -1053,27 +944,13 @@ export function adminUpdateLgpdDeletionRequest(
     adminNotes?: string;
   },
 ) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/lgpd/deletion-requests/${requestId}`, {
+  return adminRequestJson<LgpdDeletionRequestSummary>(`/lgpd/deletion-requests/${requestId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar solicitacao LGPD');
-    }
-
-    return (await response.json()) as LgpdDeletionRequestSummary;
-  });
+  }, 'Falha ao atualizar solicitacao LGPD');
 }
 
 export function adminGetAthleteReviewPage(input: {
@@ -1133,103 +1010,35 @@ export function adminGetSponsorCoupons(sponsorId: string) {
 }
 
 export function adminCreateSponsorCoupon(sponsorId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/sponsors/${sponsorId}/coupons`, {
+  return adminRequestJson<CouponAdminSummary>(`/sponsors/${sponsorId}/coupons`, {
     method: 'POST',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao gerar cupom');
-    }
-
-    return (await response.json()) as CouponAdminSummary;
-  });
+  }, 'Falha ao gerar cupom');
 }
 
 export function adminActivateSponsor(sponsorId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/sponsors/${sponsorId}/activate`, {
+  return adminRequestJson<{
+    id: string;
+    status: 'active' | 'pending' | 'inactive';
+    couponsGenerated: number;
+  }>(`/sponsors/${sponsorId}/activate`, {
     method: 'PATCH',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao ativar patrocinador');
-    }
-
-    return (await response.json()) as {
-      id: string;
-      status: 'active' | 'pending' | 'inactive';
-      couponsGenerated: number;
-    };
-  });
+  }, 'Falha ao ativar patrocinador');
 }
 
 export function adminExpireCoupon(couponId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/coupons/${couponId}/expire`, {
+  return adminRequestJson<CouponAdminSummary>(`/coupons/${couponId}/expire`, {
     method: 'PATCH',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao expirar cupom');
-    }
-
-    return (await response.json()) as CouponAdminSummary;
-  });
+  }, 'Falha ao expirar cupom');
 }
 
 export function adminUpdateSponsor(sponsorId: string, input: UpdateSponsorInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/sponsors/${sponsorId}`, {
+  return adminRequestJson<SponsorAdminSummary>(`/sponsors/${sponsorId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar patrocinador');
-    }
-
-    return (await response.json()) as SponsorAdminSummary;
-  });
+  }, 'Falha ao atualizar patrocinador');
 }
 
 export function adminGetMedia() {
@@ -1248,27 +1057,13 @@ export function adminGetMediaPage(input: {
 }
 
 export function adminCreateMedia(input: CreateMediaInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/media`, {
+  return adminRequestJson<MediaAdminSummary>('/media', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao criar midia');
-    }
-
-    return (await response.json()) as MediaAdminSummary;
-  });
+  }, 'Falha ao criar midia');
 }
 
 export function adminUploadMedia(file: File, input: {
@@ -1276,8 +1071,6 @@ export function adminUploadMedia(file: File, input: {
   isFeatured?: boolean;
   sortOrder?: number;
 }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
   const formData = new FormData();
 
   formData.set('file', file);
@@ -1294,73 +1087,26 @@ export function adminUploadMedia(file: File, input: {
     formData.set('sortOrder', String(input.sortOrder));
   }
 
-  return fetch(`${apiBase}/media/upload`, {
+  return adminRequestJson<MediaAdminSummary>('/media/upload', {
     method: 'POST',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
     body: formData,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao enviar midia');
-    }
-
-    return (await response.json()) as MediaAdminSummary;
-  });
+  }, 'Falha ao enviar midia');
 }
 
 export function adminUpdateMedia(mediaId: string, input: UpdateMediaInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/media/${mediaId}`, {
+  return adminRequestJson<MediaAdminSummary>(`/media/${mediaId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar midia');
-    }
-
-    return (await response.json()) as MediaAdminSummary;
-  });
+  }, 'Falha ao atualizar midia');
 }
 
 export function adminDeleteMedia(mediaId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/media/${mediaId}`, {
+  return adminRequestJson<{ id: string; deleted: true }>(`/media/${mediaId}`, {
     method: 'DELETE',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao remover midia');
-    }
-
-    return (await response.json()) as { id: string; deleted: true };
-  });
+  }, 'Falha ao remover midia');
 }
 
 export function adminGetScoringConfig() {
@@ -1368,239 +1114,85 @@ export function adminGetScoringConfig() {
 }
 
 export function adminCreateScoringConfig(input: CreateScoringConfigInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/settings/scoring`, {
+  return adminRequestJson<ScoringConfigSummary>('/settings/scoring', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao criar configuracao');
-    }
-
-    return (await response.json()) as ScoringConfigSummary;
-  });
+  }, 'Falha ao criar configuracao');
 }
 
 export function adminUpdateTeam(teamId: string, input: UpdateTeamInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/teams/${teamId}`, {
+  return adminRequestJson<TeamSummary>(`/teams/${teamId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar equipe');
-    }
-
-    return (await response.json()) as TeamSummary;
-  });
+  }, 'Falha ao atualizar equipe');
 }
 
 export function adminDeleteTeam(teamId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/teams/${teamId}`, {
+  return adminRequestJson<{ id: string; deleted: true }>(`/teams/${teamId}`, {
     method: 'DELETE',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao excluir equipe');
-    }
-
-    return (await response.json()) as { id: string; deleted: true };
-  });
+  }, 'Falha ao excluir equipe');
 }
 
 export function adminCreateTeam(input: { name: string; color?: string }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/teams`, {
+  return adminRequestJson<TeamSummary>('/teams', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao criar equipe');
-    }
-
-    return (await response.json()) as TeamSummary;
-  });
+  }, 'Falha ao criar equipe');
 }
 
 export function adminCreateSport(input: CreateSportInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/sports`, {
+  return adminRequestJson<SportSummary>('/sports', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao criar modalidade');
-    }
-
-    return (await response.json()) as SportSummary;
-  });
+  }, 'Falha ao criar modalidade');
 }
 
 export function adminUpdateSport(sportId: string, input: UpdateSportInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/sports/${sportId}`, {
+  return adminRequestJson<SportSummary>(`/sports/${sportId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(input),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar modalidade');
-    }
-
-    return (await response.json()) as SportSummary;
-  });
+  }, 'Falha ao atualizar modalidade');
 }
 
 export function adminDeleteSport(sportId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/sports/${sportId}`, {
+  return adminRequestJson<{ id: string; deleted: true }>(`/sports/${sportId}`, {
     method: 'DELETE',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao excluir modalidade');
-    }
-
-    return (await response.json()) as { id: string; deleted: true };
-  });
+  }, 'Falha ao excluir modalidade');
 }
 
 export function adminUpdateScoringConfig(rowId: string, points: number) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/settings/scoring/${rowId}`, {
+  return adminRequestJson<ScoringConfigSummary>(`/settings/scoring/${rowId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({ points }),
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao atualizar configuracao');
-    }
-
-    return (await response.json()) as ScoringConfigSummary;
-  });
+  }, 'Falha ao atualizar configuracao');
 }
 
 export function adminDeleteScoringConfig(rowId: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  return fetch(`${apiBase}/settings/scoring/${rowId}`, {
+  return adminRequestJson<{ id: string; deleted: true }>(`/settings/scoring/${rowId}`, {
     method: 'DELETE',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as
-        | { message?: string | string[] }
-        | null;
-      const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-      throw new Error(message ?? 'Falha ao remover configuracao');
-    }
-
-    return (await response.json()) as { id: string; deleted: true };
-  });
+  }, 'Falha ao remover configuracao');
 }
 
 export async function adminDownloadAthletesCsv() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
-  const token = getAdminTokenFromCookie();
-
-  const response = await fetch(`${apiBase}/athletes/export`, {
+  return adminRequestText('/athletes/export', {
     method: 'GET',
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  });
-
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as
-      | { message?: string | string[] }
-      | null;
-    const message = Array.isArray(body?.message) ? body?.message[0] : body?.message;
-    throw new Error(message ?? 'Falha ao exportar atletas');
-  }
-
-  return response.text();
+  }, 'Falha ao exportar atletas');
 }

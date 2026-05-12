@@ -1,5 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import {
+  clearAdminSessionCookies,
+  getAdminRefreshTokenFromRequest,
+  setAdminSessionCookies,
+} from './auth.cookies';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -12,26 +30,84 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  private resolveRefreshToken(request: Request, dto?: RefreshTokenDto) {
+    const refreshToken = dto?.refreshToken ?? getAdminRefreshTokenFromRequest(request);
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token ausente');
+    }
+
+    return refreshToken;
   }
 
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
+  @Post('login')
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const session = await this.authService.login(dto);
+    setAdminSessionCookies(response, session);
+    return { user: session.user };
+  }
+
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('refresh')
-  refresh(@Body() dto: RefreshTokenDto) {
-    return this.authService.refresh(dto);
+  async refresh(
+    @Req() request: Request,
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const session = await this.authService.refresh({
+      refreshToken: this.resolveRefreshToken(request, dto),
+    });
+    setAdminSessionCookies(response, session);
+    return { user: session.user };
   }
 
   @Post('logout')
-  logout(@Body() dto: RefreshTokenDto) {
-    return this.authService.logout(dto);
+  async logout(
+    @Req() request: Request,
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const refreshToken = dto?.refreshToken ?? getAdminRefreshTokenFromRequest(request);
+
+    if (refreshToken) {
+      await this.authService.logout({ refreshToken });
+    }
+
+    clearAdminSessionCookies(response);
+    return { success: true };
   }
 
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
 
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);

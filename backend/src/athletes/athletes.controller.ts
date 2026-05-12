@@ -38,11 +38,18 @@ export class AthletesController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return this.athletesService.findAll();
   }
 
+  @Get('public')
+  findPublic() {
+    return this.athletesService.findPublic();
+  }
+
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string) {
     return this.athletesService.findOne(id);
   }

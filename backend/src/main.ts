@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { createCorsOptions } from './config/cors';
 import { PrismaService } from './prisma/prisma.service';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 
@@ -17,7 +18,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.enableCors();
+  app.enableCors(createCorsOptions());
 
   const port = Number(process.env.PORT ?? 4000);
   await app.get(PrismaService).enableShutdownHooks(app);

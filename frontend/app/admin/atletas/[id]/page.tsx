@@ -1,4 +1,5 @@
-import { getAthlete, getSports, getTeams } from '../../../lib';
+import { getSports, getTeams } from '../../../lib';
+import { getAdminAthlete } from '../../admin-data';
 import { AthleteEditForm } from '../athlete-edit-form';
 
 type AdminAthleteDetailPageProps = {
@@ -10,7 +11,7 @@ export default async function AdminAthleteDetailPage({
 }: AdminAthleteDetailPageProps) {
   const { id } = await params;
   const [athlete, teams, sports] = await Promise.all([
-    getAthlete(id),
+    getAdminAthlete(id),
     getTeams(),
     getSports(),
   ]);

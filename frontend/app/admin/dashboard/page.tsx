@@ -1,6 +1,5 @@
 import {
   AthleteSummary,
-  getAthletes,
   getRanking,
   getResults,
   getSponsorshipQuotas,
@@ -9,6 +8,7 @@ import {
   ResultSummary,
   SportSummary,
 } from '../../lib';
+import { getAdminAthletes } from '../admin-data';
 
 type DashboardMetric = {
   label: string;
@@ -148,7 +148,7 @@ function EmptyState({ title, message }: { title: string; message: string }) {
 export default async function AdminDashboardPage() {
   const [teams, athletes, ranking, sports, results, quotas] = await Promise.all([
     getTeams(),
-    getAthletes(),
+    getAdminAthletes(),
     getRanking(),
     getSports(),
     getResults(),

@@ -24,8 +24,8 @@ export class MediaStorageService {
       endpoint,
       forcePathStyle: true,
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY ?? 'minioadmin',
-        secretAccessKey: process.env.MINIO_SECRET_KEY ?? 'minioadmin',
+        accessKeyId: process.env.MINIO_ACCESS_KEY ?? '',
+        secretAccessKey: process.env.MINIO_SECRET_KEY ?? '',
       },
     });
   }
