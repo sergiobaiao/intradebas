@@ -52,4 +52,4 @@
 - [x] T016 Atualizar `INTRADEBAS_2026_Especificacao_Tecnica.md` com os itens concluidos da 054
 - [x] T017 Rodar `cd backend && npm test && npm run build`
 - [x] T018 Rodar `cd frontend && npm run test:e2e && npm run build`
-- [ ] T019 Commitar e enviar a feature `054-security-hardening`
+- [x] T019 Commitar e enviar a feature `054-security-hardening`
