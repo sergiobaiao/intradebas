@@ -78,6 +78,7 @@ export default function AdminConfiguracoesPage() {
   }
 
   async function deleteRow(rowId: string) {
+    if (!confirm('Tem certeza que deseja remover esta regra?')) return;
     setDeletingId(rowId);
     setError(null);
 
@@ -95,31 +96,45 @@ export default function AdminConfiguracoesPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Configuracoes</span>
-        <h1>Pontuacao e regras</h1>
-        <p>Visualizacao da tabela de pontuacao atualmente aplicada pelo motor de resultados.</p>
-        <div className="card" style={{ marginBottom: '24px' }}>
-          <h2>Nova regra de pontuacao</h2>
-          <div className="form-grid">
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Configuracoes do Sistema</span>
+          <h1>Pontuacao e regras</h1>
+        </div>
+      </header>
+
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <div className="admin-content-grid">
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+             <h2>Nova regra de pontuacao</h2>
+          </div>
+          <div className="form-grid" style={{ marginTop: 0 }}>
             <label>
-              Categoria
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Categoria</span>
               <select
+                style={{ minHeight: '38px', borderRadius: '10px' }}
                 value={newCategory}
                 onChange={(event) =>
                   setNewCategory(event.target.value as CreateScoringConfigInput['category'])
                 }
               >
-                <option value="coletiva">coletiva</option>
-                <option value="individual">individual</option>
-                <option value="dupla">dupla</option>
-                <option value="fitness">fitness</option>
+                <option value="coletiva">Coletiva</option>
+                <option value="individual">Individual</option>
+                <option value="dupla">Dupla</option>
+                <option value="fitness">Fitness</option>
               </select>
             </label>
             <label>
-              Posicao
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Posicao</span>
               <input
+                style={{ minHeight: '38px', borderRadius: '10px' }}
                 value={newPosition}
                 onChange={(event) => setNewPosition(event.target.value)}
                 type="number"
@@ -127,79 +142,128 @@ export default function AdminConfiguracoesPage() {
               />
             </label>
             <label>
-              Pontos
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Pontos</span>
               <input
+                style={{ minHeight: '38px', borderRadius: '10px' }}
                 value={newPoints}
                 onChange={(event) => setNewPoints(event.target.value)}
                 type="number"
                 min={0}
               />
             </label>
-            <div className="cta-row">
+            <div className="admin-topbar-actions field-span" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
               <button
-                className="button primary"
+                className="admin-quick-action"
+                style={{ minHeight: '40px', padding: '0 20px' }}
                 type="button"
-                onClick={() => createRow()}
+                onClick={() => void createRow()}
                 disabled={creating}
               >
                 {creating ? 'Criando...' : 'Criar regra'}
               </button>
             </div>
           </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-header">
+             <h2>Regras Ativas</h2>
+          </div>
+          <div className="admin-status-stack">
+             <div>
+               <span>Total de Regras</span>
+               <strong>{rows.length}</strong>
+             </div>
+             <div>
+               <span>Categorias</span>
+               <strong>{new Set(rows.map(r => r.category)).size}</strong>
+             </div>
+          </div>
+        </section>
+      </div>
+
+      {loading ? (
+        <div className="admin-empty-state">
+          <strong>Carregando...</strong>
         </div>
-        {error ? <p className="error-text">{error}</p> : null}
-        {loading ? <p>Carregando configuracoes...</p> : null}
-        {!loading && rows.length === 0 ? <div className="card empty-state"><strong>Nenhuma configuracao cadastrada.</strong></div> : null}
-        {!loading ? (
-          <div className="review-grid">
-            {rows.map((row) => (
-              <article key={row.id} className="card review-card">
-                <div className="review-header">
-                  <div>
-                    <h3>{row.category}</h3>
-                    <small>Posicao {row.position}</small>
-                  </div>
-                  <span className="status-pill active">{row.points} pts</span>
+      ) : null}
+
+      {!loading && rows.length === 0 ? (
+        <div className="admin-empty-state">
+          <strong>Nenhuma regra cadastrada.</strong>
+          <span>Defina a pontuacao para as categorias acima.</span>
+        </div>
+      ) : null}
+
+      {!loading && rows.length > 0 ? (
+        <div className="review-grid">
+          {rows.map((row) => (
+            <article key={row.id} className="admin-panel" style={{ padding: '18px', background: '#fcfcfc' }}>
+              <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', margin: 0, textTransform: 'capitalize' }}>{row.category}</h3>
+                  <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>Posicao {row.position}º</span>
                 </div>
-                <p>Atualizado por: {row.updatedByUser.name}</p>
-                <p>{row.updatedByUser.email}</p>
-                {editingId === row.id ? (
-                  <div className="cta-row">
-                    <input value={points} onChange={(event) => setPoints(event.target.value)} type="number" min={0} />
-                    <button className="button primary" type="button" onClick={() => saveRow(row.id)}>
+                <span className="admin-table-status success" style={{ background: 'rgba(45, 106, 79, 0.1)', color: '#2d6a4f', fontSize: '1.1rem', fontWeight: 800 }}>
+                  {row.points} pts
+                </span>
+              </div>
+              
+              <div style={{ marginBottom: '16px' }}>
+                 <span className="admin-kicker" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
+                  Ultima atualizacao por <strong>{row.updatedByUser.name}</strong>
+                </span>
+              </div>
+
+              {editingId === row.id ? (
+                <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
+                  <label className="field-span">
+                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nova pontuacao</span>
+                    <input 
+                      style={{ minHeight: '34px', borderRadius: '8px', fontSize: '0.85rem' }} 
+                      value={points} 
+                      onChange={(event) => setPoints(event.target.value)} 
+                      type="number" 
+                      min={0} 
+                    />
+                  </label>
+                  <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
+                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 12px', fontSize: '0.85rem', background: '#111827', color: '#fff' }} type="button" onClick={() => saveRow(row.id)}>
                       Salvar
                     </button>
-                    <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
+                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 12px', fontSize: '0.85rem' }} type="button" onClick={() => setEditingId(null)}>
                       Cancelar
                     </button>
                   </div>
-                ) : (
-                  <div className="cta-row">
-                    <button
-                      className="button secondary"
-                      type="button"
-                      onClick={() => {
-                        setEditingId(row.id);
-                        setPoints(String(row.points));
-                      }}
-                    >
-                      Editar pontuacao
-                    </button>
-                    <button
-                      className="button secondary"
-                      type="button"
-                      onClick={() => deleteRow(row.id)}
-                      disabled={deletingId === row.id}
-                    >
-                      {deletingId === row.id ? 'Removendo...' : 'Remover'}
-                    </button>
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </main>
+                </div>
+              ) : (
+                <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
+                  <button
+                    className="admin-topbar-actions a"
+                    style={{ minHeight: '30px', padding: '0 10px', fontSize: '0.8rem' }}
+                    type="button"
+                    onClick={() => {
+                      setEditingId(row.id);
+                      setPoints(String(row.points));
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="admin-topbar-actions a"
+                    style={{ minHeight: '30px', padding: '0 10px', fontSize: '0.8rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
+                    type="button"
+                    onClick={() => deleteRow(row.id)}
+                    disabled={deletingId === row.id}
+                  >
+                    {deletingId === row.id ? '...' : 'Remover'}
+                  </button>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }

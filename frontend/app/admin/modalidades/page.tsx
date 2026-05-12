@@ -72,6 +72,7 @@ export default function AdminModalidadesPage() {
   }
 
   async function deleteSport(sportId: string) {
+    if (!confirm('Tem certeza que deseja excluir esta modalidade?')) return;
     setDeletingId(sportId);
     setError(null);
 
@@ -94,110 +95,142 @@ export default function AdminModalidadesPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Modalidades</span>
-        <h1>Gestao de modalidades</h1>
-        <p>Resumo operacional das modalidades e da quantidade de resultados ja lancados.</p>
-        <div className="cta-row">
-          <a className="button primary" href="/admin/modalidades/nova">
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Competicao</span>
+          <h1>Modalidades</h1>
+        </div>
+        <div className="admin-topbar-actions">
+          <a className="admin-quick-action" style={{ minHeight: '38px', padding: '0 14px' }} href="/admin/modalidades/nova">
             Nova modalidade
           </a>
-          <a className="button secondary" href="/admin/dashboard">
-            Voltar ao dashboard
-          </a>
         </div>
-        {error ? <p className="error-text">{error}</p> : null}
-        {loading ? <p>Carregando modalidades...</p> : null}
-        {!loading ? (
-          <div className="review-grid">
-            {summaries.map((sport) => (
-              <article key={sport.id} className="card review-card">
-                <div className="review-header">
-                  <div>
-                    <h3>{sport.name}</h3>
-                    <small>{sport.category}</small>
-                  </div>
-                  <span className={`status-pill ${sport.isActive === false ? 'rejected' : 'active'}`}>
-                    {sport.isActive === false ? 'inativa' : 'ativa'}
-                  </span>
+      </header>
+
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <section className="admin-panel" style={{ marginBottom: '22px' }}>
+        <p className="admin-kicker" style={{ textTransform: 'none' }}>
+          Resumo operacional das modalidades, categorias e quantidade de resultados ja lancados no sistema.
+        </p>
+      </section>
+
+      {loading ? (
+        <div className="admin-empty-state">
+          <strong>Carregando...</strong>
+          <span>Buscando registros de modalidades no sistema.</span>
+        </div>
+      ) : null}
+
+      {!loading && summaries.length === 0 ? (
+        <div className="admin-empty-state">
+          <strong>Nenhuma modalidade cadastrada.</strong>
+          <span>Clique em "Nova modalidade" para comecar.</span>
+        </div>
+      ) : null}
+
+      {!loading && summaries.length > 0 ? (
+        <div className="review-grid">
+          {summaries.map((sport) => (
+            <article key={sport.id} className="admin-panel" style={{ padding: '18px' }}>
+              <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.2rem' }}>{sport.name}</h2>
+                  <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>{sport.category}</span>
                 </div>
-                <p>Resultados lancados: {sport.resultCount}</p>
-                <p>ALDEBARUN: {sport.isAldebarun ? 'sim' : 'nao'}</p>
-                <p>Agenda: {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}</p>
+                <span className={`admin-table-status ${sport.isActive === false ? 'rejected' : 'active'}`} style={{ background: sport.isActive === false ? 'rgba(230, 57, 70, 0.1)' : 'rgba(45, 106, 79, 0.1)', color: sport.isActive === false ? '#e63946' : '#2d6a4f' }}>
+                  {sport.isActive === false ? 'Inativa' : 'Ativa'}
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gap: '8px', marginBottom: '18px' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+                  <strong>Resultados:</strong> {sport.resultCount} lancados
+                </p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+                  <strong>ALDEBARUN:</strong> {sport.isAldebarun ? 'Sim' : 'Nao'}
+                </p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <strong>Agenda:</strong> {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}
+                </p>
+              </div>
+
+              {editingId === sport.id ? (
+                <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
+                  <label className="field-span">
+                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome</span>
+                    <input style={{ minHeight: '36px', borderRadius: '8px' }} value={sportName} onChange={(event) => setSportName(event.target.value)} />
+                  </label>
+                  <label className="field-span">
+                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Descricao</span>
+                    <input style={{ minHeight: '36px', borderRadius: '8px' }} value={description} onChange={(event) => setDescription(event.target.value)} />
+                  </label>
+                  <label>
+                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data/hora</span>
+                    <input type="datetime-local" style={{ minHeight: '36px', borderRadius: '8px' }} value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
+                  </label>
+                  <label className="checkbox-row" style={{ alignSelf: 'center' }}>
+                    <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+                    <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Ativa</span>
+                  </label>
+                </div>
+              ) : null}
+
+              <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
+                <a className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} href={`/admin/modalidades/${sport.id}`}>
+                  Ver detalhes
+                </a>
                 {editingId === sport.id ? (
-                  <div className="form-grid">
-                    <label>
-                      <span>Nome</span>
-                      <input value={sportName} onChange={(event) => setSportName(event.target.value)} />
-                    </label>
-                    <label className="field-span">
-                      <span>Descricao</span>
-                      <input value={description} onChange={(event) => setDescription(event.target.value)} />
-                    </label>
-                    <label>
-                      <span>Data/hora</span>
-                      <input type="datetime-local" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
-                    </label>
-                    <label className="field-span">
-                      <span>Notas</span>
-                      <input value={scheduleNotes} onChange={(event) => setScheduleNotes(event.target.value)} />
-                    </label>
-                    <label className="checkbox-row field-span">
-                      <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-                      <span>Modalidade ativa</span>
-                    </label>
-                  </div>
-                ) : null}
-                <div className="cta-row">
-                  <a className="button secondary" href={`/admin/modalidades/${sport.id}`}>
-                    Ver detalhes
-                  </a>
-                  {editingId === sport.id ? (
-                    <>
-                      <button className="button primary" type="button" onClick={() => saveSport(sport.id)}>
-                        Salvar
-                      </button>
-                      <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="button secondary"
-                        type="button"
-                        onClick={() => {
-                          setEditingId(sport.id);
-                          setSportName(sport.name);
-                          setDescription(sport.description ?? '');
-                          setScheduleDate(
-                            sport.scheduleDate
-                              ? new Date(sport.scheduleDate).toISOString().slice(0, 16)
-                              : '',
-                          );
-                          setScheduleNotes(sport.scheduleNotes ?? '');
-                          setIsActive(sport.isActive !== false);
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="button secondary"
-                        type="button"
-                        onClick={() => deleteSport(sport.id)}
-                        disabled={deletingId === sport.id}
-                      >
-                        {deletingId === sport.id ? 'Removendo...' : 'Excluir'}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </main>
+                  <>
+                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', background: '#111827', color: '#fff' }} type="button" onClick={() => saveSport(sport.id)}>
+                      Salvar
+                    </button>
+                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} type="button" onClick={() => setEditingId(null)}>
+                      Cancelar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="admin-topbar-actions a"
+                      style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+                      type="button"
+                      onClick={() => {
+                        setEditingId(sport.id);
+                        setSportName(sport.name);
+                        setDescription(sport.description ?? '');
+                        setScheduleDate(
+                          sport.scheduleDate
+                            ? new Date(sport.scheduleDate).toISOString().slice(0, 16)
+                            : '',
+                        );
+                        setScheduleNotes(sport.scheduleNotes ?? '');
+                        setIsActive(sport.isActive !== false);
+                      }}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="admin-topbar-actions a"
+                      style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
+                      type="button"
+                      onClick={() => deleteSport(sport.id)}
+                      disabled={deletingId === sport.id}
+                    >
+                      {deletingId === sport.id ? '...' : 'Excluir'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }

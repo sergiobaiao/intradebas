@@ -26,16 +26,32 @@ export default function AdminAuditoriaPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Auditoria</span>
-        <h1>Logs de auditoria</h1>
-        <p>Historico recente de alteracoes em resultados e dados administrativos criticos.</p>
-        <div className="card" style={{ marginTop: '24px' }}>
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Sessao de Seguranca</span>
+          <h1>Logs de auditoria</h1>
+        </div>
+      </header>
+
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <section className="admin-panel" style={{ marginBottom: '22px' }}>
+        <div className="admin-panel-header">
+           <div>
+             <h2>Historico de alteracoes</h2>
+             <p>Registro de modificacoes em resultados, atletas e dados administrativos criticos.</p>
+           </div>
+        </div>
+        <div className="form-grid" style={{ marginTop: 0 }}>
           <label>
-            <span>Filtrar por entidade</span>
-            <select value={entityType} onChange={(event) => setEntityType(event.target.value)}>
-              <option value="">Todas</option>
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Filtrar por entidade</span>
+            <select style={{ minHeight: '40px', borderRadius: '10px' }} value={entityType} onChange={(event) => setEntityType(event.target.value)}>
+              <option value="">Todas as entidades</option>
               <option value="result">Resultados</option>
               <option value="athlete">Atletas</option>
               <option value="team">Equipes</option>
@@ -44,28 +60,58 @@ export default function AdminAuditoriaPage() {
             </select>
           </label>
         </div>
-        {error ? <p className="error-text">{error}</p> : null}
-        {loading ? <p>Carregando auditoria...</p> : null}
-        {!loading && logs.length === 0 ? <div className="card empty-state"><strong>Nenhum log encontrado.</strong></div> : null}
-        {!loading ? (
-          <div className="review-grid">
-            {logs.map((audit) => (
-              <article key={audit.id} className="card review-card">
-                <div className="review-header">
-                  <div>
-                    <h3>{audit.entityLabel ?? audit.entityId}</h3>
-                    <small>{audit.entityType}</small>
-                  </div>
-                  <span className="status-pill active">{audit.action}</span>
+      </section>
+
+      {loading ? (
+        <div className="admin-empty-state">
+          <strong>Carregando...</strong>
+        </div>
+      ) : null}
+
+      {!loading && logs.length === 0 ? (
+        <div className="admin-empty-state">
+          <strong>Nenhum log encontrado.</strong>
+          <span>Altere o filtro de entidade para ampliar a busca.</span>
+        </div>
+      ) : null}
+
+      {!loading && logs.length > 0 ? (
+        <div className="review-grid">
+          {logs.map((audit) => (
+            <article key={audit.id} className="admin-panel" style={{ padding: '18px', background: '#fcfcfc' }}>
+              <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{audit.entityLabel ?? audit.entityId}</h3>
+                  <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>{audit.entityType}</span>
                 </div>
-                <p>Campo: {audit.fieldChanged ?? 'n/a'}</p>
-                <p>{audit.oldValue ?? 'vazio'} → {audit.newValue ?? 'vazio'}</p>
-                <p>{audit.changer.name} · {new Date(audit.changedAt).toLocaleString('pt-BR')}</p>
-              </article>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </main>
+                <span className="admin-table-status" style={{ textTransform: 'uppercase' }}>
+                  {audit.action}
+                </span>
+              </div>
+              
+              <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+                <p style={{ margin: 0 }}><strong>Campo:</strong> <span className="admin-table-status" style={{ fontSize: '0.75rem', padding: '2px 8px' }}>{audit.fieldChanged ?? 'n/a'}</span></p>
+                <div style={{ marginTop: '12px', display: 'grid', gap: '4px' }}>
+                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className="admin-kicker" style={{ fontSize: '0.65rem', minWidth: '40px' }}>De:</span>
+                      <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{audit.oldValue ?? 'vazio'}</span>
+                   </div>
+                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className="admin-kicker" style={{ fontSize: '0.65rem', minWidth: '40px' }}>Para:</span>
+                      <span style={{ fontSize: '0.8rem', color: '#111827', fontWeight: 600 }}>{audit.newValue ?? 'vazio'}</span>
+                   </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '16px', paddingTop: '10px', borderTop: '1px solid rgba(17, 24, 39, 0.05)' }}>
+                 <span className="admin-kicker" style={{ fontSize: '0.65rem', textTransform: 'none' }}>
+                  Alterado por <strong>{audit.changer.name}</strong> em {new Date(audit.changedAt).toLocaleString('pt-BR')}
+                </span>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -77,6 +77,7 @@ export default function AdminMidiaPage() {
   }
 
   async function deleteItem(mediaId: string) {
+    if (!confirm('Tem certeza que deseja remover esta midia?')) return;
     setDeletingId(mediaId);
     setError(null);
 
@@ -94,112 +95,164 @@ export default function AdminMidiaPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Midia</span>
-        <h1>Gestao de fotos e videos</h1>
-        <p>Visao administrativa do acervo de midia do evento.</p>
-        <div className="cta-row">
-          <a className="button primary" href="/admin/midia/nova">
+    <div className="admin-screen-content">
+      <header className="admin-topbar">
+        <div>
+          <span className="admin-kicker">Conteudo</span>
+          <h1>Galeria de midia</h1>
+        </div>
+        <div className="admin-topbar-actions">
+          <a className="admin-quick-action" style={{ minHeight: '38px', padding: '0 14px' }} href="/admin/midia/nova">
             Novo item
           </a>
-          <a className="button secondary" href="/admin/dashboard">
-            Voltar ao dashboard
-          </a>
         </div>
-        {error ? <p className="error-text">{error}</p> : null}
-        {loading ? <p>Carregando midia...</p> : null}
-        <div className="card" style={{ marginTop: '24px' }}>
-          <div className="form-grid">
-            <label>
-              <span>Filtrar por provider</span>
-              <select
-                value={providerFilter}
-                onChange={(event) => {
-                  setPage(1);
-                  setProviderFilter(event.target.value);
-                }}
-              >
-                <option value="">Todos</option>
-                <option value="local">local</option>
-                <option value="youtube">youtube</option>
-                <option value="vimeo">vimeo</option>
-              </select>
-            </label>
-            <label>
-              <span>Filtrar por destaque</span>
-              <select
-                value={featuredFilter}
-                onChange={(event) => {
-                  setPage(1);
-                  setFeaturedFilter(event.target.value);
-                }}
-              >
-                <option value="">Todos</option>
-                <option value="true">destaque</option>
-                <option value="false">normal</option>
-              </select>
-            </label>
+      </header>
+
+      {error ? (
+        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
+          <p className="error-text">{error}</p>
+        </div>
+      ) : null}
+
+      <section className="admin-panel" style={{ marginBottom: '22px' }}>
+        <div className="form-grid" style={{ marginTop: 0 }}>
+          <label>
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Provedor</span>
+            <select
+              style={{ minHeight: '40px', borderRadius: '10px' }}
+              value={providerFilter}
+              onChange={(event) => {
+                setPage(1);
+                setProviderFilter(event.target.value);
+              }}
+            >
+              <option value="">Todos</option>
+              <option value="local">Local (Upload)</option>
+              <option value="youtube">YouTube</option>
+              <option value="vimeo">Vimeo</option>
+            </select>
+          </label>
+          <label>
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Destaque</span>
+            <select
+              style={{ minHeight: '40px', borderRadius: '10px' }}
+              value={featuredFilter}
+              onChange={(event) => {
+                setPage(1);
+                setFeaturedFilter(event.target.value);
+              }}
+            >
+              <option value="">Todos</option>
+              <option value="true">Apenas em destaque</option>
+              <option value="false">Normais</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+          <div>
+            <h2>Arquivos e Links</h2>
+            <p>Gerenciamento de acervo visual e audiovisual.</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+             <span className="admin-kicker">Pagina {page} de {totalPages}</span>
+             <div className="admin-topbar-actions" style={{ marginTop: 0 }}>
+                <button
+                  className="admin-topbar-actions a"
+                  style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+                  type="button"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                >
+                  Anterior
+                </button>
+                <button
+                  className="admin-topbar-actions a"
+                  style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+                  type="button"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Proxima
+                </button>
+             </div>
           </div>
         </div>
-        {!loading && items.length === 0 ? <div className="card empty-state"><strong>Nenhum item de midia cadastrado.</strong></div> : null}
-        {!loading ? (
-          <>
+
+        {loading ? (
+          <div className="admin-empty-state">
+            <strong>Carregando...</strong>
+          </div>
+        ) : null}
+
+        {!loading && items.length === 0 ? (
+          <div className="admin-empty-state">
+            <strong>Nenhum item de midia encontrado.</strong>
+            <span>Ajuste os filtros ou adicione um novo item.</span>
+          </div>
+        ) : null}
+
+        {!loading && items.length > 0 ? (
           <div className="review-grid">
             {items.map((item) => (
-              <article key={item.id} className="card review-card">
-                <div className="review-header">
-                  <div>
-                    <h3>{item.title ?? item.type}</h3>
-                    <small>{item.provider}</small>
+              <article key={item.id} className="admin-panel" style={{ padding: '16px', background: '#fcfcfc' }}>
+                <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.title ?? item.type}
+                    </h3>
+                    <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>{item.provider} · {item.type}</span>
                   </div>
-                  <span className={`status-pill ${item.isFeatured ? 'active' : 'pending'}`}>{item.isFeatured ? 'destaque' : 'normal'}</span>
+                  <span className={`admin-table-status ${item.isFeatured ? 'success' : ''}`} style={{ background: item.isFeatured ? 'rgba(45, 106, 79, 0.1)' : 'rgba(17, 24, 39, 0.05)', color: item.isFeatured ? '#2d6a4f' : '#6b7280' }}>
+                    {item.isFeatured ? 'Destaque' : 'Normal'}
+                  </span>
                 </div>
-                <p>URL: {item.url}</p>
-                <p>Uploader: {item.uploader.name}</p>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <strong>URL:</strong> {item.url}
+                  </p>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#6b7280' }}>
+                    <strong>Enviado por:</strong> {item.uploader.name} · <strong>Ordem:</strong> {item.sortOrder}
+                  </p>
+                </div>
+
                 {editingId === item.id ? (
-                  <>
-                    <label className="field">
-                      <span>Titulo</span>
-                      <input
-                        value={title}
-                        onChange={(event) => setTitle(event.target.value)}
-                      />
+                  <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
+                    <label className="field-span">
+                      <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Titulo</span>
+                      <input style={{ minHeight: '36px', borderRadius: '8px' }} value={title} onChange={(event) => setTitle(event.target.value)} />
                     </label>
-                    <label className="field">
-                      <span>Destaque</span>
-                      <input
-                        type="checkbox"
-                        checked={isFeatured}
-                        onChange={(event) => setIsFeatured(event.target.checked)}
-                      />
+                    <label>
+                      <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Ordem</span>
+                      <input type="number" style={{ minHeight: '36px', borderRadius: '8px' }} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
                     </label>
-                    <label className="field">
-                      <span>Ordem</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={sortOrder}
-                        onChange={(event) => setSortOrder(event.target.value)}
-                      />
+                    <label className="checkbox-row" style={{ alignSelf: 'center' }}>
+                      <input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} />
+                      <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Destaque</span>
                     </label>
-                    <div className="cta-row">
-                      <button className="button" type="button" onClick={() => void saveItem(item.id)}>
+                  </div>
+                ) : null}
+
+                <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
+                  {editingId === item.id ? (
+                    <>
+                      <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', background: '#111827', color: '#fff' }} type="button" onClick={() => void saveItem(item.id)}>
                         Salvar
                       </button>
-                      <button className="button secondary" type="button" onClick={() => setEditingId(null)}>
+                      <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} type="button" onClick={() => setEditingId(null)}>
                         Cancelar
                       </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p>Ordem: {item.sortOrder}</p>
-                    <div className="cta-row">
-                    <button
-                      className="button secondary"
-                      type="button"
-                      onClick={() => {
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="admin-topbar-actions a"
+                        style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
+                        type="button"
+                        onClick={() => {
                           setEditingId(item.id);
                           setTitle(item.title ?? '');
                           setIsFeatured(item.isFeatured);
@@ -209,41 +262,22 @@ export default function AdminMidiaPage() {
                         Editar
                       </button>
                       <button
-                        className="button secondary"
+                        className="admin-topbar-actions a"
+                        style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
                         type="button"
                         onClick={() => void deleteItem(item.id)}
                         disabled={deletingId === item.id}
                       >
-                        {deletingId === item.id ? 'Removendo...' : 'Remover'}
+                        {deletingId === item.id ? '...' : 'Remover'}
                       </button>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </article>
             ))}
           </div>
-          <div className="cta-row" style={{ marginTop: '24px' }}>
-            <button
-              className="button secondary"
-              type="button"
-              disabled={page <= 1 || loading}
-              onClick={() => setPage((current) => Math.max(current - 1, 1))}
-            >
-              Pagina anterior
-            </button>
-            <span>Pagina {page} de {totalPages}</span>
-            <button
-              className="button secondary"
-              type="button"
-              disabled={page >= totalPages || loading}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              Proxima pagina
-            </button>
-          </div>
-          </>
         ) : null}
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }

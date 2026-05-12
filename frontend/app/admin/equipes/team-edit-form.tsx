@@ -75,34 +75,52 @@ export function TeamEditForm({ team, athletes }: TeamEditFormProps) {
   }
 
   return (
-    <>
-      <div className="card" style={{ marginTop: '24px' }}>
-        <h2>Resumo operacional</h2>
-        <p>Total de atletas: {athletes.length}</p>
-        <p>Ativos: {activeCount}</p>
-        <p>Pendentes: {pendingCount}</p>
-        <p>Modalidades: {representedSports.join(', ') || 'Nenhuma'}</p>
-      </div>
+    <div className="admin-content-grid" style={{ gridTemplateColumns: '1fr 0.6fr', alignItems: 'start' }}>
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+           <h2>Configuracao da Equipe</h2>
+           <p>Ajuste nome e identificacao visual no placar.</p>
+        </div>
 
-      <div className="card" style={{ marginTop: '24px' }}>
-        <h2>Editar equipe</h2>
-        {error ? <p className="error-text">{error}</p> : null}
-        {message ? <p className="success-text">{message}</p> : null}
-        <form className="form-grid" onSubmit={handleSubmit}>
-          <label>
-            <span>Nome</span>
-            <input value={name} onChange={(event) => setName(event.target.value)} />
+        {error ? (
+          <div style={{ marginBottom: '20px' }}>
+            <p className="error-text">{error}</p>
+          </div>
+        ) : null}
+        {message ? (
+          <div style={{ marginBottom: '20px' }}>
+            <p className="success-text">{message}</p>
+          </div>
+        ) : null}
+
+        <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
+          <label className="field-span">
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome da equipe</span>
+            <input style={{ minHeight: '40px', borderRadius: '10px' }} value={name} onChange={(event) => setName(event.target.value)} />
           </label>
           <label>
-            <span>Cor</span>
-            <input value={color} onChange={(event) => setColor(event.target.value)} />
+            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Cor base</span>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+               <input 
+                  type="color" 
+                  style={{ width: '40px', height: '40px', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
+                  value={color} 
+                  onChange={(event) => setColor(event.target.value)} 
+                />
+                <input 
+                   style={{ flex: 1, minHeight: '40px', borderRadius: '10px' }}
+                   value={color} 
+                   onChange={(event) => setColor(event.target.value)} 
+                />
+            </div>
           </label>
-          <div className="field-span cta-row">
-            <button className="button primary" type="submit" disabled={submitting}>
+          <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
+            <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 30px' }} type="submit" disabled={submitting}>
               {submitting ? 'Salvando...' : 'Salvar alteracoes'}
             </button>
             <button
-              className="button secondary"
+              className="admin-topbar-actions a"
+              style={{ minHeight: '40px', padding: '0 20px', borderColor: 'rgba(230, 57, 70, 0.2)' }}
               type="button"
               onClick={handleDelete}
               disabled={deleting || submitting}
@@ -111,7 +129,33 @@ export function TeamEditForm({ team, athletes }: TeamEditFormProps) {
             </button>
           </div>
         </form>
-      </div>
-    </>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-header">
+           <h2>Resumo Operacional</h2>
+        </div>
+        <div className="admin-status-stack">
+           <div>
+             <span>Atletas Inscritos</span>
+             <strong>{athletes.length}</strong>
+           </div>
+           <div>
+             <span>Atletas Ativos</span>
+             <strong>{activeCount}</strong>
+           </div>
+           <div>
+             <span>Aguardando Revisao</span>
+             <strong>{pendingCount}</strong>
+           </div>
+        </div>
+        <div style={{ marginTop: '22px' }}>
+           <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Modalidades Representadas</span>
+           <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#4b5563' }}>
+             {representedSports.join(', ') || 'Nenhuma modalidade vinculada.'}
+           </p>
+        </div>
+      </section>
+    </div>
   );
 }
