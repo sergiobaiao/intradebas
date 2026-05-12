@@ -110,8 +110,8 @@ export default function AdminAthletesPage() {
     <main className="section">
       <div className="shell">
         <span className="eyebrow">Atletas</span>
-        <h1>Revisao de inscricoes</h1>
-        <p>Fluxo administrativo para aprovacao e rejeicao de atletas pendentes.</p>
+        <h1>Atletas</h1>
+        <p>Gestao cadastral com criacao, revisao e aprovacao operacional das inscricoes.</p>
 
         <div className="cta-row">
           <a className="button secondary" href="/admin/dashboard">
@@ -151,6 +151,9 @@ export default function AdminAthletesPage() {
             </label>
           </div>
           <p style={{ marginTop: '12px' }}>Total filtrado: {total}</p>
+          <p style={{ marginTop: '8px' }}>
+            A inclusao de novos atletas fica centralizada nesta propria pagina de gestao.
+          </p>
         </div>
 
         {error ? <p className="error-text">{error}</p> : null}

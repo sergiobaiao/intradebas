@@ -15,9 +15,11 @@ test('shows the redesigned admin dashboard with real operational sections', asyn
 
   await expect(page.getByRole('heading', { name: 'Dashboard operacional' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navegacao administrativa' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Revisar atletas' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Atletas' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Gerenciar resultados' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Usuarios admin' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Nova equipe' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Nova modalidade' })).toHaveCount(0);
 
   await expect(page.getByText('Total de atletas')).toBeVisible();
   await expect(page.getByText('Inscricoes pendentes')).toBeVisible();
@@ -28,6 +30,16 @@ test('shows the redesigned admin dashboard with real operational sections', asyn
   await expect(page.getByText('Total Revenue')).toHaveCount(0);
   await expect(page.getByText('Customer Activity')).toHaveCount(0);
   await expect(page.getByText('Sarah Parker')).toHaveCount(0);
+});
+
+test('keeps athletes under Cadastros and exposes creation inside the page', async ({ page }) => {
+  await page.goto('/admin/atletas');
+
+  await expect(page.getByRole('heading', { name: 'Atletas' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Atletas' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Novo atleta' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Nova equipe' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Nova modalidade' })).toHaveCount(0);
 });
 
 for (const viewport of [

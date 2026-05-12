@@ -13,7 +13,6 @@ const navigationGroups: NavigationGroup[] = [
     label: 'Operacao',
     items: [
       { label: 'Dashboard', href: '/admin/dashboard' },
-      { label: 'Revisar atletas', href: '/admin/atletas' },
       { label: 'Gerenciar resultados', href: '/admin/resultados' },
       { label: 'Ranking', href: '/admin/ranking' },
     ],
@@ -21,10 +20,9 @@ const navigationGroups: NavigationGroup[] = [
   {
     label: 'Cadastros',
     items: [
+      { label: 'Atletas', href: '/admin/atletas' },
       { label: 'Equipes', href: '/admin/equipes' },
-      { label: 'Nova equipe', href: '/admin/equipes/nova' },
       { label: 'Modalidades', href: '/admin/modalidades' },
-      { label: 'Nova modalidade', href: '/admin/modalidades/nova' },
     ],
   },
   {
