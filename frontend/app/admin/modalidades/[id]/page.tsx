@@ -1,3 +1,8 @@
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getSport } from '../../../lib';
 import { SportEditForm } from '../sport-edit-form';
 
@@ -12,49 +17,55 @@ export default async function AdminSportDetailPage({
   const sport = await getSport(id);
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Modalidade</span>
-        <h1>Detalhes da modalidade</h1>
-        <div className="cta-row">
-          <a className="button secondary" href="/admin/modalidades">
-            Voltar para modalidades
-          </a>
-        </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Modalidade"
+        title="Detalhes da modalidade"
+        actions={
+          <Button asChild variant="outline">
+            <a href="/admin/modalidades">Voltar para modalidades</a>
+          </Button>
+        }
+      />
 
-        {!sport ? (
-          <div className="card empty-state">
-            <strong>Modalidade nao encontrada.</strong>
-          </div>
-        ) : (
-          <>
-            <div className="card">
-              <h2>{sport.name}</h2>
-              <p>Categoria: {sport.category}</p>
-              <p>Status: {sport.isActive === false ? 'inativa' : 'ativa'}</p>
-              <p>ALDEBARUN: {sport.isAldebarun ? 'sim' : 'nao'}</p>
-              <p>Descricao: {sport.description ?? 'Nao informada'}</p>
-              <p>Agenda: {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}</p>
+      {!sport ? (
+        <AdminEmptyState title="Modalidade nao encontrada." description="Verifique o registro e tente novamente." />
+      ) : (
+        <>
+          <AdminSurface
+            title={sport.name}
+            description={sport.description ?? 'Sem descricao complementar.'}
+            actions={<Badge variant={sport.isActive === false ? 'destructive' : 'success'}>{sport.isActive === false ? 'Inativa' : 'Ativa'}</Badge>}
+          >
+            <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2">
+              <p className="m-0">Categoria: {sport.category}</p>
+              <p className="m-0">ALDEBARUN: {sport.isAldebarun ? 'sim' : 'nao'}</p>
+              <p className="m-0">
+                Agenda: {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}
+              </p>
+              <p className="m-0">Resultados: {sport.results.length}</p>
             </div>
-            <SportEditForm sport={sport} />
-            <div className="review-grid" style={{ marginTop: '24px' }}>
-              {sport.results.map((result) => (
-                <article key={result.id} className="card review-card">
-                  <h3>{result.team.name}</h3>
-                  <p>Posicao: {result.position}</p>
-                  <p>Pontos: {result.calculatedPoints ?? 0}</p>
-                  <p>Data: {new Date(result.resultDate).toLocaleString('pt-BR')}</p>
-                </article>
-              ))}
-              {sport.results.length === 0 ? (
-                <div className="card empty-state">
-                  <strong>Nenhum resultado lancado.</strong>
+          </AdminSurface>
+          <SportEditForm sport={sport} />
+          <section className="grid gap-4 xl:grid-cols-2">
+            {sport.results.map((result) => (
+              <AdminSurface
+                key={result.id}
+                title={result.team.name}
+                description={new Date(result.resultDate).toLocaleString('pt-BR')}
+                actions={<Badge variant="outline">{result.position}o lugar</Badge>}
+              >
+                <div className="space-y-1 text-sm text-slate-600">
+                  <p className="m-0">Pontos: {result.calculatedPoints ?? 0}</p>
                 </div>
-              ) : null}
-            </div>
-          </>
-        )}
-      </div>
-    </main>
+              </AdminSurface>
+            ))}
+            {sport.results.length === 0 ? (
+              <AdminEmptyState title="Nenhum resultado lancado." description="Esta modalidade ainda nao possui resultados associados." />
+            ) : null}
+          </section>
+        </>
+      )}
+    </div>
   );
 }

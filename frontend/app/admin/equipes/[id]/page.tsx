@@ -1,3 +1,8 @@
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getAdminTeam, getAdminTeamAthletes } from '../../admin-data';
 import { TeamEditForm } from '../team-edit-form';
 
@@ -12,53 +17,53 @@ export default async function AdminTeamDetailPage({
   const [team, athletes] = await Promise.all([getAdminTeam(id), getAdminTeamAthletes(id)]);
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Equipe</span>
-        <h1>Detalhes da equipe</h1>
-        <div className="cta-row">
-          <a className="button secondary" href="/admin/equipes">
-            Voltar para equipes
-          </a>
-        </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Equipe"
+        title="Detalhes da equipe"
+        actions={
+          <Button asChild variant="outline">
+            <a href="/admin/equipes">Voltar para equipes</a>
+          </Button>
+        }
+      />
 
-        {!team ? (
-          <div className="card empty-state">
-            <strong>Equipe nao encontrada.</strong>
-          </div>
-        ) : (
-          <>
-            <div className="card">
-              <h2>{team.name}</h2>
-              <p>Cor: {team.color ?? 'Nao definida'}</p>
-              <p>Placar atual: {team.totalScore}</p>
-              <p>Atletas cadastrados: {team.athletesCount}</p>
+      {!team ? (
+        <AdminEmptyState title="Equipe nao encontrada." description="Verifique o registro e tente novamente." />
+      ) : (
+        <>
+          <AdminSurface title={team.name} description={`Placar atual: ${team.totalScore}`}>
+            <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
+              <p className="m-0">Cor: {team.color ?? 'Nao definida'}</p>
+              <p className="m-0">Placar atual: {team.totalScore}</p>
+              <p className="m-0">Atletas cadastrados: {team.athletesCount}</p>
             </div>
-            <TeamEditForm team={team} athletes={athletes} />
-            <div className="review-grid" style={{ marginTop: '24px' }}>
-              {athletes.map((athlete) => (
-                <article key={athlete.id} className="card review-card">
-                  <h3>{athlete.name}</h3>
-                  <p>Status: {athlete.status}</p>
-                  <p>Tipo: {athlete.type}</p>
-                  <p>
-                    Modalidades:{' '}
-                    {athlete.sports.map((sport) => sport.name).join(', ') || 'Nenhuma'}
-                  </p>
-                  <a className="button secondary" href={`/admin/atletas/${athlete.id}`}>
-                    Ver atleta
-                  </a>
-                </article>
-              ))}
-              {athletes.length === 0 ? (
-                <div className="card empty-state">
-                  <strong>Nenhum atleta vinculado.</strong>
+          </AdminSurface>
+          <TeamEditForm team={team} athletes={athletes} />
+          <section className="grid gap-4 xl:grid-cols-2">
+            {athletes.map((athlete) => (
+              <AdminSurface
+                key={athlete.id}
+                title={athlete.name}
+                description={athlete.sports.map((sport) => sport.name).join(', ') || 'Nenhuma'}
+                actions={<Badge variant="outline">{athlete.status}</Badge>}
+              >
+                <div className="space-y-3 text-sm text-slate-600">
+                  <p className="m-0">Tipo: {athlete.type}</p>
+                  <div>
+                    <Button asChild variant="outline" size="sm">
+                      <a href={`/admin/atletas/${athlete.id}`}>Ver atleta</a>
+                    </Button>
+                  </div>
                 </div>
-              ) : null}
-            </div>
-          </>
-        )}
-      </div>
-    </main>
+              </AdminSurface>
+            ))}
+            {athletes.length === 0 ? (
+              <AdminEmptyState title="Nenhum atleta vinculado." description="Esta equipe ainda nao possui atletas associados." />
+            ) : null}
+          </section>
+        </>
+      )}
+    </div>
   );
 }

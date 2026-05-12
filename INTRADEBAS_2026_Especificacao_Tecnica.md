@@ -210,6 +210,13 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 - Atletas foi consolidado no grupo de Cadastros da navegação lateral.
 - A inclusão de atletas permanece disponível dentro da própria página de gestão de atletas.
 
+### Atualização de Progresso — Feature 055
+
+- O frontend administrativo passou a usar base real em `shadcn/ui` com `Tailwind CSS`, substituindo a abordagem ad hoc anterior.
+- Foram introduzidos primitives reutilizáveis em `frontend/components/ui` e componentes semânticos em `frontend/components/admin`.
+- Dashboard, listagens principais e formulários centrais de atletas, equipes e modalidades foram migrados para essa base compartilhada.
+- A shell administrativa manteve dados reais e comportamento responsivo, sem retorno a conteúdo mockado.
+
 ## Módulo 3 — Sistema de Autenticação
 
 | Subcomponente | Descrição | Status Atual |
@@ -710,20 +717,16 @@ O template **next-shadcn-admin-dashboard** (Studio Admin — github: arhamkhnz/n
 
 | Componente | Uso no INTRADEBAS |
 |---|---|
-| `<DataTable>` | Listagem de atletas, resultados, cupons, patrocinadores |
+| `<Table>` / wrappers admin | Listagem de atletas, equipes, modalidades e registros operacionais |
 | `<Card>` | KPI cards de equipes, cards de cotas de patrocínio |
 | `<Badge>` | Status de atletas, equipes (com cores Mucura/Jacaré/Capivara) |
-| `<Form>` + `<Input>` | Formulários de inscrição, resultado, patrocínio |
+| `<Input>` / `<Textarea>` / `<Select>` | Formulários de inscrição, resultado, patrocínio e cadastros admin |
 | `<Select>` | Seleção de equipe, modalidade, tamanho de camiseta |
-| `<Dialog>` | Confirmações de lançamento de resultado, aprovação de atleta |
+| `<Sheet>` | Navegação mobile do painel admin |
 | `<Tabs>` | Dashboard com abas por modalidade; perfil do atleta |
-| `<Progress>` | Disponibilidade de cotas (ex: "6 de 8 Bronze vendidas") |
 | `<Alert>` | Cota esgotada, erro de CPF duplicado, aviso LGPD |
 | `<Checkbox>` | Aceite LGPD no formulário de inscrição |
-| `<Toast>` / `<Sonner>` | Feedback após lançamento de resultado, cadastro concluído |
-| `<Sidebar>` | Navegação do Painel Admin (já inclusa no template) |
-| `<CommandPalette>` | Busca rápida de atletas e modalidades no Admin |
-| `<Avatar>` | Logo do patrocinador, mascote da equipe |
+| `<ScrollArea>` | Navegação lateral com rolagem no painel admin |
 | `<Separator>` | Divisores visuais em formulários e cards |
 
 ## 9.5 Customizações no Template
@@ -1477,7 +1480,7 @@ Duração estimada: 1 semana
 
 - [x] Configurar repositório Git (monorepo ou multi-repo)
 - [x] Setup do ambiente Docker de desenvolvimento
-- [~] Adaptar padrão visual do next-shadcn-admin-dashboard ao painel admin (feature 051 em andamento)
+- [x] Adaptar padrão visual do next-shadcn-admin-dashboard ao painel admin
 - [x] Configurar Prisma + PostgreSQL + primeiras migrations
 - [x] Configurar NestJS com módulos base
 - [x] Definir CI/CD básico (GitHub Actions)
@@ -1489,8 +1492,8 @@ Duração estimada: 4 semanas
 ### Semana 2 — Auth + Estrutura Base
 - [x] Módulo de autenticação (login, JWT, refresh e recuperação de senha implementados)
 - [~] Layout público (footer WhatsApp implementado; navbar dedicada ainda pendente)
-- [~] Sidebar do Admin adaptada (feature 051 em andamento)
-- [~] Dashboard Admin com KPIs reais e padrão Studio Admin (feature 051 em andamento)
+- [x] Sidebar do Admin adaptada
+- [x] Dashboard Admin com KPIs reais e padrão Studio Admin
 
 ### Semana 3 — Atletas e Inscrições
 - [x] Formulário público de inscrição de atleta (com LGPD, reCAPTCHA configurável e confirmação por e-mail)

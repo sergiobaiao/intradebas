@@ -1,8 +1,9 @@
 # intradebas Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-05-11
+Auto-generated from all feature plans. Last updated: 2026-05-12
 
 ## Active Technologies
+- TypeScript 5.7, React 18, Next.js 15, Tailwind CSS 3.4, shadcn/ui primitives, Radix UI, App Router, admin shared components in `frontend/components/admin`, UI primitives in `frontend/components/ui` (055-shadcn-admin-system)
 - TypeScript 5.7, React 18, Next.js 15 + Next.js App Router, existing admin routes under `frontend/app/admin`, existing fetch helpers in `frontend/app/lib.ts`, global CSS from feature 051 (052-admin-screens-redesign)
 - N/A for new persistence; screens consume existing backend data (052-admin-screens-redesign)
 
@@ -24,9 +25,11 @@ npm test && npm run lint
 TypeScript 5.7, React 18, Next.js 15: Follow standard conventions
 
 ## Recent Changes
+- 055-shadcn-admin-system: Added Tailwind CSS + shadcn/ui foundation, reusable admin components, and migrated admin dashboard/lists/forms away from page-local styling
 - 052-admin-screens-redesign: Added TypeScript 5.7, React 18, Next.js 15 + Next.js App Router, existing admin routes under `frontend/app/admin`, existing fetch helpers in `frontend/app/lib.ts`, global CSS from feature 051
 
 - 051-admin-dashboard-redesign: Added TypeScript 5.7, React 18, Next.js 15 + Next.js App Router, existing fetch helpers in `frontend/app/lib.ts`, existing global CSS
 
 <!-- MANUAL ADDITIONS START -->
+- Prefer `frontend/components/ui` and `frontend/components/admin` for new admin UI work instead of reintroducing page-local inline styles or one-off visual wrappers.
 <!-- MANUAL ADDITIONS END -->

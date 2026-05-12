@@ -2,6 +2,12 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { adminCreateTeam } from '../../../lib';
 
 export default function AdminNovaEquipePage() {
@@ -31,78 +37,59 @@ export default function AdminNovaEquipePage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Competicao</span>
-          <h1>Nova equipe</h1>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Competicao"
+        title="Nova equipe"
+        description="Crie uma equipe administrativa com nome e cor base para o placar."
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
-      <div className="admin-content-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-             <h2>Informacoes da Equipe</h2>
-             <p>Crie uma equipe administrativa com nome e cor base para o placar.</p>
-          </div>
-          <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
-            <label className="field-span">
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome da equipe</span>
-              <input 
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                value={name} 
-                onChange={(event) => setName(event.target.value)} 
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <AdminSurface title="Informacoes da equipe">
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            <AdminField label="Nome da equipe">
+              <Input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
                 placeholder="Ex: Equipe Alfa"
               />
-            </label>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Cor base</span>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                 <input 
-                  type="color" 
-                  style={{ width: '40px', height: '40px', padding: '2px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
-                  value={color} 
-                  onChange={(event) => setColor(event.target.value)} 
+            </AdminField>
+
+            <AdminField label="Cor base">
+              <div className="flex gap-3">
+                <input
+                  type="color"
+                  className="h-10 w-14 rounded-md border border-input bg-background p-1"
+                  value={color}
+                  onChange={(event) => setColor(event.target.value)}
                 />
-                <input 
-                   style={{ flex: 1, minHeight: '40px', borderRadius: '10px' }}
-                   value={color} 
-                   onChange={(event) => setColor(event.target.value)} 
-                />
+                <Input value={color} onChange={(event) => setColor(event.target.value)} />
               </div>
-            </label>
-            <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
-              <button 
-                className="admin-quick-action" 
-                style={{ minHeight: '40px', padding: '0 20px' }}
-                type="submit" 
-                disabled={submitting || name.trim().length < 2}
-              >
+            </AdminField>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button type="submit" disabled={submitting || name.trim().length < 2}>
                 {submitting ? 'Salvando...' : 'Criar equipe'}
-              </button>
-              <a className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} href="/admin/equipes">
-                Cancelar
-              </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/admin/equipes">Cancelar</a>
+              </Button>
             </div>
           </form>
-        </section>
+        </AdminSurface>
 
-        <section className="admin-panel">
-           <div className="admin-panel-header">
-             <h2>Visualizacao</h2>
-           </div>
-           <div style={{ padding: '20px', borderRadius: '12px', border: '2px dashed rgba(17, 24, 39, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-              <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: color, marginBottom: '12px', border: '4px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}></div>
-              <strong style={{ fontSize: '1.2rem', color: '#111827' }}>{name || 'Nome da Equipe'}</strong>
-              <span className="admin-kicker" style={{ marginTop: '4px' }}>Exemplo de exibicao</span>
-           </div>
-        </section>
+        <AdminSurface title="Visualizacao">
+          <div className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-slate-50/70 p-8 text-center">
+            <div
+              className="mb-4 h-16 w-16 rounded-full border-4 border-white shadow-md"
+              style={{ background: color }}
+            />
+            <strong className="text-xl text-slate-950">{name || 'Nome da Equipe'}</strong>
+            <span className="mt-2 text-sm text-slate-500">Exemplo de exibicao</span>
+          </div>
+        </AdminSurface>
       </div>
     </div>
   );

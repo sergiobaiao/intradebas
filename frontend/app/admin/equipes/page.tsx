@@ -1,6 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   AthleteSummary,
   TeamSummary,
@@ -86,128 +94,116 @@ export default function AdminEquipesPage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Competicao</span>
-          <h1>Equipes</h1>
-        </div>
-        <div className="admin-topbar-actions">
-          <a className="admin-quick-action" style={{ minHeight: '38px', padding: '0 14px' }} href="/admin/equipes/nova">
-            Nova equipe
-          </a>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Competicao"
+        title="Equipes"
+        description="Visao consolidada das equipes, composicao de atletas e placar acumulado do evento."
+        actions={
+          <Button asChild>
+            <a href="/admin/equipes/nova">Nova equipe</a>
+          </Button>
+        }
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
-
-      <section className="admin-panel" style={{ marginBottom: '22px' }}>
-        <p className="admin-kicker" style={{ textTransform: 'none' }}>
-          Visao consolidada das equipes, composicao de atletas e placar acumulado do evento.
-        </p>
-      </section>
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
       {loading ? (
-        <div className="admin-empty-state">
-          <strong>Carregando...</strong>
-          <span>Buscando registros de equipes no sistema.</span>
-        </div>
+        <AdminEmptyState title="Carregando..." description="Buscando registros de equipes no sistema." />
       ) : null}
 
       {!loading && grouped.length === 0 ? (
-        <div className="admin-empty-state">
-          <strong>Nenhuma equipe cadastrada.</strong>
-          <span>Clique em "Nova equipe" para comecar.</span>
-        </div>
+        <AdminEmptyState
+          title="Nenhuma equipe cadastrada."
+          description='Clique em "Nova equipe" para comecar.'
+        />
       ) : null}
 
       {!loading && grouped.length > 0 ? (
-        <div className="review-grid">
+        <section className="grid gap-4 xl:grid-cols-2">
           {grouped.map((team) => (
-            <article key={team.id} className="admin-panel" style={{ padding: '18px' }}>
-              <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.2rem' }}>{team.name}</h2>
-                  <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>Placar: {team.totalScore} pts</span>
+            <AdminSurface
+              key={team.id}
+              title={team.name}
+              description={`Placar atual: ${team.totalScore} pts`}
+              actions={<Badge variant="outline">{team.athletes.length} atletas</Badge>}
+            >
+              <div className="space-y-4">
+                <div className="grid gap-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="h-3 w-3 rounded-full border border-slate-200"
+                      style={{ backgroundColor: team.color || '#ccc' }}
+                    />
+                    <span>Cor: {team.color || 'Padrao'}</span>
+                  </div>
+                  <p className="m-0">
+                    <strong>Ativos:</strong> {team.athletes.filter((athlete) => athlete.status === 'active').length}{' '}
+                    · <strong>Pendentes:</strong>{' '}
+                    {team.athletes.filter((athlete) => athlete.status === 'pending').length}
+                  </p>
+                  <p className="m-0">
+                    <strong>Modalidades:</strong>{' '}
+                    {Array.from(
+                      new Set(team.athletes.flatMap((athlete) => athlete.sports.map((sport) => sport.name))),
+                    ).join(', ') || 'Nenhuma'}
+                  </p>
                 </div>
-                <span className="admin-table-status" style={{ background: 'rgba(45, 106, 79, 0.1)', color: '#2d6a4f' }}>
-                  {team.athletes.length} atletas
-                </span>
-              </div>
 
-              <div style={{ display: 'grid', gap: '8px', marginBottom: '18px' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                   <span style={{ width: '12px', height: '12px', borderRadius: '4px', background: team.color || '#ccc', border: '1px solid rgba(0,0,0,0.1)' }}></span>
-                   <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Cor: {team.color || 'Padrao'}</span>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
-                  <strong>Ativos:</strong> {team.athletes.filter((a) => a.status === 'active').length} · 
-                  <strong> Pendentes:</strong> {team.athletes.filter((a) => a.status === 'pending').length}
-                </p>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <strong>Modalidades:</strong> {Array.from(new Set(team.athletes.flatMap((a) => a.sports.map((s) => s.name)))).join(', ') || 'Nenhuma'}
-                </p>
-              </div>
-
-              {editingId === team.id ? (
-                <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
-                  <label>
-                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome</span>
-                    <input style={{ minHeight: '36px', borderRadius: '8px' }} value={teamName} onChange={(event) => setTeamName(event.target.value)} />
-                  </label>
-                  <label>
-                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Cor (Hex)</span>
-                    <input style={{ minHeight: '36px', borderRadius: '8px' }} value={teamColor} onChange={(event) => setTeamColor(event.target.value)} />
-                  </label>
-                </div>
-              ) : null}
-
-              <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
-                <a className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} href={`/admin/equipes/${team.id}`}>
-                  Ver detalhes
-                </a>
                 {editingId === team.id ? (
-                  <>
-                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', background: '#111827', color: '#fff' }} type="button" onClick={() => saveTeam(team.id)}>
-                      Salvar
-                    </button>
-                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} type="button" onClick={() => setEditingId(null)}>
-                      Cancelar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className="admin-topbar-actions a"
-                      style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
-                      type="button"
-                      onClick={() => {
-                        setEditingId(team.id);
-                        setTeamName(team.name);
-                        setTeamColor(team.color ?? '');
-                      }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="admin-topbar-actions a"
-                      style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
-                      type="button"
-                      onClick={() => deleteTeam(team.id)}
-                      disabled={deletingId === team.id}
-                    >
-                      {deletingId === team.id ? '...' : 'Excluir'}
-                    </button>
-                  </>
-                )}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AdminField label="Nome">
+                      <Input value={teamName} onChange={(event) => setTeamName(event.target.value)} />
+                    </AdminField>
+                    <AdminField label="Cor (Hex)">
+                      <Input value={teamColor} onChange={(event) => setTeamColor(event.target.value)} />
+                    </AdminField>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/admin/equipes/${team.id}`}>Ver detalhes</a>
+                  </Button>
+                  {editingId === team.id ? (
+                    <>
+                      <Button size="sm" type="button" onClick={() => saveTeam(team.id)}>
+                        Salvar
+                      </Button>
+                      <Button variant="outline" size="sm" type="button" onClick={() => setEditingId(null)}>
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          setEditingId(team.id);
+                          setTeamName(team.name);
+                          setTeamColor(team.color ?? '');
+                        }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        disabled={deletingId === team.id}
+                        onClick={() => deleteTeam(team.id)}
+                      >
+                        {deletingId === team.id ? '...' : 'Excluir'}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-            </article>
+            </AdminSurface>
           ))}
-        </div>
+        </section>
       ) : null}
     </div>
   );

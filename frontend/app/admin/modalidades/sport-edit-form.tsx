@@ -1,7 +1,13 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
+
+import { AdminField } from '@/components/admin/field';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   SportDetailSummary,
   adminDeleteSport,
@@ -73,100 +79,77 @@ export function SportEditForm({ sport }: SportEditFormProps) {
   }
 
   return (
-    <div className="admin-content-grid" style={{ gridTemplateColumns: '1fr 0.6fr', alignItems: 'start' }}>
-      <section className="admin-panel">
-        <div className="admin-panel-header">
-           <h2>Configuracao da Prova</h2>
-           <p>Ajuste os dados operacionais e de agenda da modalidade.</p>
-        </div>
+    <div className="grid gap-6 xl:grid-cols-[1fr_0.7fr]">
+      <AdminSurface
+        title="Configuracao da prova"
+        description="Ajuste os dados operacionais e de agenda da modalidade."
+      >
+        {error ? <p className="mb-4 text-sm font-medium text-rose-700">{error}</p> : null}
+        {message ? <p className="mb-4 text-sm font-medium text-emerald-700">{message}</p> : null}
 
-        {error ? (
-          <div style={{ marginBottom: '20px' }}>
-            <p className="error-text">{error}</p>
-          </div>
-        ) : null}
-        {message ? (
-          <div style={{ marginBottom: '20px' }}>
-            <p className="success-text">{message}</p>
-          </div>
-        ) : null}
+        <form className="grid gap-4" onSubmit={handleSubmit}>
+          <AdminField label="Nome">
+            <Input value={name} onChange={(event) => setName(event.target.value)} />
+          </AdminField>
+          <AdminField label="Descricao">
+            <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+          </AdminField>
 
-        <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
-          <label className="field-span">
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome</span>
-            <input style={{ minHeight: '40px', borderRadius: '10px' }} value={name} onChange={(event) => setName(event.target.value)} />
-          </label>
-          <label className="field-span">
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Descricao</span>
-            <input
-              style={{ minHeight: '40px', borderRadius: '10px' }}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </label>
-          <label>
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data/hora prevista</span>
-            <input
-              style={{ minHeight: '40px', borderRadius: '10px' }}
-              type="datetime-local"
-              value={scheduleDate}
-              onChange={(event) => setScheduleDate(event.target.value)}
-            />
-          </label>
-          <label>
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Local / Notas</span>
-            <input
-              style={{ minHeight: '40px', borderRadius: '10px' }}
-              value={scheduleNotes}
-              onChange={(event) => setScheduleNotes(event.target.value)}
-            />
-          </label>
-          
-          <div className="field-span admin-status-stack" style={{ marginTop: '10px' }}>
-            <label className="checkbox-row" style={{ background: 'rgba(17,24,39,0.03)', padding: '12px', borderRadius: '10px' }}>
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(event) => setIsActive(event.target.checked)}
+          <div className="grid gap-4 md:grid-cols-2">
+            <AdminField label="Data/hora prevista">
+              <Input
+                type="datetime-local"
+                value={scheduleDate}
+                onChange={(event) => setScheduleDate(event.target.value)}
               />
-              <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Modalidade <strong>ativa</strong> para inscricao e operacao</span>
-            </label>
+            </AdminField>
+            <AdminField label="Local / Notas">
+              <Input
+                value={scheduleNotes}
+                onChange={(event) => setScheduleNotes(event.target.value)}
+              />
+            </AdminField>
           </div>
 
-          <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
-            <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 30px' }} type="submit" disabled={submitting}>
+          <label className="flex items-center gap-3 rounded-xl border border-border/70 bg-slate-50/70 px-4 py-3 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(event) => setIsActive(event.target.checked)}
+            />
+            Modalidade <strong>ativa</strong> para inscricao e operacao
+          </label>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button type="submit" disabled={submitting}>
               {submitting ? 'Salvando...' : 'Salvar alteracoes'}
-            </button>
-            <button
-              className="admin-topbar-actions a"
-              style={{ minHeight: '40px', padding: '0 20px', borderColor: 'rgba(230, 57, 70, 0.2)' }}
+            </Button>
+            <Button
+              variant="outline"
               type="button"
               onClick={handleDelete}
               disabled={deleting || submitting}
             >
               {deleting ? 'Removendo...' : 'Excluir modalidade'}
-            </button>
+            </Button>
           </div>
         </form>
-      </section>
+      </AdminSurface>
 
-      <section className="admin-panel">
-         <div className="admin-panel-header">
-           <h2>Status Operacional</h2>
-         </div>
-         <div className="admin-status-stack">
-            <div>
-              <span>Resultados Lancados</span>
-              <strong>{sport.results.length}</strong>
-            </div>
-         </div>
-         <div style={{ marginTop: '22px' }}>
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Categoria</span>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#4b5563', textTransform: 'capitalize' }}>
+      <AdminSurface title="Status operacional">
+        <div className="grid gap-3">
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-slate-50/70 px-4 py-3">
+            <span className="text-sm text-slate-600">Resultados lancados</span>
+            <Badge variant="outline">{sport.results.length}</Badge>
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-slate-50/70 px-4 py-3">
+            <span className="text-sm text-slate-600">Categoria</span>
+            <Badge variant="outline" className="capitalize">
               {sport.category}
-            </p>
-         </div>
-      </section>
+            </Badge>
+          </div>
+        </div>
+      </AdminSurface>
     </div>
   );
 }

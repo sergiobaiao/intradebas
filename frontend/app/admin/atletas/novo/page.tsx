@@ -1,7 +1,28 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { CreateAthleteInput, SportSummary, TeamSummary, adminFetchJson, createAthleteRegistration } from '../../../lib';
+
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  CreateAthleteInput,
+  SportSummary,
+  TeamSummary,
+  adminFetchJson,
+  createAthleteRegistration,
+} from '../../../lib';
 
 const shirtSizes: CreateAthleteInput['shirtSize'][] = ['PP', 'P', 'M', 'G', 'GG', 'XGG'];
 
@@ -86,114 +107,134 @@ export default function AdminNovoAtletaPage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Gestao de Atletas</span>
-          <h1>Novo atleta</h1>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Gestao de atletas"
+        title="Novo atleta"
+        description="Cadastro manual de atleta com vinculo de equipe, kit e modalidades."
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
-
-      {message ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(45, 106, 79, 0.3)', marginBottom: '22px' }}>
-          <p className="success-text">{message}</p>
-        </div>
-      ) : null}
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
+      {message ? <p className="text-sm font-medium text-emerald-700">{message}</p> : null}
 
       {loading ? (
-        <div className="admin-empty-state">
-           <strong>Carregando formulario...</strong>
-        </div>
+        <AdminEmptyState title="Carregando formulario..." description="Preparando equipes e modalidades." />
       ) : (
-        <form className="admin-content-grid" style={{ gridTemplateColumns: '1fr 0.6fr', alignItems: 'start' }} onSubmit={handleSubmit}>
-          <section className="admin-panel">
-            <div className="admin-panel-header">
-               <h2>Dados Pessoais</h2>
-               <p>Informacoes obrigatorias para registro do atleta.</p>
-            </div>
-            
-            <div className="form-grid" style={{ marginTop: 0 }}>
-              <label className="field-span">
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome completo</span>
-                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex: Joao Silva" />
-              </label>
-              <label>
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>CPF</span>
-                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={cpf} onChange={(event) => setCpf(event.target.value)} placeholder="000.000.000-00" />
-              </label>
-              <label>
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data de nascimento</span>
-                <input style={{ minHeight: '40px', borderRadius: '10px' }} type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} />
-              </label>
-              <label>
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>E-mail</span>
-                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="joao@exemplo.com" />
-              </label>
-              <label>
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Telefone</span>
-                <input style={{ minHeight: '40px', borderRadius: '10px' }} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="(00) 00000-0000" />
-              </label>
-            </div>
-
-            <div className="admin-panel-header" style={{ marginTop: '30px' }}>
-               <h2>Vinculo e Kit</h2>
-            </div>
-            <div className="form-grid" style={{ marginTop: 0 }}>
-              <label>
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Equipe</span>
-                <select style={{ minHeight: '40px', borderRadius: '10px' }} value={teamId} onChange={(event) => setTeamId(event.target.value)}>
-                  {teams.map((team) => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Tamanho da camiseta</span>
-                <select style={{ minHeight: '40px', borderRadius: '10px' }} value={shirtSize} onChange={(event) => setShirtSize(event.target.value as CreateAthleteInput['shirtSize'])}>
-                  {shirtSizes.map((size) => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-              </label>
+        <form className="grid gap-6 xl:grid-cols-[1fr_0.7fr]" onSubmit={handleSubmit}>
+          <AdminSurface title="Dados pessoais" description="Informacoes obrigatorias para registro do atleta.">
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Nome completo" className="md:col-span-2">
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Ex: Joao Silva"
+                />
+              </AdminField>
+              <AdminField label="CPF">
+                <Input
+                  value={cpf}
+                  onChange={(event) => setCpf(event.target.value)}
+                  placeholder="000.000.000-00"
+                />
+              </AdminField>
+              <AdminField label="Data de nascimento">
+                <Input
+                  type="date"
+                  value={birthDate}
+                  onChange={(event) => setBirthDate(event.target.value)}
+                />
+              </AdminField>
+              <AdminField label="E-mail">
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="joao@exemplo.com"
+                />
+              </AdminField>
+              <AdminField label="Telefone">
+                <Input
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder="(00) 00000-0000"
+                />
+              </AdminField>
             </div>
 
-            <div className="admin-topbar-actions field-span" style={{ justifyContent: 'flex-start', marginTop: '30px' }}>
-               <button className="admin-quick-action" style={{ minHeight: '40px', padding: '0 30px' }} type="submit" disabled={submitting || selectedSports.length === 0}>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <AdminField label="Equipe">
+                <Select value={teamId} onValueChange={setTeamId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teams.map((team) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </AdminField>
+              <AdminField label="Tamanho da camiseta">
+                <Select
+                  value={shirtSize}
+                  onValueChange={(value) => setShirtSize(value as CreateAthleteInput['shirtSize'])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shirtSizes.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </AdminField>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Button type="submit" disabled={submitting || selectedSports.length === 0}>
                 {submitting ? 'Salvando...' : 'Criar atleta'}
-              </button>
-              <a className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} href="/admin/atletas">
-                Cancelar
-              </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/admin/atletas">Cancelar</a>
+              </Button>
             </div>
-          </section>
+          </AdminSurface>
 
-          <section className="admin-panel">
-            <div className="admin-panel-header">
-               <h2>Modalidades</h2>
-               <p>Selecione pelo menos uma prova.</p>
+          <AdminSurface title="Modalidades" description="Selecione pelo menos uma prova.">
+            <div className="grid gap-3">
+              {sports.map((sport) => {
+                const selected = selectedSports.includes(sport.id);
+
+                return (
+                  <button
+                    key={sport.id}
+                    type="button"
+                    onClick={() => toggleSport(sport.id)}
+                    className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left transition ${
+                      selected
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                        : 'border-border/70 bg-slate-50/70 text-slate-700'
+                    }`}
+                  >
+                    <span className="font-medium">{sport.name}</span>
+                    <Badge variant={selected ? 'success' : 'outline'}>
+                      {selected ? 'Selecionada' : 'Selecionar'}
+                    </Badge>
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              {sports.map((sport) => (
-                <label key={sport.id} className="checkbox-row" style={{ background: selectedSports.includes(sport.id) ? 'rgba(45, 106, 79, 0.05)' : 'transparent', padding: '10px', borderRadius: '8px', border: '1px solid rgba(17, 24, 39, 0.05)' }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedSports.includes(sport.id)}
-                    onChange={() => toggleSport(sport.id)}
-                  />
-                  <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>{sport.name}</span>
-                </label>
-              ))}
-            </div>
-            {selectedSports.length === 0 && (
-               <p style={{ marginTop: '12px', fontSize: '0.75rem', color: '#e63946' }}>* Selecione pelo menos uma modalidade.</p>
-            )}
-          </section>
+            {selectedSports.length === 0 ? (
+              <p className="mt-4 text-xs font-medium text-rose-700">
+                * Selecione pelo menos uma modalidade.
+              </p>
+            ) : null}
+          </AdminSurface>
         </form>
       )}
     </div>

@@ -2,6 +2,19 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CreateSportInput, adminCreateSport } from '../../../lib';
 
 const categories: CreateSportInput['category'][] = [
@@ -50,115 +63,95 @@ export default function AdminNovaModalidadePage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Competicao</span>
-          <h1>Nova modalidade</h1>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Competicao"
+        title="Nova modalidade"
+        description="Cadastre novas provas e mantenha a agenda do evento atualizada."
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
-      <div className="admin-content-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-             <h2>Configuracao da Prova</h2>
-             <p>Cadastre novas provas e mantenha a agenda do evento atualizada.</p>
-          </div>
-          <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome da modalidade</span>
-              <input 
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                value={name} 
-                onChange={(event) => setName(event.target.value)} 
-                placeholder="Ex: Futebol Society"
-              />
-            </label>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Categoria</span>
-              <select 
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                value={category} 
-                onChange={(event) => setCategory(event.target.value as CreateSportInput['category'])}
-              >
-                {categories.map((item) => (
-                  <option key={item} value={item}>
-                    {item.charAt(0).toUpperCase() + item.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field-span">
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Descricao (opcional)</span>
-              <input 
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                value={description} 
-                onChange={(event) => setDescription(event.target.value)} 
-              />
-            </label>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data/hora prevista</span>
-              <input 
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                type="datetime-local" 
-                value={scheduleDate} 
-                onChange={(event) => setScheduleDate(event.target.value)} 
-              />
-            </label>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Notas de agenda</span>
-              <input 
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                value={scheduleNotes} 
-                onChange={(event) => setScheduleNotes(event.target.value)} 
-                placeholder="Ex: Quadra 2"
-              />
-            </label>
-            
-            <div className="field-span admin-status-stack" style={{ marginTop: '10px' }}>
-              <label className="checkbox-row" style={{ background: 'rgba(17,24,39,0.03)', padding: '12px', borderRadius: '10px' }}>
-                <input type="checkbox" checked={isAldebarun} onChange={(event) => setIsAldebarun(event.target.checked)} />
-                <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Esta modalidade pertence ao <strong>ALDEBARUN</strong></span>
-              </label>
-              <label className="checkbox-row" style={{ background: 'rgba(17,24,39,0.03)', padding: '12px', borderRadius: '10px', marginTop: '8px' }}>
-                <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-                <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Modalidade <strong>ativa</strong> para inscricao e operacao</span>
-              </label>
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <AdminSurface title="Configuracao da prova">
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Nome da modalidade">
+                <Input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Ex: Futebol Society"
+                />
+              </AdminField>
+
+              <AdminField label="Categoria">
+                <Select value={category} onValueChange={(value) => setCategory(value as CreateSportInput['category'])}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item.charAt(0).toUpperCase() + item.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </AdminField>
             </div>
 
-            <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
-              <button 
-                className="admin-quick-action" 
-                style={{ minHeight: '40px', padding: '0 20px' }}
-                type="submit" 
-                disabled={submitting || name.trim().length < 2}
-              >
+            <AdminField label="Descricao (opcional)">
+              <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+            </AdminField>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Data/hora prevista">
+                <Input
+                  type="datetime-local"
+                  value={scheduleDate}
+                  onChange={(event) => setScheduleDate(event.target.value)}
+                />
+              </AdminField>
+              <AdminField label="Notas de agenda">
+                <Input
+                  value={scheduleNotes}
+                  onChange={(event) => setScheduleNotes(event.target.value)}
+                  placeholder="Ex: Quadra 2"
+                />
+              </AdminField>
+            </div>
+
+            <label className="flex items-center gap-3 rounded-xl border border-border/70 bg-slate-50/70 px-4 py-3 text-sm text-slate-700">
+              <input type="checkbox" checked={isAldebarun} onChange={(event) => setIsAldebarun(event.target.checked)} />
+              Esta modalidade pertence ao <strong>ALDEBARUN</strong>
+            </label>
+
+            <label className="flex items-center gap-3 rounded-xl border border-border/70 bg-slate-50/70 px-4 py-3 text-sm text-slate-700">
+              <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+              Modalidade <strong>ativa</strong> para inscricao e operacao
+            </label>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button type="submit" disabled={submitting || name.trim().length < 2}>
                 {submitting ? 'Salvando...' : 'Criar modalidade'}
-              </button>
-              <a className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} href="/admin/modalidades">
-                Cancelar
-              </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/admin/modalidades">Cancelar</a>
+              </Button>
             </div>
           </form>
-        </section>
+        </AdminSurface>
 
-        <section className="admin-panel">
-           <div className="admin-panel-header">
-             <h2>Contexto</h2>
-           </div>
-           <p className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem', color: '#4b5563' }}>
-             Modalidades sao o nucleo da competicao. Cada modalidade deve pertencer a uma categoria (coletiva, individual, etc) para o calculo correto do ranking.
-           </p>
-           <p className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem', color: '#4b5563', marginTop: '12px' }}>
-             O flag <strong>ALDEBARUN</strong> indica que a prova faz parte do modulo especial de integracao.
-           </p>
-        </section>
+        <AdminSurface title="Contexto">
+          <div className="space-y-3 text-sm leading-6 text-slate-600">
+            <p>
+              Modalidades sao o nucleo da competicao. Cada modalidade deve pertencer a uma categoria para o calculo correto do ranking.
+            </p>
+            <p>
+              O flag <strong>ALDEBARUN</strong> indica que a prova faz parte do modulo especial de integracao.
+            </p>
+          </div>
+        </AdminSurface>
       </div>
     </div>
   );

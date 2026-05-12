@@ -23,8 +23,8 @@ test('shows the redesigned admin dashboard with real operational sections', asyn
 
   await expect(page.getByText('Total de atletas')).toBeVisible();
   await expect(page.getByText('Inscricoes pendentes')).toBeVisible();
-  await expect(page.getByText('Desempenho das equipes')).toBeVisible();
-  await expect(page.getByText('Registros operacionais')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Desempenho das equipes' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Registros operacionais' })).toBeVisible();
   await expect(page.getByText('Joao Silva Santos')).toBeVisible();
 
   await expect(page.getByText('Total Revenue')).toHaveCount(0);
@@ -53,7 +53,7 @@ for (const viewport of [
     await page.goto('/admin/dashboard');
 
     await expect(page.getByRole('heading', { name: 'Dashboard operacional' })).toBeVisible();
-    await expect(page.getByText('Desempenho das equipes')).toBeVisible();
-    await expect(page.getByText('Registros operacionais')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Desempenho das equipes' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Registros operacionais' })).toBeVisible();
   });
 }

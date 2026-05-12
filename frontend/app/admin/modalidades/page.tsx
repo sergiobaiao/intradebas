@@ -1,6 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   ResultSummary,
   SportSummary,
@@ -19,7 +27,6 @@ export default function AdminModalidadesPage() {
   const [sportName, setSportName] = useState('');
   const [description, setDescription] = useState('');
   const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleNotes, setScheduleNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
@@ -60,7 +67,6 @@ export default function AdminModalidadesPage() {
         description: description || undefined,
         isActive,
         scheduleDate: scheduleDate ? new Date(scheduleDate).toISOString() : undefined,
-        scheduleNotes: scheduleNotes || undefined,
       });
       setSports((current) =>
         current.map((sport) => (sport.id === sportId ? { ...sport, ...updated } : sport)),
@@ -85,9 +91,7 @@ export default function AdminModalidadesPage() {
       }
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : 'Falha ao excluir modalidade',
+        deleteError instanceof Error ? deleteError.message : 'Falha ao excluir modalidade',
       );
     } finally {
       setDeletingId(null);
@@ -95,141 +99,138 @@ export default function AdminModalidadesPage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Competicao</span>
-          <h1>Modalidades</h1>
-        </div>
-        <div className="admin-topbar-actions">
-          <a className="admin-quick-action" style={{ minHeight: '38px', padding: '0 14px' }} href="/admin/modalidades/nova">
-            Nova modalidade
-          </a>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Competicao"
+        title="Modalidades"
+        description="Resumo operacional das modalidades, categorias e quantidade de resultados ja lancados no sistema."
+        actions={
+          <Button asChild>
+            <a href="/admin/modalidades/nova">Nova modalidade</a>
+          </Button>
+        }
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
-
-      <section className="admin-panel" style={{ marginBottom: '22px' }}>
-        <p className="admin-kicker" style={{ textTransform: 'none' }}>
-          Resumo operacional das modalidades, categorias e quantidade de resultados ja lancados no sistema.
-        </p>
-      </section>
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
       {loading ? (
-        <div className="admin-empty-state">
-          <strong>Carregando...</strong>
-          <span>Buscando registros de modalidades no sistema.</span>
-        </div>
+        <AdminEmptyState
+          title="Carregando..."
+          description="Buscando registros de modalidades no sistema."
+        />
       ) : null}
 
       {!loading && summaries.length === 0 ? (
-        <div className="admin-empty-state">
-          <strong>Nenhuma modalidade cadastrada.</strong>
-          <span>Clique em "Nova modalidade" para comecar.</span>
-        </div>
+        <AdminEmptyState
+          title="Nenhuma modalidade cadastrada."
+          description='Clique em "Nova modalidade" para comecar.'
+        />
       ) : null}
 
       {!loading && summaries.length > 0 ? (
-        <div className="review-grid">
+        <section className="grid gap-4 xl:grid-cols-2">
           {summaries.map((sport) => (
-            <article key={sport.id} className="admin-panel" style={{ padding: '18px' }}>
-              <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.2rem' }}>{sport.name}</h2>
-                  <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>{sport.category}</span>
-                </div>
-                <span className={`admin-table-status ${sport.isActive === false ? 'rejected' : 'active'}`} style={{ background: sport.isActive === false ? 'rgba(230, 57, 70, 0.1)' : 'rgba(45, 106, 79, 0.1)', color: sport.isActive === false ? '#e63946' : '#2d6a4f' }}>
+            <AdminSurface
+              key={sport.id}
+              title={sport.name}
+              description={sport.category}
+              actions={
+                <Badge variant={sport.isActive === false ? 'destructive' : 'success'}>
                   {sport.isActive === false ? 'Inativa' : 'Ativa'}
-                </span>
-              </div>
-
-              <div style={{ display: 'grid', gap: '8px', marginBottom: '18px' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
-                  <strong>Resultados:</strong> {sport.resultCount} lancados
-                </p>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
-                  <strong>ALDEBARUN:</strong> {sport.isAldebarun ? 'Sim' : 'Nao'}
-                </p>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <strong>Agenda:</strong> {sport.scheduleDate ? new Date(sport.scheduleDate).toLocaleString('pt-BR') : 'Nao definida'}
-                </p>
-              </div>
-
-              {editingId === sport.id ? (
-                <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
-                  <label className="field-span">
-                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Nome</span>
-                    <input style={{ minHeight: '36px', borderRadius: '8px' }} value={sportName} onChange={(event) => setSportName(event.target.value)} />
-                  </label>
-                  <label className="field-span">
-                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Descricao</span>
-                    <input style={{ minHeight: '36px', borderRadius: '8px' }} value={description} onChange={(event) => setDescription(event.target.value)} />
-                  </label>
-                  <label>
-                    <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Data/hora</span>
-                    <input type="datetime-local" style={{ minHeight: '36px', borderRadius: '8px' }} value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
-                  </label>
-                  <label className="checkbox-row" style={{ alignSelf: 'center' }}>
-                    <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-                    <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Ativa</span>
-                  </label>
+                </Badge>
+              }
+            >
+              <div className="space-y-4">
+                <div className="grid gap-2 text-sm text-slate-600">
+                  <p className="m-0">
+                    <strong>Resultados:</strong> {sport.resultCount} lancados
+                  </p>
+                  <p className="m-0">
+                    <strong>ALDEBARUN:</strong> {sport.isAldebarun ? 'Sim' : 'Nao'}
+                  </p>
+                  <p className="m-0">
+                    <strong>Agenda:</strong>{' '}
+                    {sport.scheduleDate
+                      ? new Date(sport.scheduleDate).toLocaleString('pt-BR')
+                      : 'Nao definida'}
+                  </p>
                 </div>
-              ) : null}
 
-              <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
-                <a className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} href={`/admin/modalidades/${sport.id}`}>
-                  Ver detalhes
-                </a>
                 {editingId === sport.id ? (
-                  <>
-                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', background: '#111827', color: '#fff' }} type="button" onClick={() => saveSport(sport.id)}>
-                      Salvar
-                    </button>
-                    <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} type="button" onClick={() => setEditingId(null)}>
-                      Cancelar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className="admin-topbar-actions a"
-                      style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
-                      type="button"
-                      onClick={() => {
-                        setEditingId(sport.id);
-                        setSportName(sport.name);
-                        setDescription(sport.description ?? '');
-                        setScheduleDate(
-                          sport.scheduleDate
-                            ? new Date(sport.scheduleDate).toISOString().slice(0, 16)
-                            : '',
-                        );
-                        setScheduleNotes(sport.scheduleNotes ?? '');
-                        setIsActive(sport.isActive !== false);
-                      }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="admin-topbar-actions a"
-                      style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
-                      type="button"
-                      onClick={() => deleteSport(sport.id)}
-                      disabled={deletingId === sport.id}
-                    >
-                      {deletingId === sport.id ? '...' : 'Excluir'}
-                    </button>
-                  </>
-                )}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AdminField label="Nome" className="md:col-span-2">
+                      <Input value={sportName} onChange={(event) => setSportName(event.target.value)} />
+                    </AdminField>
+                    <AdminField label="Descricao" className="md:col-span-2">
+                      <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+                    </AdminField>
+                    <AdminField label="Data/hora">
+                      <Input
+                        type="datetime-local"
+                        value={scheduleDate}
+                        onChange={(event) => setScheduleDate(event.target.value)}
+                      />
+                    </AdminField>
+                    <label className="flex items-center gap-2 self-end rounded-md border border-input px-3 py-2 text-sm text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={isActive}
+                        onChange={(event) => setIsActive(event.target.checked)}
+                      />
+                      Ativa
+                    </label>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/admin/modalidades/${sport.id}`}>Ver detalhes</a>
+                  </Button>
+                  {editingId === sport.id ? (
+                    <>
+                      <Button size="sm" type="button" onClick={() => saveSport(sport.id)}>
+                        Salvar
+                      </Button>
+                      <Button variant="outline" size="sm" type="button" onClick={() => setEditingId(null)}>
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          setEditingId(sport.id);
+                          setSportName(sport.name);
+                          setDescription(sport.description ?? '');
+                          setScheduleDate(
+                            sport.scheduleDate
+                              ? new Date(sport.scheduleDate).toISOString().slice(0, 16)
+                              : '',
+                          );
+                          setIsActive(sport.isActive !== false);
+                        }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        disabled={deletingId === sport.id}
+                        onClick={() => deleteSport(sport.id)}
+                      >
+                        {deletingId === sport.id ? '...' : 'Excluir'}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-            </article>
+            </AdminSurface>
           ))}
-        </div>
+        </section>
       ) : null}
     </div>
   );
