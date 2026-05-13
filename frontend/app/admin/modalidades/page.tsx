@@ -26,6 +26,8 @@ export default function AdminModalidadesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sportName, setSportName] = useState('');
   const [description, setDescription] = useState('');
+  const [minParticipants, setMinParticipants] = useState('1');
+  const [maxParticipants, setMaxParticipants] = useState('');
   const [scheduleDate, setScheduleDate] = useState('');
   const [isActive, setIsActive] = useState(true);
 
@@ -65,6 +67,8 @@ export default function AdminModalidadesPage() {
       const updated = await adminUpdateSport(sportId, {
         name: sportName || undefined,
         description: description || undefined,
+        minParticipants: minParticipants ? Number(minParticipants) : undefined,
+        maxParticipants: maxParticipants ? Number(maxParticipants) : undefined,
         isActive,
         scheduleDate: scheduleDate ? new Date(scheduleDate).toISOString() : undefined,
       });
@@ -149,6 +153,10 @@ export default function AdminModalidadesPage() {
                     <strong>ALDEBARUN:</strong> {sport.isAldebarun ? 'Sim' : 'Nao'}
                   </p>
                   <p className="m-0">
+                    <strong>Capacidade:</strong> minimo {sport.minParticipants ?? 1}
+                    {' '}· maximo {sport.maxParticipants ?? 'livre'}
+                  </p>
+                  <p className="m-0">
                     <strong>Agenda:</strong>{' '}
                     {sport.scheduleDate
                       ? new Date(sport.scheduleDate).toLocaleString('pt-BR')
@@ -163,6 +171,23 @@ export default function AdminModalidadesPage() {
                     </AdminField>
                     <AdminField label="Descricao" className="md:col-span-2">
                       <Input value={description} onChange={(event) => setDescription(event.target.value)} />
+                    </AdminField>
+                    <AdminField label="Minimo de participantes">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={minParticipants}
+                        onChange={(event) => setMinParticipants(event.target.value)}
+                      />
+                    </AdminField>
+                    <AdminField label="Maximo de participantes">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={maxParticipants}
+                        onChange={(event) => setMaxParticipants(event.target.value)}
+                        placeholder="Sem limite"
+                      />
                     </AdminField>
                     <AdminField label="Data/hora">
                       <Input
@@ -205,6 +230,10 @@ export default function AdminModalidadesPage() {
                           setEditingId(sport.id);
                           setSportName(sport.name);
                           setDescription(sport.description ?? '');
+                          setMinParticipants(String(sport.minParticipants ?? 1));
+                          setMaxParticipants(
+                            sport.maxParticipants != null ? String(sport.maxParticipants) : '',
+                          );
                           setScheduleDate(
                             sport.scheduleDate
                               ? new Date(sport.scheduleDate).toISOString().slice(0, 16)

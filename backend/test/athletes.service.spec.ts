@@ -52,6 +52,15 @@ describe('AthletesService', () => {
     mailService.sendAthleteRegistrationConfirmationEmail.mockResolvedValue(undefined);
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
+        sport: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'sport-1',
+              name: 'Futsal',
+              maxParticipants: null,
+            },
+          ]),
+        },
         athlete: {
           create: jest.fn().mockResolvedValue({ id: 'athlete-1' }),
           findUniqueOrThrow: jest.fn().mockResolvedValue({
@@ -75,6 +84,7 @@ describe('AthletesService', () => {
           }),
         },
         registration: {
+          count: jest.fn().mockResolvedValue(0),
           createMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         coupon: {
@@ -112,6 +122,15 @@ describe('AthletesService', () => {
     mailService.sendAthleteRegistrationConfirmationEmail.mockResolvedValue(undefined);
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
+        sport: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'sport-1',
+              name: 'Futsal',
+              maxParticipants: null,
+            },
+          ]),
+        },
         athlete: {
           create: jest.fn().mockResolvedValue({ id: 'athlete-2' }),
           findUniqueOrThrow: jest.fn().mockResolvedValue({
@@ -135,6 +154,7 @@ describe('AthletesService', () => {
           }),
         },
         registration: {
+          count: jest.fn().mockResolvedValue(0),
           createMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         coupon: {
@@ -157,6 +177,41 @@ describe('AthletesService', () => {
 
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(result.status).toBe('active');
+  });
+
+  it('rejects registration when selected sport reached maximum capacity', async () => {
+    prisma.athlete.findUnique.mockResolvedValueOnce(null);
+    prisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    prisma.sport.findMany.mockResolvedValue([{ id: 'sport-1' }]);
+
+    prisma.$transaction.mockImplementation(async (callback: any) =>
+      callback({
+        sport: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'sport-1',
+              name: 'Futsal',
+              maxParticipants: 10,
+            },
+          ]),
+        },
+        registration: {
+          count: jest.fn().mockResolvedValue(10),
+        },
+        athlete: {
+          create: jest.fn(),
+          findUniqueOrThrow: jest.fn(),
+        },
+        coupon: {
+          findUnique: jest.fn(),
+          updateMany: jest.fn(),
+        },
+      }),
+    );
+
+    await expect(service.create(validDto)).rejects.toThrow(
+      'Modalidade Futsal atingiu o limite maximo de participantes',
+    );
   });
 
   it('rejects registration when configured reCAPTCHA validation fails', async () => {
@@ -340,6 +395,15 @@ describe('AthletesService', () => {
     prisma.auditLog.createMany.mockResolvedValue({ count: 7 });
     prisma.$transaction.mockImplementation(async (callback: any) =>
       callback({
+        sport: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: 'sport-2',
+              name: 'Volei',
+              maxParticipants: 20,
+            },
+          ]),
+        },
         athlete: {
           update: jest.fn().mockResolvedValue({}),
           findUniqueOrThrow: jest.fn().mockResolvedValue({
@@ -363,6 +427,7 @@ describe('AthletesService', () => {
           }),
         },
         registration: {
+          count: jest.fn().mockResolvedValue(3),
           deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
           createMany: jest.fn().mockResolvedValue({ count: 1 }),
         },

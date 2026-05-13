@@ -7,6 +7,19 @@ import { UpdateSportDto } from './dto/update-sport.dto';
 export class SportsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private validateParticipantLimits(minParticipants?: number, maxParticipants?: number | null) {
+    if (
+      minParticipants !== undefined &&
+      maxParticipants !== undefined &&
+      maxParticipants !== null &&
+      minParticipants > maxParticipants
+    ) {
+      throw new BadRequestException(
+        'Minimo de participantes nao pode ser maior que o maximo',
+      );
+    }
+  }
+
   private toAuditValue(value: unknown) {
     if (value === null || value === undefined) {
       return null;
@@ -54,6 +67,8 @@ export class SportsService {
         name: true,
         category: true,
         description: true,
+        minParticipants: true,
+        maxParticipants: true,
         isAldebarun: true,
         isActive: true,
         scheduleDate: true,
@@ -74,6 +89,8 @@ export class SportsService {
         name: true,
         category: true,
         description: true,
+        minParticipants: true,
+        maxParticipants: true,
         isAldebarun: true,
         isActive: true,
         scheduleDate: true,
@@ -103,11 +120,15 @@ export class SportsService {
   }
 
   async create(dto: CreateSportDto) {
+    this.validateParticipantLimits(dto.minParticipants, dto.maxParticipants);
+
     return this.prisma.sport.create({
       data: {
         name: dto.name,
         category: dto.category,
         description: dto.description,
+        minParticipants: dto.minParticipants,
+        maxParticipants: dto.maxParticipants,
         isAldebarun: dto.isAldebarun,
         isActive: dto.isActive,
         scheduleDate: dto.scheduleDate ? new Date(dto.scheduleDate) : undefined,
@@ -123,6 +144,8 @@ export class SportsService {
         id: true,
         name: true,
         description: true,
+        minParticipants: true,
+        maxParticipants: true,
         isActive: true,
         scheduleDate: true,
         scheduleNotes: true,
@@ -133,11 +156,18 @@ export class SportsService {
       throw new NotFoundException('Modalidade nao encontrada');
     }
 
+    this.validateParticipantLimits(
+      dto.minParticipants ?? sport.minParticipants,
+      dto.maxParticipants ?? sport.maxParticipants,
+    );
+
     const updated = await this.prisma.sport.update({
       where: { id },
       data: {
         name: dto.name,
         description: dto.description,
+        minParticipants: dto.minParticipants,
+        maxParticipants: dto.maxParticipants,
         isActive: dto.isActive,
         scheduleDate: dto.scheduleDate ? new Date(dto.scheduleDate) : undefined,
         scheduleNotes: dto.scheduleNotes,
@@ -150,6 +180,16 @@ export class SportsService {
         fieldChanged: 'description',
         oldValue: sport.description,
         newValue: updated.description,
+      },
+      {
+        fieldChanged: 'minParticipants',
+        oldValue: sport.minParticipants,
+        newValue: updated.minParticipants,
+      },
+      {
+        fieldChanged: 'maxParticipants',
+        oldValue: sport.maxParticipants,
+        newValue: updated.maxParticipants,
       },
       {
         fieldChanged: 'isActive',

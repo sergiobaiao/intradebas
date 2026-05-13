@@ -29,6 +29,8 @@ export default function AdminNovaModalidadePage() {
   const [name, setName] = useState('');
   const [category, setCategory] = useState<CreateSportInput['category']>('coletiva');
   const [description, setDescription] = useState('');
+  const [minParticipants, setMinParticipants] = useState('1');
+  const [maxParticipants, setMaxParticipants] = useState('');
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [isAldebarun, setIsAldebarun] = useState(false);
@@ -46,6 +48,8 @@ export default function AdminNovaModalidadePage() {
         name,
         category,
         description: description || undefined,
+        minParticipants: minParticipants ? Number(minParticipants) : undefined,
+        maxParticipants: maxParticipants ? Number(maxParticipants) : undefined,
         isAldebarun,
         isActive,
         scheduleDate: scheduleDate ? new Date(scheduleDate).toISOString() : undefined,
@@ -105,6 +109,26 @@ export default function AdminNovaModalidadePage() {
             </AdminField>
 
             <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Minimo de participantes">
+                <Input
+                  type="number"
+                  min="1"
+                  value={minParticipants}
+                  onChange={(event) => setMinParticipants(event.target.value)}
+                />
+              </AdminField>
+              <AdminField label="Maximo de participantes">
+                <Input
+                  type="number"
+                  min="1"
+                  value={maxParticipants}
+                  onChange={(event) => setMaxParticipants(event.target.value)}
+                  placeholder="Sem limite"
+                />
+              </AdminField>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
               <AdminField label="Data/hora prevista">
                 <Input
                   type="datetime-local"
@@ -149,6 +173,9 @@ export default function AdminNovaModalidadePage() {
             </p>
             <p>
               O flag <strong>ALDEBARUN</strong> indica que a prova faz parte do modulo especial de integracao.
+            </p>
+            <p>
+              Limites minimo e maximo controlam a capacidade operacional das inscricoes em cada modalidade.
             </p>
           </div>
         </AdminSurface>

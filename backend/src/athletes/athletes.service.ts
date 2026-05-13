@@ -89,6 +89,54 @@ export class AthletesService {
     return randomBytes(32).toString('base64url');
   }
 
+  private async ensureSportsHaveCapacity(
+    tx: Prisma.TransactionClient,
+    sportIds: string[],
+    athleteIdToExclude?: string,
+  ) {
+    if (sportIds.length === 0) {
+      return;
+    }
+
+    const sports = await tx.sport.findMany({
+      where: {
+        id: {
+          in: sportIds,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        maxParticipants: true,
+      },
+    });
+
+    for (const sport of sports) {
+      if (sport.maxParticipants == null) {
+        continue;
+      }
+
+      const currentCount = await tx.registration.count({
+        where: {
+          sportId: sport.id,
+          ...(athleteIdToExclude
+            ? {
+                athleteId: {
+                  not: athleteIdToExclude,
+                },
+              }
+            : {}),
+        },
+      });
+
+      if (currentCount >= sport.maxParticipants) {
+        throw new BadRequestException(
+          `Modalidade ${sport.name} atingiu o limite maximo de participantes`,
+        );
+      }
+    }
+  }
+
   private async verifyRecaptcha(token?: string) {
     const secret = process.env.RECAPTCHA_SECRET_KEY;
 
@@ -524,6 +572,8 @@ export class AthletesService {
         couponId = coupon.id;
       }
 
+      await this.ensureSportsHaveCapacity(tx, dto.sports);
+
       const createdAthlete = await tx.athlete.create({
         data: {
           name: dto.name,
@@ -815,6 +865,10 @@ export class AthletesService {
     }
 
     const updated = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (dto.sports) {
+        await this.ensureSportsHaveCapacity(tx, dto.sports, id);
+      }
+
       await tx.athlete.update({
         where: { id },
         data: {

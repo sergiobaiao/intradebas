@@ -22,6 +22,10 @@ export function SportEditForm({ sport }: SportEditFormProps) {
   const router = useRouter();
   const [name, setName] = useState(sport.name);
   const [description, setDescription] = useState(sport.description ?? '');
+  const [minParticipants, setMinParticipants] = useState(String(sport.minParticipants ?? 1));
+  const [maxParticipants, setMaxParticipants] = useState(
+    sport.maxParticipants != null ? String(sport.maxParticipants) : '',
+  );
   const [scheduleDate, setScheduleDate] = useState(
     sport.scheduleDate ? new Date(sport.scheduleDate).toISOString().slice(0, 16) : '',
   );
@@ -42,6 +46,8 @@ export function SportEditForm({ sport }: SportEditFormProps) {
       await adminUpdateSport(sport.id, {
         name,
         description: description || undefined,
+        minParticipants: minParticipants ? Number(minParticipants) : undefined,
+        maxParticipants: maxParticipants ? Number(maxParticipants) : undefined,
         isActive,
         scheduleDate: scheduleDate ? new Date(scheduleDate).toISOString() : undefined,
         scheduleNotes: scheduleNotes || undefined,
@@ -96,6 +102,26 @@ export function SportEditForm({ sport }: SportEditFormProps) {
           </AdminField>
 
           <div className="grid gap-4 md:grid-cols-2">
+            <AdminField label="Minimo de participantes">
+              <Input
+                type="number"
+                min="1"
+                value={minParticipants}
+                onChange={(event) => setMinParticipants(event.target.value)}
+              />
+            </AdminField>
+            <AdminField label="Maximo de participantes">
+              <Input
+                type="number"
+                min="1"
+                value={maxParticipants}
+                onChange={(event) => setMaxParticipants(event.target.value)}
+                placeholder="Sem limite"
+              />
+            </AdminField>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
             <AdminField label="Data/hora prevista">
               <Input
                 type="datetime-local"
@@ -146,6 +172,12 @@ export function SportEditForm({ sport }: SportEditFormProps) {
             <span className="text-sm text-slate-600">Categoria</span>
             <Badge variant="outline" className="capitalize">
               {sport.category}
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-slate-50/70 px-4 py-3">
+            <span className="text-sm text-slate-600">Capacidade</span>
+            <Badge variant="outline">
+              {sport.minParticipants ?? 1} / {sport.maxParticipants ?? 'livre'}
             </Badge>
           </div>
         </div>

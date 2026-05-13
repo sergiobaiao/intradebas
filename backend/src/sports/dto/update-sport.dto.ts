@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDateString, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class UpdateSportDto {
   @IsOptional()
@@ -10,6 +10,18 @@ export class UpdateSportDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  minParticipants?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxParticipants?: number;
 
   @IsOptional()
   @IsBoolean()

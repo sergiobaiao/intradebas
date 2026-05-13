@@ -210,6 +210,8 @@ export type SportSummary = {
   name: string;
   category: string;
   description?: string | null;
+  minParticipants?: number;
+  maxParticipants?: number | null;
   isAldebarun: boolean;
   isActive?: boolean;
   scheduleDate?: string | null;
@@ -442,6 +444,8 @@ export type UpdateTeamInput = {
 export type UpdateSportInput = {
   name?: string;
   description?: string;
+  minParticipants?: number;
+  maxParticipants?: number;
   isActive?: boolean;
   scheduleDate?: string;
   scheduleNotes?: string;
@@ -451,6 +455,8 @@ export type CreateSportInput = {
   name: string;
   category: 'coletiva' | 'individual' | 'dupla' | 'fitness';
   description?: string;
+  minParticipants?: number;
+  maxParticipants?: number;
   isAldebarun?: boolean;
   isActive?: boolean;
   scheduleDate?: string;

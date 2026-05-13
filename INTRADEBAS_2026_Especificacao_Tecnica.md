@@ -70,7 +70,7 @@ A arquitetura é **Docker-first** desde a concepção, operando sobre o template
 |---|---|---|---|
 | A01 | Sistema de pagamento não especificado | Pagamentos gerenciados off-system (manual/PIX). Admin confirma pagamento e ativa a cota/inscrição manualmente. | ✅ Sim |
 | A02 | Peso/pontuação das categorias não definido | Pontuação configurável via Admin (tabela de pesos). Default: Coletivo=3pts, Individual=2pts, Dupla=2pts, Fitness=1pt por posição | ✅ Sim |
-| A03 | Limite de atletas por modalidade não especificado | Configurável no Admin por modalidade e por equipe | ✅ Sim |
+| A03 | Limite de atletas por modalidade não especificado | Configurável no Admin por modalidade, com bloqueio automático ao atingir o máximo | ✅ Sim |
 | A04 | Categorias etárias não mencionadas | Assumido: sem divisão por faixa etária no MVP; campo de data de nascimento coletado para uso futuro | ✅ Sim |
 | A05 | Autenticação de admins não detalhada | Login/senha com JWT. Apenas e-mails pré-cadastrados da Comissão têm acesso | ✅ Sim |
 | A06 | Cronograma de datas das modalidades não fornecido | Gerenciado pelo Admin via módulo de cronograma | ✅ Sim |
@@ -188,7 +188,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 |---|---|---|
 | Dashboard Principal | KPIs reais, navegação lateral/topbar, pontuação das equipes, modalidades e registros operacionais | ✅ Implementado |
 | Gestão de Atletas | CRUD completo, visualização por equipe, exportação CSV | ✅ Implementado |
-| Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | 🟡 Parcial; interface administrativa padronizada, limites de participantes pendentes |
+| Gestão de Modalidades | Configuração de modalidades, datas, limites de participantes | ✅ Implementado |
 | Gestão de Patrocínio | Controle de cotas vendidas, geração/listagem de cupons, status de pagamento | ✅ Implementado |
 | Input de Resultados | Formulário de lançamento de resultados por modalidade | ✅ Implementado |
 | Gestão de Ranking | Visualização e auditoria do placar consolidado | ✅ Implementado |
@@ -236,6 +236,13 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 - A home passou a exibir countdown real baseado na próxima modalidade agendada no cadastro esportivo.
 - O backend passou a expor mídia pública em endpoint dedicado, e o frontend ganhou a rota `/midia` com fotos e vídeos reais.
 - O backdrop público deixou de ser apenas grade estática e passou a contar com rotação dinâmica de patrocinadores ativos.
+- Backend e frontend foram validados com `npm test`, `npm run build` e `npm run test:e2e`.
+
+### Atualização de Progresso — Feature 059
+
+- O cadastro administrativo de modalidades passou a permitir definir quantidade mínima e máxima de participantes.
+- O backend passou a validar limites inconsistentes e a impedir novas inscrições quando a modalidade atingir sua capacidade máxima.
+- O fluxo de criação e edição de atletas agora respeita a lotação configurada por modalidade.
 - Backend e frontend foram validados com `npm test`, `npm run build` e `npm run test:e2e`.
 
 ## Módulo 3 — Sistema de Autenticação

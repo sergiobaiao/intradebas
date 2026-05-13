@@ -75,6 +75,8 @@ describe('SportsService', () => {
         name: true,
         category: true,
         description: true,
+        minParticipants: true,
+        maxParticipants: true,
         isAldebarun: true,
         isActive: true,
         scheduleDate: true,
@@ -90,6 +92,8 @@ describe('SportsService', () => {
       name: 'Corrida de Rua',
       category: SportCategory.individual,
       description: 'Percurso urbano',
+      minParticipants: 5,
+      maxParticipants: 50,
       isAldebarun: true,
       isActive: true,
       scheduleDate: new Date('2026-04-22T06:30:00Z'),
@@ -100,6 +104,8 @@ describe('SportsService', () => {
       name: 'Corrida de Rua',
       category: SportCategory.individual,
       description: 'Percurso urbano',
+      minParticipants: 5,
+      maxParticipants: 50,
       isAldebarun: true,
       isActive: true,
       scheduleDate: '2026-04-22T06:30:00Z',
@@ -111,6 +117,8 @@ describe('SportsService', () => {
         name: 'Corrida de Rua',
         category: SportCategory.individual,
         description: 'Percurso urbano',
+        minParticipants: 5,
+        maxParticipants: 50,
         isAldebarun: true,
         isActive: true,
         scheduleDate: new Date('2026-04-22T06:30:00Z'),
@@ -120,11 +128,24 @@ describe('SportsService', () => {
     expect(result.name).toBe('Corrida de Rua');
   });
 
+  it('rejects sport creation when minimum exceeds maximum', async () => {
+    await expect(
+      service.create({
+        name: 'Corrida',
+        category: SportCategory.individual,
+        minParticipants: 12,
+        maxParticipants: 8,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it('updates a sport when it exists', async () => {
     prisma.sport.findUnique.mockResolvedValue({
       id: 'sport-1',
       name: 'Futsal',
       description: null,
+      minParticipants: 1,
+      maxParticipants: 20,
       isActive: true,
       scheduleDate: null,
       scheduleNotes: null,
@@ -134,6 +155,8 @@ describe('SportsService', () => {
       id: 'sport-1',
       name: 'Futsal Master',
       description: 'Categoria principal',
+      minParticipants: 4,
+      maxParticipants: 24,
       isActive: false,
       scheduleDate: new Date('2026-04-21T10:00:00Z'),
       scheduleNotes: 'Quadra principal',
@@ -142,6 +165,8 @@ describe('SportsService', () => {
     const result = await service.update('sport-1', {
       name: 'Futsal Master',
       description: 'Categoria principal',
+      minParticipants: 4,
+      maxParticipants: 24,
       isActive: false,
       scheduleDate: '2026-04-21T10:00:00Z',
       scheduleNotes: 'Quadra principal',
@@ -149,6 +174,30 @@ describe('SportsService', () => {
 
     expect(prisma.auditLog.createMany).toHaveBeenCalled();
     expect(result.name).toBe('Futsal Master');
+  });
+
+  it('rejects sport update when minimum exceeds maximum', async () => {
+    prisma.sport.findUnique.mockResolvedValue({
+      id: 'sport-1',
+      name: 'Futsal',
+      description: null,
+      minParticipants: 1,
+      maxParticipants: 10,
+      isActive: true,
+      scheduleDate: null,
+      scheduleNotes: null,
+    });
+
+    await expect(
+      service.update(
+        'sport-1',
+        {
+          minParticipants: 11,
+          maxParticipants: 8,
+        },
+        'admin-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('deletes a sport with no registrations or results', async () => {
