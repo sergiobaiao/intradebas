@@ -2,10 +2,18 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CreateMediaInput, adminCreateMedia, adminUploadMedia } from '../../../lib';
 
 const providers: CreateMediaInput['provider'][] = ['local', 'youtube', 'vimeo'];
 const types: CreateMediaInput['type'][] = ['photo', 'video'];
+const selectClassName =
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
 export default function AdminNovaMidiaPage() {
   const router = useRouter();
@@ -58,131 +66,122 @@ export default function AdminNovaMidiaPage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Conteudo</span>
-          <h1>Novo item de midia</h1>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Conteudo"
+        title="Novo item de midia"
+        description="Nesta tela voce cadastra novas fotos e videos para o portal, definindo origem do arquivo, destaque e ordem de exibicao no acervo."
+        highlights={[
+          'Escolha Upload local para arquivos da organizacao e provedores externos para links ja publicados.',
+          'Defina destaque e ordem agora para controlar a visibilidade do item na galeria publica.',
+        ]}
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
-      <div className="admin-content-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-             <h2>Fonte e Tipo</h2>
-             <p>Defina como o arquivo sera integrado ao acervo.</p>
-          </div>
-          <form className="form-grid" style={{ marginTop: 0 }} onSubmit={handleSubmit}>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Tipo de Midia</span>
-              <select style={{ minHeight: '40px', borderRadius: '10px' }} value={type} onChange={(event) => setType(event.target.value as CreateMediaInput['type'])}>
-                {types.map((item) => (
-                  <option key={item} value={item}>
-                    {item === 'photo' ? 'Foto / Imagem' : 'Video'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Provedor</span>
-              <select
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                value={provider}
-                onChange={(event) => setProvider(event.target.value as CreateMediaInput['provider'])}
-              >
-                {providers.map((item) => (
-                  <option key={item} value={item}>
-                    {item === 'local' ? 'Upload Local (S3/MinIO)' : item.charAt(0).toUpperCase() + item.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field-span">
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Titulo Editorial</span>
-              <input style={{ minHeight: '40px', borderRadius: '10px' }} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ex: Largada da Maratona" />
-            </label>
+      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <AdminSurface title="Fonte e tipo do conteudo" description="Defina como o arquivo sera integrado ao acervo oficial.">
+          <form className="grid gap-4" onSubmit={handleSubmit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Tipo de midia">
+                <select
+                  className={selectClassName}
+                  value={type}
+                  onChange={(event) => setType(event.target.value as CreateMediaInput['type'])}
+                >
+                  {types.map((item) => (
+                    <option key={item} value={item}>
+                      {item === 'photo' ? 'Foto / Imagem' : 'Video'}
+                    </option>
+                  ))}
+                </select>
+              </AdminField>
+              <AdminField label="Provedor">
+                <select
+                  className={selectClassName}
+                  value={provider}
+                  onChange={(event) => setProvider(event.target.value as CreateMediaInput['provider'])}
+                >
+                  {providers.map((item) => (
+                    <option key={item} value={item}>
+                      {item === 'local' ? 'Upload local (S3/MinIO)' : item.charAt(0).toUpperCase() + item.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </AdminField>
+            </div>
+
+            <AdminField label="Titulo editorial">
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Ex: Largada da maratona"
+              />
+            </AdminField>
+
             {provider === 'local' ? (
-              <label className="field-span">
-                <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Arquivo</span>
-                <input
+              <AdminField label="Arquivo" hint="Aceita imagens ou videos conforme o tipo selecionado.">
+                <Input
                   type="file"
-                  style={{ minHeight: '40px', padding: '8px' }}
                   accept={type === 'photo' ? 'image/*' : 'video/*'}
                   onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                  className="pt-2"
                 />
-              </label>
+              </AdminField>
             ) : (
-              <>
-                <label className="field-span">
-                  <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>URL Publica</span>
-                  <input style={{ minHeight: '40px', borderRadius: '10px' }} type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://..." />
-                </label>
-                <label className="field-span">
-                  <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>URL da Thumbnail (opcional)</span>
-                  <input
-                    style={{ minHeight: '40px', borderRadius: '10px' }}
-                    type="url"
-                    value={thumbnailUrl}
-                    onChange={(event) => setThumbnailUrl(event.target.value)}
-                  />
-                </label>
-              </>
+              <div className="grid gap-4">
+                <AdminField label="URL publica">
+                  <Input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://..." />
+                </AdminField>
+                <AdminField label="URL da thumbnail" hint="Opcional para provedores externos.">
+                  <Input type="url" value={thumbnailUrl} onChange={(event) => setThumbnailUrl(event.target.value)} />
+                </AdminField>
+              </div>
             )}
-            <label>
-              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Ordem de Exibicao</span>
-              <input
-                style={{ minHeight: '40px', borderRadius: '10px' }}
-                type="number"
-                min="0"
-                value={sortOrder}
-                onChange={(event) => setSortOrder(event.target.value)}
-              />
-            </label>
-            <div className="checkbox-row" style={{ alignSelf: 'center' }}>
-              <input
-                type="checkbox"
-                checked={isFeatured}
-                onChange={(event) => setIsFeatured(event.target.checked)}
-              />
-              <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Marcar como <strong>destaque</strong></span>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Ordem de exibicao">
+                <Input
+                  type="number"
+                  min="0"
+                  value={sortOrder}
+                  onChange={(event) => setSortOrder(event.target.value)}
+                />
+              </AdminField>
+              <label className="flex items-center gap-3 rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3 text-sm text-[#605d52]">
+                <input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} />
+                Marcar como destaque na galeria publica
+              </label>
             </div>
-            <div className="field-span admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: '20px' }}>
-              <button
-                className="admin-quick-action"
-                style={{ minHeight: '40px', padding: '0 20px' }}
+
+            <div className="flex flex-wrap gap-2">
+              <Button
                 type="submit"
-                disabled={
-                  submitting ||
-                  (provider === 'local' ? !file : !url.trim())
-                }
+                disabled={submitting || (provider === 'local' ? !file : !url.trim())}
               >
                 {submitting ? 'Salvando...' : 'Criar item'}
-              </button>
-              <a className="admin-topbar-actions a" style={{ minHeight: '40px', padding: '0 20px' }} href="/admin/midia">
-                Cancelar
-              </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="/admin/midia">Cancelar</a>
+              </Button>
             </div>
           </form>
-        </section>
+        </AdminSurface>
 
-        <section className="admin-panel">
-           <div className="admin-panel-header">
-             <h2>Diretrizes</h2>
-           </div>
-           <p className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem', color: '#4b5563' }}>
-             Use <strong>Upload Local</strong> para fotos capturadas pela comissao. 
-           </p>
-           <p className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem', color: '#4b5563', marginTop: '12px' }}>
-             Provedores externos como <strong>YouTube</strong> e <strong>Vimeo</strong> sao ideais para videos de cobertura oficial ja publicados.
-           </p>
-        </section>
-      </div>
+        <AdminSurface title="Diretrizes operacionais" description="Boas praticas para manter a galeria consistente.">
+          <div className="grid gap-3 text-sm leading-6 text-[#605d52]">
+            <div className="rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3">
+              Use <strong className="text-[#201515]">upload local</strong> para fotos e videos capturados pela comissao.
+            </div>
+            <div className="rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3">
+              Prefira <strong className="text-[#201515]">YouTube</strong> ou <strong className="text-[#201515]">Vimeo</strong> para coberturas longas ja publicadas.
+            </div>
+            <div className="rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3">
+              Defina a <strong className="text-[#201515]">ordem</strong> e o <strong className="text-[#201515]">destaque</strong> pensando no que deve aparecer primeiro no portal.
+            </div>
+          </div>
+        </AdminSurface>
+      </section>
     </div>
   );
 }

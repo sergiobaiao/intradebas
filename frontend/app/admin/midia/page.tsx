@@ -1,12 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminField } from '@/components/admin/field';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   MediaAdminSummary,
   adminDeleteMedia,
   adminGetMediaPage,
   adminUpdateMedia,
 } from '../../lib';
+
+const selectClassName =
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
 export default function AdminMidiaPage() {
   const [items, setItems] = useState<MediaAdminSummary[]>([]);
@@ -95,31 +106,29 @@ export default function AdminMidiaPage() {
   }
 
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Conteudo</span>
-          <h1>Galeria de midia</h1>
-        </div>
-        <div className="admin-topbar-actions">
-          <a className="admin-quick-action" style={{ minHeight: '38px', padding: '0 14px' }} href="/admin/midia/nova">
-            Novo item
-          </a>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Conteudo"
+        title="Galeria de midia"
+        description="Nesta tela voce organiza o acervo oficial publicado no portal, controla destaque, ordem de exibicao e faz a manutencao de fotos e videos."
+        highlights={[
+          'Use os filtros para localizar itens por provedor ou status de destaque.',
+          'A criacao de novos itens fica centralizada aqui pelo botao de Novo item.',
+        ]}
+        actions={
+          <Button asChild>
+            <a href="/admin/midia/nova">Novo item</a>
+          </Button>
+        }
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
-      <section className="admin-panel" style={{ marginBottom: '22px' }}>
-        <div className="form-grid" style={{ marginTop: 0 }}>
-          <label>
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Provedor</span>
+      <AdminSurface title="Filtros do acervo" description="Encontre rapidamente uploads locais e videos de provedores externos.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <AdminField label="Provedor">
             <select
-              style={{ minHeight: '40px', borderRadius: '10px' }}
+              className={selectClassName}
               value={providerFilter}
               onChange={(event) => {
                 setPage(1);
@@ -131,11 +140,10 @@ export default function AdminMidiaPage() {
               <option value="youtube">YouTube</option>
               <option value="vimeo">Vimeo</option>
             </select>
-          </label>
-          <label>
-            <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Destaque</span>
+          </AdminField>
+          <AdminField label="Destaque">
             <select
-              style={{ minHeight: '40px', borderRadius: '10px' }}
+              className={selectClassName}
               value={featuredFilter}
               onChange={(event) => {
                 setPage(1);
@@ -146,138 +154,132 @@ export default function AdminMidiaPage() {
               <option value="true">Apenas em destaque</option>
               <option value="false">Normais</option>
             </select>
-          </label>
+          </AdminField>
         </div>
-      </section>
+      </AdminSurface>
 
-      <section className="admin-panel">
-        <div className="admin-panel-header">
-          <div>
-            <h2>Arquivos e Links</h2>
-            <p>Gerenciamento de acervo visual e audiovisual.</p>
+      <AdminSurface
+        title="Arquivos e links publicados"
+        description="Gerenciamento de acervo visual e audiovisual que aparece no portal publico."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-[#605d52]">Pagina {page} de {totalPages}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((current) => Math.max(current - 1, 1))}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              disabled={page >= totalPages || loading}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Proxima
+            </Button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-             <span className="admin-kicker">Pagina {page} de {totalPages}</span>
-             <div className="admin-topbar-actions" style={{ marginTop: 0 }}>
-                <button
-                  className="admin-topbar-actions a"
-                  style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
-                  type="button"
-                  disabled={page <= 1 || loading}
-                  onClick={() => setPage((current) => Math.max(current - 1, 1))}
-                >
-                  Anterior
-                </button>
-                <button
-                  className="admin-topbar-actions a"
-                  style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
-                  type="button"
-                  disabled={page >= totalPages || loading}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  Proxima
-                </button>
-             </div>
-          </div>
-        </div>
-
+        }
+      >
         {loading ? (
-          <div className="admin-empty-state">
-            <strong>Carregando...</strong>
-          </div>
+          <AdminEmptyState title="Carregando..." description="Buscando itens de midia no acervo oficial." />
         ) : null}
 
         {!loading && items.length === 0 ? (
-          <div className="admin-empty-state">
-            <strong>Nenhum item de midia encontrado.</strong>
-            <span>Ajuste os filtros ou adicione um novo item.</span>
-          </div>
+          <AdminEmptyState
+            title="Nenhum item encontrado."
+            description="Ajuste os filtros ou adicione um novo item para publicar conteudo."
+          />
         ) : null}
 
         {!loading && items.length > 0 ? (
-          <div className="review-grid">
+          <div className="grid gap-4 xl:grid-cols-2">
             {items.map((item) => (
-              <article key={item.id} className="admin-panel" style={{ padding: '16px', background: '#fcfcfc' }}>
-                <div className="admin-panel-header" style={{ marginBottom: '16px' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <h3 style={{ fontSize: '1.1rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.title ?? item.type}
-                    </h3>
-                    <span className="admin-kicker" style={{ fontSize: '0.75rem' }}>{item.provider} · {item.type}</span>
-                  </div>
-                  <span className={`admin-table-status ${item.isFeatured ? 'success' : ''}`} style={{ background: item.isFeatured ? 'rgba(45, 106, 79, 0.1)' : 'rgba(17, 24, 39, 0.05)', color: item.isFeatured ? '#2d6a4f' : '#6b7280' }}>
+              <AdminSurface
+                key={item.id}
+                title={item.title ?? item.type}
+                description={`${item.provider} · ${item.type}`}
+                actions={
+                  <Badge variant={item.isFeatured ? 'success' : 'outline'}>
                     {item.isFeatured ? 'Destaque' : 'Normal'}
-                  </span>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#4b5563', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <strong>URL:</strong> {item.url}
-                  </p>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#6b7280' }}>
-                    <strong>Enviado por:</strong> {item.uploader.name} · <strong>Ordem:</strong> {item.sortOrder}
-                  </p>
-                </div>
-
-                {editingId === item.id ? (
-                  <div className="form-grid" style={{ marginTop: 0, marginBottom: '16px', gap: '10px' }}>
-                    <label className="field-span">
-                      <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Titulo</span>
-                      <input style={{ minHeight: '36px', borderRadius: '8px' }} value={title} onChange={(event) => setTitle(event.target.value)} />
-                    </label>
-                    <label>
-                      <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Ordem</span>
-                      <input type="number" style={{ minHeight: '36px', borderRadius: '8px' }} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
-                    </label>
-                    <label className="checkbox-row" style={{ alignSelf: 'center' }}>
-                      <input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} />
-                      <span className="admin-kicker" style={{ textTransform: 'none', fontSize: '0.85rem' }}>Destaque</span>
-                    </label>
+                  </Badge>
+                }
+              >
+                <div className="space-y-4">
+                  <div className="grid gap-2 text-sm text-[#605d52]">
+                    <p className="m-0 break-all">
+                      <strong className="text-[#201515]">URL:</strong> {item.url}
+                    </p>
+                    <p className="m-0">
+                      <strong className="text-[#201515]">Enviado por:</strong> {item.uploader.name}
+                    </p>
+                    <p className="m-0">
+                      <strong className="text-[#201515]">Ordem:</strong> {item.sortOrder}
+                    </p>
                   </div>
-                ) : null}
 
-                <div className="admin-topbar-actions" style={{ justifyContent: 'flex-start', marginTop: 0 }}>
                   {editingId === item.id ? (
-                    <>
-                      <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', background: '#111827', color: '#fff' }} type="button" onClick={() => void saveItem(item.id)}>
-                        Salvar
-                      </button>
-                      <button className="admin-topbar-actions a" style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }} type="button" onClick={() => setEditingId(null)}>
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="admin-topbar-actions a"
-                        style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem' }}
-                        type="button"
-                        onClick={() => {
-                          setEditingId(item.id);
-                          setTitle(item.title ?? '');
-                          setIsFeatured(item.isFeatured);
-                          setSortOrder(String(item.sortOrder));
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="admin-topbar-actions a"
-                        style={{ minHeight: '32px', padding: '0 10px', fontSize: '0.85rem', borderColor: 'rgba(230, 57, 70, 0.2)' }}
-                        type="button"
-                        onClick={() => void deleteItem(item.id)}
-                        disabled={deletingId === item.id}
-                      >
-                        {deletingId === item.id ? '...' : 'Remover'}
-                      </button>
-                    </>
-                  )}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <AdminField label="Titulo" className="md:col-span-2">
+                        <Input value={title} onChange={(event) => setTitle(event.target.value)} />
+                      </AdminField>
+                      <AdminField label="Ordem">
+                        <Input type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} />
+                      </AdminField>
+                      <label className="flex items-center gap-3 rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3 text-sm text-[#605d52]">
+                        <input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} />
+                        Item em destaque na galeria publica
+                      </label>
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-2">
+                    {editingId === item.id ? (
+                      <>
+                        <Button size="sm" type="button" onClick={() => void saveItem(item.id)}>
+                          Salvar
+                        </Button>
+                        <Button variant="outline" size="sm" type="button" onClick={() => setEditingId(null)}>
+                          Cancelar
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={() => {
+                            setEditingId(item.id);
+                            setTitle(item.title ?? '');
+                            setIsFeatured(item.isFeatured);
+                            setSortOrder(String(item.sortOrder));
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={() => void deleteItem(item.id)}
+                          disabled={deletingId === item.id}
+                        >
+                          {deletingId === item.id ? 'Removendo...' : 'Remover'}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </article>
+              </AdminSurface>
             ))}
           </div>
         ) : null}
-      </section>
+      </AdminSurface>
     </div>
   );
 }

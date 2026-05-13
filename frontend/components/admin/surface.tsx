@@ -21,7 +21,7 @@ export function AdminSurface({
   contentClassName,
 }: AdminSurfaceProps) {
   return (
-    <Card className={cn("border-border/60 bg-white/90", className)}>
+    <Card className={cn("border-border/70 bg-card", className)}>
       {title || description || actions ? (
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">

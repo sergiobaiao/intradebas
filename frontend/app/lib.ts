@@ -1,3 +1,5 @@
+import { getApiBaseUrl, getPublicApiBaseUrl } from './api-base';
+
 export type TeamSummary = {
   id: string;
   name: string;
@@ -488,7 +490,7 @@ export type UpdateMediaInput = {
 };
 
 async function refreshAdminSession() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/auth/refresh`, {
     method: 'POST',
@@ -506,7 +508,7 @@ async function refreshAdminSession() {
 }
 
 async function adminApiFetch(path: string, init?: RequestInit) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
   const doRequest = () =>
     fetch(`${apiBase}${path}`, {
       ...init,
@@ -530,7 +532,7 @@ async function adminApiFetch(path: string, init?: RequestInit) {
 }
 
 async function fetchJson<T>(path: string, emptyValue: T): Promise<T> {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getApiBaseUrl();
 
   try {
     const response = await fetch(`${apiBase}${path}`, {
@@ -627,7 +629,7 @@ export async function createSponsorInterest(input: {
   quotaId: string;
   logoUrl?: string;
 }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/sponsors`, {
     method: 'POST',
@@ -648,7 +650,7 @@ export async function createSponsorInterest(input: {
 }
 
 export async function requestSponsorPortalAccess(input: { email: string }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/sponsors/portal/access-request`, {
     method: 'POST',
@@ -670,7 +672,7 @@ export async function requestSponsorPortalAccess(input: { email: string }) {
 }
 
 export async function getSponsorPortalSession(token: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/sponsors/portal/session`, {
     method: 'POST',
@@ -693,7 +695,7 @@ export async function getSponsorPortalSession(token: string) {
 }
 
 export async function createAthleteRegistration(input: CreateAthleteInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/athletes`, {
     method: 'POST',
@@ -717,7 +719,7 @@ export async function createAthleteRegistration(input: CreateAthleteInput) {
 }
 
 export async function confirmAthleteEmail(token: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/athletes/portal/confirm-email`, {
     method: 'POST',
@@ -739,7 +741,7 @@ export async function confirmAthleteEmail(token: string) {
 }
 
 export async function getAthletePortalSession(token: string) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/athletes/portal/session`, {
     method: 'POST',
@@ -761,7 +763,7 @@ export async function getAthletePortalSession(token: string) {
 }
 
 export async function createLgpdDeletionRequest(input: CreateLgpdDeletionRequestInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/lgpd/deletion-requests`, {
     method: 'POST',
@@ -783,7 +785,7 @@ export async function createLgpdDeletionRequest(input: CreateLgpdDeletionRequest
 }
 
 export async function requestPasswordReset(input: ForgotPasswordInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/auth/forgot-password`, {
     method: 'POST',
@@ -805,7 +807,7 @@ export async function requestPasswordReset(input: ForgotPasswordInput) {
 }
 
 export async function submitPasswordReset(input: ResetPasswordInput) {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
 
   const response = await fetch(`${apiBase}/auth/reset-password`, {
     method: 'POST',

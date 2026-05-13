@@ -6,6 +6,7 @@ import { PublicSectionShell } from '@/components/public/section-shell';
 import { PublicStatCard } from '@/components/public/stat-card';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getPublicApiBaseUrl } from '../api-base';
 import { RankingRow } from '../lib';
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 };
 
 function getSseUrl() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getPublicApiBaseUrl();
   return `${apiBase}/results/ranking/live`;
 }
 

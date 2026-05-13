@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
+import { buildThemeBootScript, defaultThemeId } from '@/designs';
+import { ThemeProvider } from '@/components/theme-provider';
 import { BodyShell } from './body-shell';
 import './globals.css';
 
@@ -13,9 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-theme={defaultThemeId} suppressHydrationWarning>
+      <head>
+        <Script id="theme-boot" strategy="beforeInteractive">
+          {buildThemeBootScript()}
+        </Script>
+      </head>
       <body>
-        <BodyShell>{children}</BodyShell>
+        <ThemeProvider>
+          <BodyShell>{children}</BodyShell>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -4,6 +4,7 @@ import { Menu } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { ReactNode } from "react"
 
+import { ThemeSelect } from "@/components/theme-select"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils"
 
 type NavigationGroup = {
   label: string
+  description?: string
   items: { label: string; href: string }[]
 }
 
@@ -40,11 +42,11 @@ const navigationGroups: NavigationGroup[] = [
   },
   {
     label: "Patrocinio e midia",
+    description: "Comercial, backdrop e acervo oficial",
     items: [
-      { label: "Gerenciar patrocinio", href: "/admin/patrocinio" },
+      { label: "Patrocinios", href: "/admin/patrocinio" },
       { label: "Backdrop", href: "/admin/backdrop" },
-      { label: "Midia", href: "/admin/midia" },
-      { label: "Nova midia", href: "/admin/midia/nova" },
+      { label: "Galeria de midia", href: "/admin/midia" },
     ],
   },
   {
@@ -72,17 +74,19 @@ function AdminSidebarNav() {
   return (
     <div className="flex h-full flex-col gap-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-foreground text-sm font-semibold text-background">
           IN
         </div>
         <div>
-          <strong className="block text-base tracking-tight text-slate-950">INTRADEBAS</strong>
-          <span className="text-sm text-slate-500">Studio Admin</span>
+          <strong className="block text-base tracking-tight text-sidebar-foreground">INTRADEBAS</strong>
+          <span className="text-sm text-muted-foreground">Studio Admin</span>
         </div>
       </div>
 
+      <ThemeSelect />
+
       <a
-        className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
+        className="inline-flex min-h-11 items-center justify-center rounded-[12px] bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
         href="/admin/atletas"
       >
         Revisar inscricoes
@@ -92,18 +96,21 @@ function AdminSidebarNav() {
         <nav className="grid gap-6 pr-4" aria-label="Navegacao administrativa">
           {navigationGroups.map((group) => (
             <section key={group.label} className="grid gap-2">
-              <span className="px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <span className="px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                 {group.label}
               </span>
+              {group.description ? (
+                <p className="px-2 text-xs leading-5 text-muted-foreground">{group.description}</p>
+              ) : null}
               <div className="grid gap-1">
                 {group.items.map((item) => (
                   <a
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-amber-50 hover:text-slate-950",
+                      "rounded-[12px] px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       isActiveRoute(pathname, item.href) &&
-                        "bg-slate-100 text-slate-950 shadow-sm",
+                        "border border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground",
                     )}
                   >
                     {item.label}
@@ -120,25 +127,27 @@ function AdminSidebarNav() {
 
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#fff8e2_0%,_#f7f1e3_48%,_#efe5d0_100%)]">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen max-w-[1600px] gap-6 px-4 py-4 lg:px-6">
-        <aside className="hidden w-80 rounded-[28px] border border-border/70 bg-white/90 p-6 shadow-admin lg:block">
+        <aside className="hidden w-80 rounded-[12px] border border-border/70 bg-sidebar p-6 text-sidebar-foreground lg:block">
           <AdminSidebarNav />
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <div className="sticky top-0 z-20 mb-4 flex items-center justify-between rounded-2xl border border-border/70 bg-white/85 px-4 py-3 shadow-sm backdrop-blur lg:hidden">
+          <div className="sticky top-0 z-20 mb-4 flex items-center justify-between rounded-[12px] border border-border/70 bg-card px-4 py-3 lg:hidden">
             <div>
-              <strong className="block text-sm tracking-tight text-slate-950">INTRADEBAS</strong>
-              <span className="text-xs text-slate-500">Admin</span>
+              <strong className="block text-sm tracking-tight text-foreground">INTRADEBAS</strong>
+              <span className="text-xs text-muted-foreground">Admin</span>
             </div>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Abrir menu administrativo">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[320px]">
+            <div className="flex items-center gap-2">
+              <ThemeSelect compact className="min-w-[10.5rem]" />
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Abrir menu administrativo">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[320px]">
                 <SheetHeader>
                   <SheetTitle>Menu administrativo</SheetTitle>
                   <SheetDescription>Navegue entre as areas operacionais do sistema.</SheetDescription>
@@ -146,11 +155,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 <div className="mt-6 h-[calc(100%-4rem)]">
                   <AdminSidebarNav />
                 </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
 
-          <section className="flex-1 rounded-[28px] border border-border/70 bg-white/65 p-4 shadow-admin backdrop-blur md:p-6 lg:p-8">
+          <section className="flex-1 rounded-[12px] border border-border/70 bg-card p-4 md:p-6 lg:p-8">
             {children}
           </section>
         </div>

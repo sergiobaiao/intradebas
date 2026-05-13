@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+import { AdminDataTable } from '@/components/admin/data-table';
+import { AdminEmptyState } from '@/components/admin/empty-state';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSurface } from '@/components/admin/surface';
+import { Badge } from '@/components/ui/badge';
 import { BackdropSponsorSummary, SponsorAdminSummary, adminFetchJson } from '../../lib';
 
 export default function AdminBackdropPage() {
@@ -30,95 +36,96 @@ export default function AdminBackdropPage() {
     }
   }
 
+  const inactiveSponsors = sponsors.filter((sponsor) => sponsor.status !== 'active').length;
+
   return (
-    <div className="admin-screen-content">
-      <header className="admin-topbar">
-        <div>
-          <span className="admin-kicker">Marketing</span>
-          <h1>Backdrop digital</h1>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <AdminPageHeader
+        kicker="Marketing"
+        title="Backdrop digital"
+        description="Nesta tela voce acompanha quem esta elegivel para exibicao publica no backdrop e valida a prioridade visual das marcas ativas."
+        highlights={[
+          'O backdrop considera patrocinadores ativos e a prioridade configurada na cota.',
+          'Use esta pagina para conferir rapidamente quem entra ou fica fora da exibicao automatica.',
+        ]}
+      />
 
-      {error ? (
-        <div className="admin-panel" style={{ borderColor: 'rgba(230, 57, 70, 0.3)', marginBottom: '22px' }}>
-          <p className="error-text">{error}</p>
-        </div>
-      ) : null}
+      {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
 
-      <section className="admin-panel" style={{ marginBottom: '22px' }}>
-        <div className="admin-panel-header">
-           <div>
-             <h2>Gestao de exibicao</h2>
-             <p>Ordem de prioridade e publicacao visual dos patrocinadores ativos no telao do evento.</p>
-           </div>
-        </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        <AdminSurface title="Marcas em exibicao" description="Patrocinadores ja retornados pelo endpoint do backdrop.">
+          <strong className="block text-4xl font-medium text-[#201515]">{backdrop.length}</strong>
+        </AdminSurface>
+        <AdminSurface title="Fora da exibicao" description="Empresas ainda inativas ou sem elegibilidade para o carrossel.">
+          <strong className="block text-4xl font-medium text-[#201515]">{inactiveSponsors}</strong>
+        </AdminSurface>
+        <AdminSurface title="Regra operacional" description="Apenas patrocinadores ativos entram no backdrop automatico.">
+          <Badge variant="outline">status = active</Badge>
+        </AdminSurface>
       </section>
 
-      <div className="admin-content-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-        <section className="admin-panel">
-          <div className="admin-panel-header">
-             <h2>Patrocinadores em Exibicao</h2>
-          </div>
-
+      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <AdminSurface
+          title="Patrocinadores em exibicao"
+          description="Ordem de prioridade e status visual das marcas publicadas no telao do evento."
+        >
           {loading ? (
-             <div className="admin-empty-state"><strong>Carregando...</strong></div>
+            <AdminEmptyState title="Carregando..." description="Buscando patrocinadores ativos publicados no backdrop." />
           ) : backdrop.length === 0 ? (
-            <div className="admin-empty-state">
-              <span>Nenhum patrocinador ativo para exibicao.</span>
-            </div>
+            <AdminEmptyState
+              title="Nenhum patrocinador em exibicao."
+              description="Ative cotas e publique logos para alimentar o carrossel do backdrop."
+            />
           ) : (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Prioridade</th>
-                    <th>Empresa</th>
-                    <th>Nivel</th>
-                    <th>Logo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {backdrop.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ textAlign: 'center' }}>
-                         <span className="admin-table-status" style={{ background: '#111827', color: '#fff', padding: '4px 10px' }}>
-                          {item.backdropPriority}
-                        </span>
-                      </td>
-                      <td><strong>{item.companyName}</strong></td>
-                      <td>{item.level.toUpperCase()}</td>
-                      <td>
-                        <span className={`admin-table-status ${item.logoUrl ? 'success' : 'attention'}`}>
-                          {item.logoUrl ? 'Publicada' : 'Pendente'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminDataTable
+              columns={[
+                {
+                  key: 'prioridade',
+                  header: 'Prioridade',
+                  cell: (item) => <Badge variant="outline">{item.backdropPriority}</Badge>,
+                },
+                {
+                  key: 'empresa',
+                  header: 'Empresa',
+                  cell: (item) => <strong className="text-sm text-[#201515]">{item.companyName}</strong>,
+                },
+                {
+                  key: 'nivel',
+                  header: 'Nivel',
+                  cell: (item) => <span className="text-sm text-[#605d52]">{item.level.toUpperCase()}</span>,
+                },
+                {
+                  key: 'logo',
+                  header: 'Logo',
+                  cell: (item) => (
+                    <Badge variant={item.logoUrl ? 'success' : 'warning'}>
+                      {item.logoUrl ? 'Publicada' : 'Pendente'}
+                    </Badge>
+                  ),
+                },
+              ]}
+              rows={backdrop}
+            />
           )}
-        </section>
+        </AdminSurface>
 
-        <section className="admin-panel">
-           <div className="admin-panel-header">
-             <h2>Status do Acervo</h2>
-           </div>
-           <div className="admin-status-stack">
-              <div>
-                <span>Ativos no Backdrop</span>
-                <strong>{backdrop.length}</strong>
-              </div>
-              <div>
-                <span>Fora do Backdrop</span>
-                <strong>{sponsors.filter(s => s.status !== 'active').length}</strong>
-              </div>
-           </div>
-           <p className="admin-kicker" style={{ marginTop: '22px', fontSize: '0.65rem' }}>
-             Apenas patrocinadores com status <strong>active</strong> sao elegiveis para exibicao automatica no carrossel do backdrop.
-           </p>
-        </section>
-      </div>
+        <AdminSurface
+          title="Como usar esta area"
+          description="Checklist rapido para a equipe operacional de marketing."
+        >
+          <div className="grid gap-3 text-sm leading-6 text-[#605d52]">
+            <div className="rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3">
+              Confirme primeiro se a cota do patrocinador esta com status <strong className="text-[#201515]">active</strong>.
+            </div>
+            <div className="rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3">
+              Garanta que a <strong className="text-[#201515]">logo</strong> foi cadastrada para a marca aparecer corretamente na rotacao.
+            </div>
+            <div className="rounded-[12px] border border-border/70 bg-[#f8f4f0] px-4 py-3">
+              Revise a <strong className="text-[#201515]">prioridade</strong> quando houver cotas de niveis diferentes disputando maior destaque.
+            </div>
+          </div>
+        </AdminSurface>
+      </section>
     </div>
   );
 }

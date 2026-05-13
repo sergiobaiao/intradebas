@@ -13,7 +13,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'node e2e/support/start-e2e-server.mjs',
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     url: 'http://127.0.0.1:3100',
   },

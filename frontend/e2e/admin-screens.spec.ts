@@ -48,6 +48,48 @@ for (const route of formRoutes) {
   });
 }
 
+test('admin team detail renders hydrated server data', async ({ page }) => {
+  await page.goto('/admin/equipes/team-1');
+  await expect(page.getByRole('heading', { name: 'Detalhes da equipe', exact: true })).toBeVisible();
+  await expect(page.getByText('Mucura')).toBeVisible();
+  await expect(page.getByText('Atletas cadastrados: 2')).toBeVisible();
+});
+
+test('admin athlete detail renders hydrated server data', async ({ page }) => {
+  await page.goto('/admin/atletas/athlete-1');
+  await expect(page.getByRole('heading', { name: 'Perfil do atleta', exact: true })).toBeVisible();
+  await expect(page.getByText('Joao Silva Santos')).toBeVisible();
+  await expect(page.getByText('Equipe: Mucura')).toBeVisible();
+});
+
+test('admin sport detail renders hydrated server data', async ({ page }) => {
+  await page.goto('/admin/modalidades/sport-1');
+  await expect(page.getByRole('heading', { name: 'Detalhes da modalidade', exact: true })).toBeVisible();
+  await expect(page.getByText('Futsal')).toBeVisible();
+  await expect(page.getByText('Resultados: 1')).toBeVisible();
+});
+
+test('admin sponsorship and media pages explain the available actions', async ({ page }) => {
+  await page.goto('/admin/patrocinio');
+  await expect(page.getByRole('heading', { name: 'Patrocinios', exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Nesta tela voce acompanha patrocinadores, ativa cotas, ajusta dados comerciais e controla os cupons de cortesia associados a cada empresa.'),
+  ).toBeVisible();
+
+  await page.goto('/admin/backdrop');
+  await expect(page.getByRole('heading', { name: 'Backdrop digital', exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Nesta tela voce acompanha quem esta elegivel para exibicao publica no backdrop e valida a prioridade visual das marcas ativas.'),
+  ).toBeVisible();
+
+  await page.goto('/admin/midia');
+  await expect(page.getByRole('heading', { name: 'Galeria de midia', exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Nesta tela voce organiza o acervo oficial publicado no portal, controla destaque, ordem de exibicao e faz a manutencao de fotos e videos.'),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Novo item' })).toBeVisible();
+});
+
 test('admin screens do not render reference mock strings', async ({ page }) => {
   // Test representative list route
   await page.goto('/admin/atletas');

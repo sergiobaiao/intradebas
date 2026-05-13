@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { getServerApiBaseUrl } from '../api-base';
 import type {
   AthleteSummary,
   PublicAthleteSummary,
@@ -7,7 +8,7 @@ import type {
 } from '../lib';
 
 async function adminServerFetchJson<T>(path: string, emptyValue: T): Promise<T> {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+  const apiBase = getServerApiBaseUrl();
   const cookieStore = await cookies();
 
   try {

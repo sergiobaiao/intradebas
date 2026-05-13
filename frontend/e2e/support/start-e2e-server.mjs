@@ -9,6 +9,7 @@ const teams = [
     name: 'Mucura',
     color: '#E63946',
     totalScore: 14,
+    athletesCount: 2,
   },
 ];
 
@@ -16,20 +17,38 @@ const sports = [
   {
     id: 'sport-1',
     name: 'Futsal',
-    category: 'coletivo',
+    category: 'coletiva',
+    description: 'Modalidade coletiva principal',
+    minParticipants: 5,
+    maxParticipants: 12,
     isAldebarun: false,
     isActive: true,
     scheduleDate: '2026-12-20T18:00:00.000Z',
     scheduleNotes: 'Quadra principal',
+    results: [
+      {
+        id: 'result-1',
+        position: 1,
+        rawScore: null,
+        calculatedPoints: 5,
+        resultDate: '2026-04-28T12:00:00.000Z',
+        notes: null,
+        team: teams[0],
+      },
+    ],
   },
   {
     id: 'sport-2',
     name: 'ALDEBARUN 5K',
     category: 'individual',
+    description: 'Corrida principal do evento',
+    minParticipants: 1,
+    maxParticipants: 300,
     isAldebarun: true,
     isActive: true,
     scheduleDate: '2026-12-21T06:00:00.000Z',
     scheduleNotes: 'Largada na portaria central',
+    results: [],
   },
 ];
 
@@ -41,8 +60,12 @@ const athletes = [
     type: 'titular',
     status: 'pending',
     shirtSize: 'M',
-    sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletivo' }],
+    sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletiva' }],
     team: teams[0],
+    email: 'joao@intradebas.local',
+    phone: '86999990000',
+    birthDate: '1990-01-10T00:00:00.000Z',
+    unit: 'Q1C2',
   },
   {
     id: 'athlete-2',
@@ -51,8 +74,12 @@ const athletes = [
     type: 'titular',
     status: 'active',
     shirtSize: 'G',
-    sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletivo' }],
+    sports: [{ id: 'sport-1', name: 'Futsal', category: 'coletiva' }],
     team: teams[0],
+    email: 'maria@intradebas.local',
+    phone: '86999990001',
+    birthDate: '1992-04-20T00:00:00.000Z',
+    unit: 'Q1C2',
   },
 ];
 
@@ -64,7 +91,7 @@ const results = [
     calculatedPoints: 5,
     resultDate: '2026-04-28T12:00:00.000Z',
     notes: null,
-    sport: { id: 'sport-1', name: 'Futsal', category: 'coletivo' },
+    sport: { id: 'sport-1', name: 'Futsal', category: 'coletiva' },
     team: teams[0],
   },
 ];
@@ -198,8 +225,28 @@ const api = createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/v1/teams/team-1') {
+    sendJson(response, teams[0]);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/teams/team-1/athletes') {
+    sendJson(response, athletes);
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/v1/sports') {
     sendJson(response, sports);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/sports/sport-1') {
+    sendJson(response, sports[0]);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/sports/sport-2') {
+    sendJson(response, sports[1]);
     return;
   }
 
@@ -210,6 +257,16 @@ const api = createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/api/v1/athletes') {
     sendJson(response, athletes);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/athletes/athlete-1') {
+    sendJson(response, athletes[0]);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/athletes/athlete-2') {
+    sendJson(response, athletes[1]);
     return;
   }
 
@@ -296,6 +353,7 @@ api.listen(apiPort, '127.0.0.1', () => {
     env: {
       ...process.env,
       NEXT_PUBLIC_API_URL: `http://127.0.0.1:${apiPort}/api/v1`,
+      INTERNAL_API_URL: `http://127.0.0.1:${apiPort}/api/v1`,
     },
     stdio: 'inherit',
   });

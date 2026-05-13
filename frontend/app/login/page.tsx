@@ -2,8 +2,9 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getPublicApiBaseUrl } from '../api-base';
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+const apiBase = getPublicApiBaseUrl();
 
 export default function LoginPage() {
   const router = useRouter();
