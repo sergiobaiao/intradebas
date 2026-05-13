@@ -177,9 +177,9 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
 | Portal do Patrocinador | Acesso por link de e-mail para status da cota e cupons | ✅ Implementado |
 | Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | ✅ Implementado |
-| ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | 🟡 Parcial (página dedicada com dados reais; categorias/faixas ainda pendentes de regulamento) |
+| ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | 🟡 Parcial (página dedicada redesenhada com dados reais; categorias/faixas ainda pendentes de regulamento) |
 | Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
-| Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial |
+| Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial; vitrine pública redesenhada, rotação dinâmica ainda pendente |
 | Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) | ✅ Implementado |
 
 ## Módulo 2 — Painel Administrativo (Comissão Organizadora)
@@ -223,6 +223,13 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 - A home deixou de ser placeholder técnico e passou a exibir hero, fluxos principais e indicadores baseados em dados reais de atletas, equipes, modalidades, cotas e backdrop.
 - O shell público continua isolado das rotas administrativas e do login admin.
 - O frontend foi validado com `npm run build` e `npm run test:e2e`, incluindo cobertura específica para o novo layout público.
+
+### Atualização de Progresso — Feature 057
+
+- Resultados, ALDEBARUN, patrocínio, portal do patrocinador, backdrop e privacidade passaram a seguir o mesmo sistema visual público.
+- As páginas migradas mantiveram dados reais e estados vazios explícitos, sem retorno a textos ou blocos mockados.
+- Foram criados componentes públicos reutilizáveis adicionais para hero, métricas e painéis vazios.
+- O frontend foi validado com `npm run build` e `npm run test:e2e`, incluindo ampliação da suíte Playwright para as páginas públicas secundárias.
 
 ## Módulo 3 — Sistema de Autenticação
 
@@ -1498,7 +1505,7 @@ Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
 - [x] Módulo de autenticação (login, JWT, refresh e recuperação de senha implementados)
-- [~] Layout público (shell compartilhado e navbar dedicados implementados; countdown e refinamentos de páginas secundárias ainda pendentes)
+- [~] Layout público (shell compartilhado, navbar e páginas públicas principais redesenhadas; countdown e refinamentos secundários ainda pendentes)
 - [x] Sidebar do Admin adaptada
 - [x] Dashboard Admin com KPIs reais e padrão Studio Admin
 

@@ -1,3 +1,12 @@
+import Link from 'next/link';
+import { Flag, Timer, Trophy } from 'lucide-react';
+import { PublicEmptyPanel } from '@/components/public/empty-panel';
+import { PublicPageHero } from '@/components/public/page-hero';
+import { PublicSection, PublicSectionShell } from '@/components/public/section-shell';
+import { PublicStatCard } from '@/components/public/stat-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAldebarunResults, getAldebarunSports } from '../lib';
 
 function formatSchedule(value?: string | null) {
@@ -38,99 +47,134 @@ export default async function AldebarunPage() {
   }));
 
   return (
-    <main className="section">
-      <div className="shell">
-        <div className="card">
-          <span className="eyebrow">ALDEBARUN II</span>
-          <h1>Corrida da Familia</h1>
-          <p>
-            Pagina dedicada da corrida com modalidades reais, agenda operacional e ranking por
-            tempo a partir dos resultados gravados no backend.
-          </p>
-          <div className="cta-row">
-            <a className="button primary" href="/inscricao">
-              Fazer inscricao
-            </a>
-            <a className="button secondary" href="/resultados">
-              Ver placar geral
-            </a>
-          </div>
-        </div>
+    <main className="pb-8">
+      <PublicPageHero
+        eyebrow="ALDEBARUN II"
+        title="Corrida da familia com agenda e tempos oficiais"
+        description="Pagina dedicada da corrida com modalidades reais, agenda operacional e ranking por tempo a partir dos resultados gravados no backend."
+        actions={
+          <>
+            <Button asChild className="rounded-full">
+              <Link href="/inscricao">Fazer inscricao</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full">
+              <Link href="/resultados">Ver placar geral</Link>
+            </Button>
+          </>
+        }
+      />
 
-        <div className="grid-3" style={{ marginTop: '24px' }}>
-          <article className="card">
-            <small>Modalidades</small>
-            <strong>{sports.length}</strong>
-            <span>Corridas marcadas como ALDEBARUN no cadastro de modalidades.</span>
-          </article>
-          <article className="card">
-            <small>Resultados</small>
-            <strong>{results.length}</strong>
-            <span>Tempos e colocacoes publicadas pela comissao organizadora.</span>
-          </article>
-          <article className="card">
-            <small>Status</small>
-            <strong>Dados reais</strong>
-            <span>Sem fallback mockado no portal publico.</span>
-          </article>
-        </div>
+      <PublicSection className="py-4">
+        <PublicSectionShell className="grid gap-4 md:grid-cols-3">
+          <PublicStatCard
+            title="Modalidades"
+            value={sports.length}
+            detail="Corridas marcadas como ALDEBARUN no cadastro de modalidades."
+            icon={Flag}
+          />
+          <PublicStatCard
+            title="Resultados"
+            value={results.length}
+            detail="Tempos e colocacoes publicadas pela comissao organizadora."
+            icon={Timer}
+          />
+          <PublicStatCard
+            title="Status"
+            value="Dados reais"
+            detail="Sem fallback mockado no portal publico."
+            icon={Trophy}
+          />
+        </PublicSectionShell>
+      </PublicSection>
 
-        <div style={{ marginTop: '24px', display: 'grid', gap: '24px' }}>
+      <PublicSection className="pt-2">
+        <PublicSectionShell className="grid gap-6">
           {groupedResults.map(({ sport, results: sportResults }) => (
-            <section key={sport.id} className="card">
-              <span className="eyebrow">{sport.category}</span>
-              <h2>{sport.name}</h2>
-              <p>{sport.description || 'Modalidade dedicada da corrida ALDEBARUN.'}</p>
-              <p>
-                <strong>Agenda:</strong> {formatSchedule(sport.scheduleDate)}
-              </p>
-              {sport.scheduleNotes ? (
-                <p>
-                  <strong>Observacoes:</strong> {sport.scheduleNotes}
-                </p>
-              ) : null}
-
-              {sportResults.length === 0 ? (
-                <p style={{ marginTop: '16px' }}>
-                  Ainda nao ha tempos publicados para esta prova.
-                </p>
-              ) : (
-                <div className="ranking-list" style={{ marginTop: '16px' }}>
-                  {sportResults.map((result) => (
-                    <article key={result.id} className="ranking-item">
-                      <div>
-                        <small>{result.position}o lugar</small>
-                        <h3>{result.team?.name ?? 'Equipe nao informada'}</h3>
-                        <span>{result.notes ?? 'Resultado oficial da corrida'}</span>
-                      </div>
-                      <strong>{formatRawScore(result.rawScore)}</strong>
-                    </article>
-                  ))}
+            <Card
+              key={sport.id}
+              className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]"
+            >
+              <CardHeader className="space-y-3">
+                <Badge
+                  variant="secondary"
+                  className="w-fit rounded-full px-4 py-1 text-[0.7rem] uppercase tracking-[0.18em]"
+                >
+                  {sport.category}
+                </Badge>
+                <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                  {sport.name}
+                </CardTitle>
+                <div className="space-y-1 text-sm leading-7 text-slate-600">
+                  <p>{sport.description || 'Modalidade dedicada da corrida ALDEBARUN.'}</p>
+                  <p>
+                    <strong>Agenda:</strong> {formatSchedule(sport.scheduleDate)}
+                  </p>
+                  {sport.scheduleNotes ? (
+                    <p>
+                      <strong>Observacoes:</strong> {sport.scheduleNotes}
+                    </p>
+                  ) : null}
                 </div>
-              )}
-            </section>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                {sportResults.length === 0 ? (
+                  <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/70 p-5 text-sm text-slate-600">
+                    Ainda nao ha tempos publicados para esta prova.
+                  </div>
+                ) : (
+                  sportResults.map((result) => (
+                    <article
+                      key={result.id}
+                      className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-slate-200/80 bg-slate-50 px-5 py-4"
+                    >
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                          {result.position}o lugar
+                        </p>
+                        <h3 className="mt-1 text-xl font-black text-slate-950">
+                          {result.team?.name ?? 'Equipe nao informada'}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {result.notes ?? 'Resultado oficial da corrida'}
+                        </p>
+                      </div>
+                      <strong className="text-2xl font-black text-slate-950">
+                        {formatRawScore(result.rawScore)}
+                      </strong>
+                    </article>
+                  ))
+                )}
+              </CardContent>
+            </Card>
           ))}
 
           {sports.length === 0 ? (
-            <section className="card">
-              <h2>Nenhuma prova ALDEBARUN cadastrada</h2>
-              <p>
-                Cadastre modalidades com a flag ALDEBARUN no painel administrativo para publicar a
-                agenda e os rankings da corrida.
-              </p>
-            </section>
+            <PublicEmptyPanel
+              title="Nenhuma prova ALDEBARUN cadastrada"
+              description="Cadastre modalidades com a flag ALDEBARUN no painel administrativo para publicar a agenda e os rankings da corrida."
+            />
           ) : null}
-        </div>
+        </PublicSectionShell>
+      </PublicSection>
 
-        <section className="card" style={{ marginTop: '24px' }}>
-          <h2>Observacao de regulamento</h2>
-          <p>
-            O documento tecnico aponta que as faixas etarias e categorias por sexo ainda dependem
-            de regulamento oficial da organizacao. Ate essa definicao, a publicacao fica por prova
-            cadastrada e por tempo/colocacao oficial.
-          </p>
-        </section>
-      </div>
+      <PublicSection className="pt-2">
+        <PublicSectionShell>
+          <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <CardTitle className="text-2xl font-black tracking-tight text-slate-950">
+                Observacao de regulamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-7 text-slate-600">
+                O documento tecnico aponta que as faixas etarias e categorias por sexo ainda
+                dependem de regulamento oficial da organizacao. Ate essa definicao, a publicacao
+                fica por prova cadastrada e por tempo/colocacao oficial.
+              </p>
+            </CardContent>
+          </Card>
+        </PublicSectionShell>
+      </PublicSection>
     </main>
   );
 }

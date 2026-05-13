@@ -1,6 +1,16 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Briefcase, Gift, Layers3 } from 'lucide-react';
+import { PublicEmptyPanel } from '@/components/public/empty-panel';
+import { PublicPageHero } from '@/components/public/page-hero';
+import { PublicSection, PublicSectionShell } from '@/components/public/section-shell';
+import { PublicStatCard } from '@/components/public/stat-card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   SponsorshipQuotaSummary,
   createSponsorInterest,
@@ -54,74 +64,148 @@ export default function PatrocinioPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Patrocinio</span>
-        <h1>Cotas de patrocinio</h1>
-        <p>Veja a disponibilidade das cotas e registre seu interesse de patrocinio.</p>
-        <div className="cta-row" style={{ marginTop: '16px' }}>
-          <a className="button secondary" href="/patrocinador">
-            Ja sou patrocinador
-          </a>
-        </div>
+    <main className="pb-8">
+      <PublicPageHero
+        eyebrow="Patrocinio"
+        title="Cotas comerciais com disponibilidade real"
+        description="Veja a disponibilidade das cotas e registre seu interesse de patrocinio a partir dos dados reais do backend."
+        actions={
+          <>
+            <Button asChild className="rounded-full">
+              <Link href="/patrocinador">Ja sou patrocinador</Link>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full">
+              <Link href="/backdrop">Ver backdrop</Link>
+            </Button>
+          </>
+        }
+      />
 
-        <div className="grid-3 sponsorship-grid">
-          {quotas.map((quota) => (
-            <article key={quota.id} className="card sponsorship-card">
-              <h3>{quota.level.toUpperCase()}</h3>
-              <strong>R$ {quota.price.toFixed(2)}</strong>
-              <p>{quota.benefits ?? 'Beneficios a definir'}</p>
-              <small>
-                {quota.remainingSlots} vagas restantes de {quota.maxSlots}
-              </small>
-            </article>
-          ))}
-        </div>
+      <PublicSection className="py-4">
+        <PublicSectionShell className="grid gap-4 md:grid-cols-3">
+          <PublicStatCard
+            title="Cotas publicadas"
+            value={quotas.length}
+            detail="Niveis comerciais ativos no portal."
+            icon={Briefcase}
+          />
+          <PublicStatCard
+            title="Vagas restantes"
+            value={quotas.reduce((sum, quota) => sum + quota.remainingSlots, 0)}
+            detail="Capacidade ainda aberta para patrocinio."
+            icon={Layers3}
+          />
+          <PublicStatCard
+            title="Cortesias previstas"
+            value={quotas.reduce((sum, quota) => sum + quota.courtesyCount, 0)}
+            detail="Potencial total de cupons/cortesias das cotas publicadas."
+            icon={Gift}
+          />
+        </PublicSectionShell>
+      </PublicSection>
 
-        <div className="card" style={{ marginTop: '24px' }}>
-          <h2>Tenho interesse</h2>
-          <form className="form-grid" onSubmit={handleSubmit}>
-            <label>
-              <span>Empresa</span>
-              <input value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
-            </label>
-            <label>
-              <span>Contato</span>
-              <input value={contactName} onChange={(event) => setContactName(event.target.value)} />
-            </label>
-            <label>
-              <span>E-mail</span>
-              <input value={email} onChange={(event) => setEmail(event.target.value)} />
-            </label>
-            <label>
-              <span>Telefone</span>
-              <input value={phone} onChange={(event) => setPhone(event.target.value)} />
-            </label>
-            <label className="field-span">
-              <span>Cota</span>
-              <select value={selectedQuotaId} onChange={(event) => setSelectedQuotaId(event.target.value)}>
-                {quotas.map((quota) => (
-                  <option key={quota.id} value={quota.id} disabled={quota.remainingSlots <= 0}>
-                    {quota.level.toUpperCase()} - {quota.remainingSlots} vagas restantes
-                  </option>
-                ))}
-              </select>
-            </label>
+      <PublicSection className="pt-2">
+        <PublicSectionShell className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
+          <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                Niveis de patrocinio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              {quotas.length === 0 ? (
+                <PublicEmptyPanel
+                  title="Nenhuma cota publicada"
+                  description="As cotas aparecerao aqui assim que forem configuradas no painel administrativo."
+                />
+              ) : (
+                quotas.map((quota) => (
+                  <article
+                    key={quota.id}
+                    className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50 p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-xl font-black text-slate-950">
+                          {quota.level.toUpperCase()}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {quota.benefits ?? 'Beneficios a definir'}
+                        </p>
+                      </div>
+                      <strong className="text-xl font-black text-slate-950">
+                        R$ {quota.price.toFixed(2)}
+                      </strong>
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-slate-500">
+                      {quota.remainingSlots} vagas restantes de {quota.maxSlots}
+                    </p>
+                  </article>
+                ))
+              )}
+            </CardContent>
+          </Card>
 
-            {message ? <p className="success-text field-span">{message}</p> : null}
-            {error ? <p className="error-text field-span">{error}</p> : null}
+          <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                Tenho interesse
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                  <span>Empresa</span>
+                  <Input value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                  <span>Contato</span>
+                  <Input value={contactName} onChange={(event) => setContactName(event.target.value)} />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                  <span>E-mail</span>
+                  <Input value={email} onChange={(event) => setEmail(event.target.value)} />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                  <span>Telefone</span>
+                  <Input value={phone} onChange={(event) => setPhone(event.target.value)} />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-slate-700 md:col-span-2">
+                  <span>Cota</span>
+                  <Select value={selectedQuotaId} onValueChange={setSelectedQuotaId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma cota" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {quotas.map((quota) => (
+                        <SelectItem
+                          key={quota.id}
+                          value={quota.id}
+                          disabled={quota.remainingSlots <= 0}
+                        >
+                          {quota.level.toUpperCase()} - {quota.remainingSlots} vagas restantes
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
 
-            <div className="field-span cta-row">
-              <button className="button primary" type="submit" disabled={submitting || !selectedQuotaId}>
-                {submitting ? 'Enviando...' : 'Registrar interesse'}
-              </button>
-              <a className="button secondary" href="/patrocinador">
-                Entrar no portal do patrocinador
-              </a>
-            </div>
-          </form>
-        </div>
-      </div>
+                {message ? <p className="success-text md:col-span-2">{message}</p> : null}
+                {error ? <p className="error-text md:col-span-2">{error}</p> : null}
+
+                <div className="flex flex-wrap gap-3 md:col-span-2">
+                  <Button type="submit" className="rounded-full" disabled={submitting || !selectedQuotaId}>
+                    {submitting ? 'Enviando...' : 'Registrar interesse'}
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-full">
+                    <Link href="/patrocinador">Entrar no portal do patrocinador</Link>
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </PublicSectionShell>
+      </PublicSection>
     </main>
   );
 }

@@ -1,6 +1,15 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { CreditCard, Mail, Ticket } from 'lucide-react';
+import { PublicEmptyPanel } from '@/components/public/empty-panel';
+import { PublicPageHero } from '@/components/public/page-hero';
+import { PublicSection, PublicSectionShell } from '@/components/public/section-shell';
+import { PublicStatCard } from '@/components/public/stat-card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   SponsorPortalSession,
   getSponsorPortalSession,
@@ -68,106 +77,164 @@ export default function PatrocinadorPage() {
   }
 
   return (
-    <main className="section">
-      <div className="shell">
-        <span className="eyebrow">Portal do patrocinador</span>
-        <h1>Acompanhe sua cota e seus cupons</h1>
-        <p>
-          Solicite um link de acesso por e-mail para visualizar o status da sua cota, cortesias e
-          cupons gerados.
-        </p>
+    <main className="pb-8">
+      <PublicPageHero
+        eyebrow="Portal do patrocinador"
+        title="Acompanhe sua cota e seus cupons"
+        description="Solicite um link de acesso por e-mail para visualizar o status da sua cota, cortesias e cupons gerados."
+        actions={
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href="/patrocinio">Voltar para cotas</Link>
+          </Button>
+        }
+      />
 
-        <div className="card" style={{ marginTop: '24px' }}>
-          <h2>Receber link de acesso</h2>
-          <form className="form-grid" onSubmit={handleSubmit}>
-            <label className="field-span">
-              <span>E-mail do patrocinador</span>
-              <input value={email} onChange={(event) => setEmail(event.target.value)} />
-            </label>
+      <PublicSection className="pt-2">
+        <PublicSectionShell className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+            <CardHeader>
+              <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                Receber link de acesso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-4" onSubmit={handleSubmit}>
+                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                  <span>E-mail do patrocinador</span>
+                  <Input value={email} onChange={(event) => setEmail(event.target.value)} />
+                </label>
 
-            {message ? <p className="success-text field-span">{message}</p> : null}
-            {error ? <p className="error-text field-span">{error}</p> : null}
+                {message ? <p className="success-text">{message}</p> : null}
+                {error ? <p className="error-text">{error}</p> : null}
 
-            <div className="field-span cta-row">
-              <button className="button primary" type="submit" disabled={submitting || !email}>
-                {submitting ? 'Enviando...' : 'Enviar link'}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {loadingSession ? <p style={{ marginTop: '24px' }}>Carregando portal...</p> : null}
-
-        {session ? (
-          <>
-            <div className="grid-3" style={{ marginTop: '24px' }}>
-              <article className="card">
-                <small>Patrocinador</small>
-                <strong>{session.sponsor.companyName}</strong>
-                <span>{session.sponsor.contactName}</span>
-              </article>
-              <article className="card">
-                <small>Cota</small>
-                <strong>{session.sponsor.quota.level.toUpperCase()}</strong>
-                <span>{formatMoney(session.sponsor.quota.price)}</span>
-              </article>
-              <article className="card">
-                <small>Cupons</small>
-                <strong>{session.coupons.length}</strong>
-                <span>Status: {session.sponsor.status}</span>
-              </article>
-            </div>
-
-            <div className="card" style={{ marginTop: '24px' }}>
-              <h2>Resumo da cota</h2>
-              <p>E-mail: {session.sponsor.email}</p>
-              <p>Telefone: {session.sponsor.phone || 'Nao informado'}</p>
-              <p>Cortesias previstas: {session.sponsor.quota.courtesyCount}</p>
-              <p>Beneficios: {session.sponsor.quota.benefits || 'A definir'}</p>
-              <p>
-                Pagamento:{' '}
-                {session.sponsor.paymentDate
-                  ? new Date(session.sponsor.paymentDate).toLocaleString('pt-BR')
-                  : 'Ainda nao confirmado'}
-              </p>
-              <p>Observacoes: {session.sponsor.paymentNotes || 'Sem observacoes registradas'}</p>
-            </div>
-
-            <div className="card" style={{ marginTop: '24px' }}>
-              <h2>Cupons gerados</h2>
-              {session.coupons.length === 0 ? (
-                <p>Nenhum cupom foi gerado para esta cota ainda.</p>
-              ) : (
-                <div className="review-grid">
-                  {session.coupons.map((coupon) => (
-                    <article key={coupon.id} className="card review-card">
-                      <div className="review-header">
-                        <div>
-                          <h3>{coupon.code}</h3>
-                          <small>{coupon.status}</small>
-                        </div>
-                      </div>
-                      <p>Gerado em: {new Date(coupon.createdAt).toLocaleString('pt-BR')}</p>
-                      <p>
-                        Utilizado por:{' '}
-                        {coupon.athlete
-                          ? `${coupon.athlete.name} (${coupon.athlete.cpf})`
-                          : 'Nao utilizado'}
-                      </p>
-                      <p>
-                        Data de uso:{' '}
-                        {coupon.redeemedAt
-                          ? new Date(coupon.redeemedAt).toLocaleString('pt-BR')
-                          : 'Ainda disponivel'}
-                      </p>
-                    </article>
-                  ))}
+                <div className="flex flex-wrap gap-3">
+                  <Button type="submit" className="rounded-full" disabled={submitting || !email}>
+                    {submitting ? 'Enviando...' : 'Enviar link'}
+                  </Button>
                 </div>
-              )}
-            </div>
-          </>
-        ) : null}
-      </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
+            <PublicStatCard
+              title="Acesso"
+              value={loadingSession ? 'Carregando' : session ? 'Ativo' : 'Email'}
+              detail="O portal abre com link assinado enviado ao patrocinador."
+              icon={Mail}
+            />
+            <PublicStatCard
+              title="Cupons"
+              value={session?.coupons.length ?? 0}
+              detail="Quantidade total de cortesias emitidas para a cota carregada."
+              icon={Ticket}
+            />
+            <PublicStatCard
+              title="Pagamento"
+              value={session?.sponsor.paymentDate ? 'Confirmado' : 'Pendente'}
+              detail="Status financeiro conforme registro administrativo atual."
+              icon={CreditCard}
+            />
+          </div>
+        </PublicSectionShell>
+      </PublicSection>
+
+      {session ? (
+        <>
+          <PublicSection className="py-4">
+            <PublicSectionShell className="grid gap-4 md:grid-cols-3">
+              <PublicStatCard
+                title="Patrocinador"
+                value={session.sponsor.companyName}
+                detail={session.sponsor.contactName}
+                icon={Mail}
+              />
+              <PublicStatCard
+                title="Cota"
+                value={session.sponsor.quota.level.toUpperCase()}
+                detail={formatMoney(session.sponsor.quota.price)}
+                icon={CreditCard}
+              />
+              <PublicStatCard
+                title="Cupons"
+                value={session.coupons.length}
+                detail={`Status: ${session.sponsor.status}`}
+                icon={Ticket}
+              />
+            </PublicSectionShell>
+          </PublicSection>
+
+          <PublicSection className="pt-2">
+            <PublicSectionShell className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+                <CardHeader>
+                  <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                    Resumo da cota
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-2 text-sm leading-7 text-slate-600">
+                  <p>E-mail: {session.sponsor.email}</p>
+                  <p>Telefone: {session.sponsor.phone || 'Nao informado'}</p>
+                  <p>Cortesias previstas: {session.sponsor.quota.courtesyCount}</p>
+                  <p>Beneficios: {session.sponsor.quota.benefits || 'A definir'}</p>
+                  <p>
+                    Pagamento:{' '}
+                    {session.sponsor.paymentDate
+                      ? new Date(session.sponsor.paymentDate).toLocaleString('pt-BR')
+                      : 'Ainda nao confirmado'}
+                  </p>
+                  <p>Observacoes: {session.sponsor.paymentNotes || 'Sem observacoes registradas'}</p>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+                <CardHeader>
+                  <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
+                    Cupons gerados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  {session.coupons.length === 0 ? (
+                    <PublicEmptyPanel
+                      title="Nenhum cupom gerado"
+                      description="Nenhum cupom foi gerado para esta cota ainda."
+                    />
+                  ) : (
+                    session.coupons.map((coupon) => (
+                      <article
+                        key={coupon.id}
+                        className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50 p-5"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-xl font-black text-slate-950">{coupon.code}</h3>
+                            <p className="text-sm font-semibold text-slate-500">{coupon.status}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-1 text-sm leading-7 text-slate-600">
+                          <p>Gerado em: {new Date(coupon.createdAt).toLocaleString('pt-BR')}</p>
+                          <p>
+                            Utilizado por:{' '}
+                            {coupon.athlete
+                              ? `${coupon.athlete.name} (${coupon.athlete.cpf})`
+                              : 'Nao utilizado'}
+                          </p>
+                          <p>
+                            Data de uso:{' '}
+                            {coupon.redeemedAt
+                              ? new Date(coupon.redeemedAt).toLocaleString('pt-BR')
+                              : 'Ainda disponivel'}
+                          </p>
+                        </div>
+                      </article>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </PublicSectionShell>
+          </PublicSection>
+        </>
+      ) : null}
     </main>
   );
 }
