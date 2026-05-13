@@ -22,20 +22,40 @@ describe('ResultsService', () => {
   });
 
   it('aggregates ranking totals by team and sorts descending', async () => {
-    prisma.result.groupBy.mockResolvedValue([
-      {
-        teamId: 'team-1',
-        _sum: {
-          calculatedPoints: 8,
+    prisma.result.groupBy
+      .mockResolvedValueOnce([
+        {
+          teamId: 'team-1',
+          _sum: {
+            calculatedPoints: 8,
+          },
         },
-      },
-      {
-        teamId: 'team-2',
-        _sum: {
-          calculatedPoints: 2,
+        {
+          teamId: 'team-2',
+          _sum: {
+            calculatedPoints: 2,
+          },
         },
-      },
-    ]);
+      ])
+      .mockResolvedValueOnce([
+        {
+          teamId: 'team-1',
+          _count: {
+            _all: 1,
+          },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          teamId: 'team-1',
+          _count: {
+            _all: 2,
+          },
+        },
+      ]);
+    prisma.rankingSettings.findUnique.mockResolvedValue({
+      tieBreakRule: 'most_wins',
+    });
     prisma.team.findMany.mockResolvedValue([
       {
         id: 'team-1',
@@ -51,7 +71,7 @@ describe('ResultsService', () => {
 
     const ranking = await service.getRanking();
 
-    expect(prisma.result.groupBy).toHaveBeenCalledWith({
+    expect(prisma.result.groupBy).toHaveBeenNthCalledWith(1, {
       by: ['teamId'],
       _sum: {
         calculatedPoints: true,
@@ -62,8 +82,74 @@ describe('ResultsService', () => {
         },
       },
     });
-    expect(ranking[0]).toMatchObject({ id: 'team-1', totalScore: 8 });
-    expect(ranking[1]).toMatchObject({ id: 'team-2', totalScore: 2 });
+    expect(ranking[0]).toMatchObject({ id: 'team-1', totalScore: 8, wins: 1, podiums: 2 });
+    expect(ranking[1]).toMatchObject({ id: 'team-2', totalScore: 2, wins: 0, podiums: 0 });
+  });
+
+  it('uses configured tie-break rule when total score is tied', async () => {
+    prisma.result.groupBy
+      .mockResolvedValueOnce([
+        {
+          teamId: 'team-1',
+          _sum: {
+            calculatedPoints: 8,
+          },
+        },
+        {
+          teamId: 'team-2',
+          _sum: {
+            calculatedPoints: 8,
+          },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          teamId: 'team-1',
+          _count: {
+            _all: 1,
+          },
+        },
+        {
+          teamId: 'team-2',
+          _count: {
+            _all: 1,
+          },
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          teamId: 'team-1',
+          _count: {
+            _all: 2,
+          },
+        },
+        {
+          teamId: 'team-2',
+          _count: {
+            _all: 3,
+          },
+        },
+      ]);
+    prisma.rankingSettings.findUnique.mockResolvedValue({
+      tieBreakRule: 'most_podiums',
+    });
+    prisma.team.findMany.mockResolvedValue([
+      {
+        id: 'team-1',
+        name: 'Mucura',
+        color: '#E63946',
+      },
+      {
+        id: 'team-2',
+        name: 'Jacare',
+        color: '#2D6A4F',
+      },
+    ]);
+
+    const ranking = await service.getRanking();
+
+    expect(ranking[0]).toMatchObject({ id: 'team-2', totalScore: 8, podiums: 3 });
+    expect(ranking[1]).toMatchObject({ id: 'team-1', totalScore: 8, podiums: 2 });
   });
 
   it('creates a result with calculated points from scoring config', async () => {
@@ -122,14 +208,41 @@ describe('ResultsService', () => {
   });
 
   it('streams the ranking payload for SSE consumers', async () => {
-    prisma.result.groupBy.mockResolvedValue([
-      {
-        teamId: 'team-1',
-        _sum: {
-          calculatedPoints: 5,
+    prisma.result.groupBy.mockImplementation(({ _sum, where }: any) => {
+      if (_sum) {
+        return Promise.resolve([
+          {
+            teamId: 'team-1',
+            _sum: {
+              calculatedPoints: 5,
+            },
+          },
+        ]);
+      }
+
+      if (where?.position === 1) {
+        return Promise.resolve([
+          {
+            teamId: 'team-1',
+            _count: {
+              _all: 1,
+            },
+          },
+        ]);
+      }
+
+      return Promise.resolve([
+        {
+          teamId: 'team-1',
+          _count: {
+            _all: 1,
+          },
         },
-      },
-    ]);
+      ]);
+    });
+    prisma.rankingSettings.findUnique.mockResolvedValue({
+      tieBreakRule: 'most_wins',
+    });
     prisma.team.findMany.mockResolvedValue([
       {
         id: 'team-1',
@@ -146,7 +259,17 @@ describe('ResultsService', () => {
     const event = await eventPromise;
 
     expect(event).toEqual({
-      data: [{ id: 'team-1', name: 'Mucura', color: '#E63946', totalScore: 5 }],
+      data: [
+        {
+          id: 'team-1',
+          name: 'Mucura',
+          color: '#E63946',
+          totalScore: 5,
+          wins: 1,
+          podiums: 1,
+          tieBreakRule: 'most_wins',
+        },
+      ],
     });
   });
 

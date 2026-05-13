@@ -118,6 +118,21 @@ async function main() {
       },
     });
   }
+
+  await prisma.rankingSettings.upsert({
+    where: {
+      id: 'default',
+    },
+    update: {
+      tieBreakRule: 'most_wins',
+      updatedBy: admin.id,
+    },
+    create: {
+      id: 'default',
+      tieBreakRule: 'most_wins',
+      updatedBy: admin.id,
+    },
+  });
 }
 
 main()

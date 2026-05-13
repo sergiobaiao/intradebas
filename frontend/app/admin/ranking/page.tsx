@@ -31,6 +31,13 @@ export default function AdminRankingPage() {
   }
 
   const maxScore = Math.max(...ranking.map(r => r.totalScore), 1);
+  const activeTieBreak = ranking[0]?.tieBreakRule ?? 'most_wins';
+  const tieBreakLabel =
+    activeTieBreak === 'most_podiums'
+      ? 'Maior numero de podios'
+      : activeTieBreak === 'alphabetical'
+        ? 'Ordem alfabetica'
+        : 'Maior numero de vitorias';
 
   return (
     <div className="admin-screen-content">
@@ -65,6 +72,9 @@ export default function AdminRankingPage() {
                   <div>
                     <span style={{ background: team.color || '#ccc' }}></span>
                     <strong style={{ fontSize: '1rem' }}>#{index + 1} {team.name}</strong>
+                    <small style={{ display: 'block', marginLeft: '22px', color: '#6b7280' }}>
+                      {team.wins} vitorias · {team.podiums} podios
+                    </small>
                   </div>
                   <div className="admin-score-track">
                     <span style={{ background: team.color || '#ccc', width: `${(team.totalScore / maxScore) * 100}%` }}></span>
@@ -88,6 +98,10 @@ export default function AdminRankingPage() {
              <div>
                <span>Lider</span>
                <strong>{ranking[0]?.name || '—'}</strong>
+             </div>
+             <div>
+               <span>Desempate</span>
+               <strong>{tieBreakLabel}</strong>
              </div>
           </div>
         </section>

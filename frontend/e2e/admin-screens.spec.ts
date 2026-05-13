@@ -20,6 +20,7 @@ const adminRoutes = [
   { path: '/admin/lgpd', heading: 'LGPD' },
   { path: '/admin/auditoria', heading: 'Logs de auditoria' },
   { path: '/admin/usuarios', heading: 'Usuarios do sistema' },
+  { path: '/admin/configuracoes', heading: 'Pontuacao e regras' },
 ];
 
 const formRoutes = [

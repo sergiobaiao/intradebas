@@ -74,7 +74,7 @@ A arquitetura é **Docker-first** desde a concepção, operando sobre o template
 | A04 | Categorias etárias não mencionadas | Assumido: sem divisão por faixa etária no MVP; campo de data de nascimento coletado para uso futuro | ✅ Sim |
 | A05 | Autenticação de admins não detalhada | Login/senha com JWT. Apenas e-mails pré-cadastrados da Comissão têm acesso | ✅ Sim |
 | A06 | Cronograma de datas das modalidades não fornecido | Gerenciado pelo Admin via módulo de cronograma | ✅ Sim |
-| A07 | Regras de desempate não especificadas | Configurável no Admin; default: maior número de vitórias | ✅ Sim |
+| A07 | Regras de desempate não especificadas | Configurável no Admin; default operacional: maior número de vitórias, com suporte adicional a pódios e ordem alfabética | ✅ Sim |
 | A08 | Processo de resgate de cortesias não detalhado | Código de cupom gerado e enviado por e-mail; resgate via formulário de inscrição | ✅ Sim |
 | A09 | Aprovação de inscrição de Convidados não especificada | Convidados exigem aprovação manual do Admin antes de ativação | ✅ Sim |
 | A10 | Limite de convidados por morador não especificado | Default: máximo 2 convidados por unidade residencial | ✅ Sim |
@@ -194,7 +194,7 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 | Gestão de Ranking | Visualização e auditoria do placar consolidado | ✅ Implementado |
 | Gestão de Mídia | Upload de fotos, cadastro de URLs de vídeo | ✅ Implementado |
 | Gestão de Backdrop | Cadastro e ordenação de logos de patrocinadores | 🟡 Parcial; interface administrativa padronizada |
-| Configurações | Tabela de pesos de pontuação, limites, regras de desempate | 🟡 Parcial; interface administrativa padronizada, pesos implementados, limites/regras pendentes |
+| Configurações | Tabela de pesos de pontuação, limites, regras de desempate | ✅ Implementado |
 | Logs de Auditoria | Histórico de alterações em resultados e dados críticos | 🟡 Parcial; interface administrativa padronizada, resultados, atletas, equipes, modalidades e patrocinadores implementados |
 
 ### Atualização de Progresso — Features 051 e 052
@@ -244,6 +244,13 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 - O backend passou a validar limites inconsistentes e a impedir novas inscrições quando a modalidade atingir sua capacidade máxima.
 - O fluxo de criação e edição de atletas agora respeita a lotação configurada por modalidade.
 - Backend e frontend foram validados com `npm test`, `npm run build` e `npm run test:e2e`.
+
+### Atualização de Progresso — Feature 060
+
+- O painel de configurações passou a permitir selecionar a regra de desempate do ranking entre vitórias, pódios e ordem alfabética.
+- O backend passou a persistir essa configuração e a invalidar o cache do ranking sempre que a regra for alterada.
+- O ranking administrativo passou a expor vitórias e pódios por equipe, deixando o critério de ordenação auditável pela comissão.
+- Backend e frontend foram validados com `npm run prisma:generate`, `npm test`, `npm run build` e `npm run test:e2e`.
 
 ## Módulo 3 — Sistema de Autenticação
 

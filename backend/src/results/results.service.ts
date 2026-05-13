@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, RankingTieBreakRule } from '@prisma/client';
 import { from, map, Observable, startWith, switchMap } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisPubSubService } from '../realtime/redis-pubsub.service';
@@ -202,7 +202,7 @@ export class ResultsService {
       return cached;
     }
 
-    const [aggregated, teams] = await Promise.all([
+    const [aggregated, wins, podiums, teams, settings] = await Promise.all([
       this.prisma.result.groupBy({
         by: ['teamId'],
         _sum: {
@@ -211,6 +211,32 @@ export class ResultsService {
         where: {
           teamId: {
             not: null,
+          },
+        },
+      }),
+      this.prisma.result.groupBy({
+        by: ['teamId'],
+        _count: {
+          _all: true,
+        },
+        where: {
+          teamId: {
+            not: null,
+          },
+          position: 1,
+        },
+      }),
+      this.prisma.result.groupBy({
+        by: ['teamId'],
+        _count: {
+          _all: true,
+        },
+        where: {
+          teamId: {
+            not: null,
+          },
+          position: {
+            lte: 3,
           },
         },
       }),
@@ -224,6 +250,12 @@ export class ResultsService {
           name: 'asc',
         },
       }),
+      this.prisma.rankingSettings.findUnique({
+        where: { id: 'default' },
+        select: {
+          tieBreakRule: true,
+        },
+      }),
     ]);
 
     const totalsByTeam = new Map(
@@ -231,6 +263,17 @@ export class ResultsService {
         .filter((row) => row.teamId)
         .map((row) => [row.teamId as string, row._sum.calculatedPoints ?? 0]),
     );
+    const winsByTeam = new Map(
+      wins
+        .filter((row) => row.teamId)
+        .map((row) => [row.teamId as string, row._count._all]),
+    );
+    const podiumsByTeam = new Map(
+      podiums
+        .filter((row) => row.teamId)
+        .map((row) => [row.teamId as string, row._count._all]),
+    );
+    const tieBreakRule = settings?.tieBreakRule ?? RankingTieBreakRule.most_wins;
 
     const ranking = teams
       .map((team) => ({
@@ -238,10 +281,33 @@ export class ResultsService {
         name: team.name,
         color: team.color,
         totalScore: totalsByTeam.get(team.id) ?? 0,
+        wins: winsByTeam.get(team.id) ?? 0,
+        podiums: podiumsByTeam.get(team.id) ?? 0,
+        tieBreakRule,
       }))
       .sort((left: RankingRow, right: RankingRow) => {
         if (right.totalScore !== left.totalScore) {
           return right.totalScore - left.totalScore;
+        }
+
+        if (tieBreakRule === RankingTieBreakRule.most_wins) {
+          if (right.wins !== left.wins) {
+            return right.wins - left.wins;
+          }
+
+          if (right.podiums !== left.podiums) {
+            return right.podiums - left.podiums;
+          }
+        }
+
+        if (tieBreakRule === RankingTieBreakRule.most_podiums) {
+          if (right.podiums !== left.podiums) {
+            return right.podiums - left.podiums;
+          }
+
+          if (right.wins !== left.wins) {
+            return right.wins - left.wins;
+          }
         }
 
         return left.name.localeCompare(right.name);
@@ -591,4 +657,7 @@ type RankingRow = {
   name: string;
   color: string | null;
   totalScore: number;
+  wins: number;
+  podiums: number;
+  tieBreakRule: RankingTieBreakRule;
 };

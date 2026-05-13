@@ -67,6 +67,10 @@ export function createPrismaMock() {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    rankingSettings: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+    },
     sponsorshipQuota: {
       findMany: jest.fn(),
       findUnique: jest.fn(),

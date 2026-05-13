@@ -41,6 +41,12 @@ enum SportCategory {
   fitness
 }
 
+enum RankingTieBreakRule {
+  alphabetical
+  most_wins
+  most_podiums
+}
+
 enum RegistrationStatus {
   registered
   confirmed
@@ -103,6 +109,7 @@ model User {
   resultChanges   ResultAuditLog[]  @relation("audit_changed_by")
   auditLogs       AuditLog[]        @relation("generic_audit_changed_by")
   scoringConfigs  ScoringConfig[]
+  rankingSettings RankingSettings[]
   uploadedMedia   Media[]
   reviewedLgpdDeletionRequests LgpdDeletionRequest[] @relation("lgpd_deletion_request_reviewed_by")
   passwordResetTokens PasswordResetToken[]
@@ -301,6 +308,18 @@ model ScoringConfig {
   @@unique([category, position])
   @@index([updatedBy])
   @@map("scoring_config")
+}
+
+model RankingSettings {
+  id           String              @id
+  tieBreakRule RankingTieBreakRule @default(most_wins) @map("tie_break_rule")
+  updatedBy    String              @map("updated_by")
+  updatedAt    DateTime            @default(now()) @updatedAt @map("updated_at")
+
+  updatedByUser User @relation(fields: [updatedBy], references: [id])
+
+  @@index([updatedBy])
+  @@map("ranking_settings")
 }
 
 model SponsorshipQuota {

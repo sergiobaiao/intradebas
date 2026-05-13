@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import {
   CreateScoringConfigInput,
+  RankingSettingsSummary,
   ScoringConfigSummary,
   adminCreateScoringConfig,
   adminDeleteScoringConfig,
+  adminGetRankingSettings,
   adminGetScoringConfig,
+  adminUpdateRankingSettings,
   adminUpdateScoringConfig,
 } from '../../lib';
 
@@ -21,6 +24,9 @@ export default function AdminConfiguracoesPage() {
   const [newPoints, setNewPoints] = useState('0');
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [rankingSettings, setRankingSettings] = useState<RankingSettingsSummary | null>(null);
+  const [tieBreakRule, setTieBreakRule] = useState<RankingSettingsSummary['tieBreakRule']>('most_wins');
+  const [savingTieBreak, setSavingTieBreak] = useState(false);
 
   useEffect(() => {
     void loadData();
@@ -30,11 +36,31 @@ export default function AdminConfiguracoesPage() {
     setLoading(true);
     setError(null);
     try {
-      setRows(await adminGetScoringConfig());
+      const [loadedRows, loadedRankingSettings] = await Promise.all([
+        adminGetScoringConfig(),
+        adminGetRankingSettings(),
+      ]);
+      setRows(loadedRows);
+      setRankingSettings(loadedRankingSettings);
+      setTieBreakRule(loadedRankingSettings.tieBreakRule);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar configuracoes');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveTieBreakRule() {
+    setSavingTieBreak(true);
+    setError(null);
+
+    try {
+      const updated = await adminUpdateRankingSettings({ tieBreakRule });
+      setRankingSettings(updated);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Falha ao atualizar regra de desempate');
+    } finally {
+      setSavingTieBreak(false);
     }
   }
 
@@ -113,6 +139,49 @@ export default function AdminConfiguracoesPage() {
       <div className="admin-content-grid">
         <section className="admin-panel">
           <div className="admin-panel-header">
+             <h2>Regra de desempate do ranking</h2>
+          </div>
+          <div className="form-grid" style={{ marginTop: 0 }}>
+            <label className="field-span">
+              <span className="admin-kicker" style={{ fontSize: '0.7rem' }}>Criterio principal em caso de empate por pontos</span>
+              <select
+                style={{ minHeight: '38px', borderRadius: '10px' }}
+                value={tieBreakRule}
+                onChange={(event) =>
+                  setTieBreakRule(event.target.value as RankingSettingsSummary['tieBreakRule'])
+                }
+              >
+                <option value="most_wins">Maior numero de vitorias</option>
+                <option value="most_podiums">Maior numero de podios</option>
+                <option value="alphabetical">Ordem alfabetica</option>
+              </select>
+            </label>
+            <div className="field-span" style={{ color: '#4b5563', fontSize: '0.9rem' }}>
+              {rankingSettings?.updatedByUser ? (
+                <span>
+                  Ultima definicao por <strong>{rankingSettings.updatedByUser.name}</strong> em{' '}
+                  {new Date(rankingSettings.updatedAt).toLocaleString('pt-BR')}
+                </span>
+              ) : (
+                <span>Sem definicao persistida; o sistema usa maior numero de vitorias como padrao.</span>
+              )}
+            </div>
+            <div className="admin-topbar-actions field-span" style={{ justifyContent: 'flex-start', marginTop: '10px' }}>
+              <button
+                className="admin-quick-action"
+                style={{ minHeight: '40px', padding: '0 20px' }}
+                type="button"
+                onClick={() => void saveTieBreakRule()}
+                disabled={savingTieBreak}
+              >
+                {savingTieBreak ? 'Salvando...' : 'Salvar regra de desempate'}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-header">
              <h2>Nova regra de pontuacao</h2>
           </div>
           <div className="form-grid" style={{ marginTop: 0 }}>
@@ -177,6 +246,16 @@ export default function AdminConfiguracoesPage() {
              <div>
                <span>Categorias</span>
                <strong>{new Set(rows.map(r => r.category)).size}</strong>
+             </div>
+             <div>
+               <span>Desempate ativo</span>
+               <strong>
+                 {tieBreakRule === 'most_wins'
+                   ? 'Vitorias'
+                   : tieBreakRule === 'most_podiums'
+                     ? 'Podios'
+                     : 'Alfabetico'}
+               </strong>
              </div>
           </div>
         </section>

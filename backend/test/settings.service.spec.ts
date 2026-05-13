@@ -1,14 +1,48 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SportCategory } from '@prisma/client';
+import { RedisPubSubService } from '../src/realtime/redis-pubsub.service';
 import { SettingsService } from '../src/settings/settings.service';
 import { createPrismaMock } from './helpers';
 
 describe('SettingsService', () => {
   const prisma = createPrismaMock();
-  const service = new SettingsService(prisma as any);
+  const redisPubSub = {
+    deleteCache: jest.fn(),
+    publish: jest.fn(),
+  } as unknown as RedisPubSubService;
+  const service = new SettingsService(prisma as any, redisPubSub);
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('returns persisted ranking settings when available', async () => {
+    prisma.rankingSettings.findUnique.mockResolvedValue({
+      id: 'default',
+      tieBreakRule: 'most_wins',
+      updatedAt: new Date('2026-05-12T12:00:00Z'),
+      updatedByUser: {
+        id: 'user-1',
+        name: 'Admin',
+        email: 'admin@intradebas.local',
+      },
+    });
+
+    const result = await service.getRankingSettings();
+
+    expect(result.tieBreakRule).toBe('most_wins');
+  });
+
+  it('falls back to default ranking settings when nothing is persisted', async () => {
+    prisma.rankingSettings.findUnique.mockResolvedValue(null);
+
+    const result = await service.getRankingSettings();
+
+    expect(result).toMatchObject({
+      id: 'default',
+      tieBreakRule: 'most_wins',
+      updatedByUser: null,
+    });
   });
 
   it('lists scoring configuration with updater context', async () => {
@@ -131,6 +165,31 @@ describe('SettingsService', () => {
 
     await expect(service.deleteScoringConfig('missing')).rejects.toBeInstanceOf(
       NotFoundException,
+    );
+  });
+
+  it('updates ranking settings and invalidates ranking cache', async () => {
+    prisma.rankingSettings.upsert.mockResolvedValue({
+      id: 'default',
+      tieBreakRule: 'most_podiums',
+      updatedAt: new Date('2026-05-12T12:00:00Z'),
+      updatedByUser: {
+        id: 'user-1',
+        name: 'Admin',
+        email: 'admin@intradebas.local',
+      },
+    });
+
+    const result = await service.updateRankingSettings(
+      { tieBreakRule: 'most_podiums' },
+      'user-1',
+    );
+
+    expect(result.tieBreakRule).toBe('most_podiums');
+    expect(redisPubSub.deleteCache).toHaveBeenCalledWith('intradebas:results:ranking');
+    expect(redisPubSub.publish).toHaveBeenCalledWith(
+      'intradebas:results:ranking-updated',
+      expect.objectContaining({ type: 'ranking-updated' }),
     );
   });
 });

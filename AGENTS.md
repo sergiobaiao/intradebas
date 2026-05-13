@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2026-05-12
 
 ## Active Technologies
+- TypeScript 5.7, React 18, Next.js 15, NestJS, Prisma 6.7, ranking tie-break persistence in `backend/src/settings`, ranking ordering metrics in `backend/src/results`, admin settings/ranking UI in `frontend/app/admin` (060-ranking-tiebreak-settings)
 - TypeScript 5.7, React 18, Next.js 15, NestJS, Tailwind CSS 3.4, participant capacity rules in `backend/src/sports` and `backend/src/athletes`, admin modality forms in `frontend/app/admin/modalidades` (059-sports-capacity-enforcement)
 - TypeScript 5.7, React 18, Next.js 15, NestJS, Tailwind CSS 3.4, public media endpoint in `backend/src/media`, countdown/backdrop/media components in `frontend/components/public` (058-public-experience-completion)
 - TypeScript 5.7, React 18, Next.js 15, Tailwind CSS 3.4, shadcn/ui primitives, public shared page components in `frontend/components/public`, public routes redesigned around real API data (057-public-pages-redesign)
@@ -29,6 +30,7 @@ npm test && npm run lint
 TypeScript 5.7, React 18, Next.js 15: Follow standard conventions
 
 ## Recent Changes
+- 060-ranking-tiebreak-settings: Added persisted ranking tie-break settings, real wins/podium metrics in ranking responses, and admin controls for selecting the tie-break rule
 - 059-sports-capacity-enforcement: Added configurable min/max participant limits for sports, backend enforcement during athlete registration, and admin editing for modality capacity
 - 058-public-experience-completion: Added public media API exposure, `/midia`, home countdown based on scheduled sports, and rotating backdrop experience
 - 057-public-pages-redesign: Migrated the remaining main public pages to the shared public visual system and expanded Playwright coverage for those routes

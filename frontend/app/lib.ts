@@ -203,6 +203,9 @@ export type RankingRow = {
   name: string;
   color?: string | null;
   totalScore: number;
+  wins: number;
+  podiums: number;
+  tieBreakRule: 'alphabetical' | 'most_wins' | 'most_podiums';
 };
 
 export type SportSummary = {
@@ -407,10 +410,25 @@ export type ScoringConfigSummary = {
   };
 };
 
+export type RankingSettingsSummary = {
+  id: string;
+  tieBreakRule: 'alphabetical' | 'most_wins' | 'most_podiums';
+  updatedAt: string;
+  updatedByUser?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+};
+
 export type CreateScoringConfigInput = {
   category: 'coletiva' | 'individual' | 'dupla' | 'fitness';
   position: number;
   points: number;
+};
+
+export type UpdateRankingSettingsInput = {
+  tieBreakRule: 'alphabetical' | 'most_wins' | 'most_podiums';
 };
 
 export type CreateAdminUserInput = {
@@ -1149,6 +1167,10 @@ export function adminGetScoringConfig() {
   return adminFetchJson<ScoringConfigSummary[]>('/settings/scoring');
 }
 
+export function adminGetRankingSettings() {
+  return adminFetchJson<RankingSettingsSummary>('/settings/ranking');
+}
+
 export function adminCreateScoringConfig(input: CreateScoringConfigInput) {
   return adminRequestJson<ScoringConfigSummary>('/settings/scoring', {
     method: 'POST',
@@ -1219,6 +1241,16 @@ export function adminUpdateScoringConfig(rowId: string, points: number) {
     },
     body: JSON.stringify({ points }),
   }, 'Falha ao atualizar configuracao');
+}
+
+export function adminUpdateRankingSettings(input: UpdateRankingSettingsInput) {
+  return adminRequestJson<RankingSettingsSummary>('/settings/ranking', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  }, 'Falha ao atualizar regra de desempate');
 }
 
 export function adminDeleteScoringConfig(rowId: string) {

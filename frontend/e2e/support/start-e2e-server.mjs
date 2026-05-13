@@ -75,12 +75,46 @@ const ranking = [
     name: 'Mucura',
     color: '#E63946',
     totalScore: 14,
+    wins: 3,
+    podiums: 4,
+    tieBreakRule: 'most_wins',
   },
   {
     id: 'team-2',
     name: 'Guara',
     color: '#2A9D8F',
     totalScore: 8,
+    wins: 1,
+    podiums: 2,
+    tieBreakRule: 'most_wins',
+  },
+];
+
+const rankingSettings = {
+  id: 'default',
+  tieBreakRule: 'most_wins',
+  updatedAt: '2026-05-12T12:00:00.000Z',
+  updatedByUser: {
+    id: 'user-1',
+    name: 'Administrador INTRADEBAS',
+    email: 'admin@intradebas.local',
+  },
+};
+
+const scoringConfig = [
+  {
+    id: 'coletiva-1',
+    category: 'coletiva',
+    position: 1,
+    points: 5,
+    updatedByUser: rankingSettings.updatedByUser,
+  },
+  {
+    id: 'coletiva-2',
+    category: 'coletiva',
+    position: 2,
+    points: 3,
+    updatedByUser: rankingSettings.updatedByUser,
   },
 ];
 
@@ -186,6 +220,16 @@ const api = createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/api/v1/results/ranking') {
     sendJson(response, ranking);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/settings/ranking') {
+    sendJson(response, rankingSettings);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/settings/scoring') {
+    sendJson(response, scoringConfig);
     return;
   }
 
