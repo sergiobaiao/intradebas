@@ -36,6 +36,9 @@ test('public secondary pages follow the redesigned shell', async ({ page }) => {
   await page.goto('/backdrop');
   await expect(page.getByRole('heading', { name: 'Marcas confirmadas no ecossistema visual do evento' })).toBeVisible();
 
+  await page.goto('/midia');
+  await expect(page.getByRole('heading', { name: 'Cobertura visual publica do evento' })).toBeVisible();
+
   await page.goto('/privacidade');
   await expect(page.getByRole('heading', { name: 'Privacidade, consentimento e direitos do titular' })).toBeVisible();
 });

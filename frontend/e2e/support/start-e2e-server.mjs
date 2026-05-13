@@ -19,6 +19,17 @@ const sports = [
     category: 'coletivo',
     isAldebarun: false,
     isActive: true,
+    scheduleDate: '2026-12-20T18:00:00.000Z',
+    scheduleNotes: 'Quadra principal',
+  },
+  {
+    id: 'sport-2',
+    name: 'ALDEBARUN 5K',
+    category: 'individual',
+    isAldebarun: true,
+    isActive: true,
+    scheduleDate: '2026-12-21T06:00:00.000Z',
+    scheduleNotes: 'Largada na portaria central',
   },
 ];
 
@@ -87,6 +98,54 @@ const sponsorshipQuotas = [
   },
 ];
 
+const backdropSponsors = [
+  {
+    id: 'sponsor-1',
+    companyName: 'Padaria Aldebaran',
+    logoUrl: 'https://example.com/logo-padaria.png',
+    level: 'ouro',
+    backdropPriority: 3,
+  },
+  {
+    id: 'sponsor-2',
+    companyName: 'Mercadinho Vila',
+    logoUrl: 'https://example.com/logo-mercadinho.png',
+    level: 'bronze',
+    backdropPriority: 1,
+  },
+];
+
+const publicMedia = {
+  items: [
+    {
+      id: 'media-1',
+      type: 'photo',
+      title: 'Abertura oficial',
+      url: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80',
+      provider: 'local',
+      isFeatured: true,
+      sortOrder: 1,
+      createdAt: '2026-04-28T12:00:00.000Z',
+    },
+    {
+      id: 'media-2',
+      type: 'video',
+      title: 'Cobertura da rodada',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      thumbnailUrl: null,
+      provider: 'youtube',
+      isFeatured: true,
+      sortOrder: 2,
+      createdAt: '2026-04-29T12:00:00.000Z',
+    },
+  ],
+  total: 2,
+  page: 1,
+  pageSize: 18,
+  totalPages: 1,
+};
+
 const api = createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://127.0.0.1:${apiPort}`);
 
@@ -110,6 +169,11 @@ const api = createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/v1/sports/aldebarun') {
+    sendJson(response, sports.filter((sport) => sport.isAldebarun));
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/v1/athletes') {
     sendJson(response, athletes);
     return;
@@ -125,8 +189,37 @@ const api = createServer(async (request, response) => {
     return;
   }
 
+  if (request.method === 'GET' && url.pathname === '/api/v1/results/aldebarun') {
+    sendJson(
+      response,
+      [
+        {
+          id: 'aldebarun-1',
+          position: 1,
+          rawScore: 1410,
+          calculatedPoints: 10,
+          resultDate: '2026-04-29T09:00:00.000Z',
+          notes: 'Melhor tempo da prova',
+          sport: sports[1],
+          team: teams[0],
+        },
+      ],
+    );
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/api/v1/sponsorship/quotas') {
     sendJson(response, sponsorshipQuotas);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/backdrop') {
+    sendJson(response, backdropSponsors);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/v1/media/public') {
+    sendJson(response, publicMedia);
     return;
   }
 

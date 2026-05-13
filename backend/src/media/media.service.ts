@@ -43,6 +43,53 @@ export class MediaService {
     });
   }
 
+  async findPublic(query: {
+    page?: string;
+    pageSize?: string;
+    provider?: string;
+    featured?: string;
+  }) {
+    const page = this.normalizePage(query.page);
+    const pageSize = this.normalizePageSize(query.pageSize);
+    const where: Prisma.MediaWhereInput = {
+      ...(query.provider ? { provider: query.provider as any } : {}),
+      ...(query.featured === 'true'
+        ? { isFeatured: true }
+        : query.featured === 'false'
+          ? { isFeatured: false }
+          : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      this.prisma.media.count({ where }),
+      this.prisma.media.findMany({
+        where,
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          url: true,
+          thumbnailUrl: true,
+          provider: true,
+          isFeatured: true,
+          sortOrder: true,
+          createdAt: true,
+        },
+        orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(total / pageSize), 1),
+    };
+  }
+
   async findPage(query: {
     page?: string;
     pageSize?: string;

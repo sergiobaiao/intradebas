@@ -101,6 +101,56 @@ describe('MediaService', () => {
     expect(result.items).toHaveLength(1);
   });
 
+  it('returns paginated public media without uploader details', async () => {
+    prisma.media.count.mockResolvedValue(1);
+    prisma.media.findMany.mockResolvedValue([
+      {
+        id: 'media-public-1',
+        type: 'photo',
+        title: 'Chegada',
+        url: 'https://example.com/chegada.jpg',
+        thumbnailUrl: 'https://example.com/chegada-thumb.jpg',
+        provider: 'local',
+        isFeatured: true,
+        sortOrder: 1,
+        createdAt: new Date('2026-04-25T12:00:00Z'),
+      },
+    ]);
+
+    const result = await service.findPublic({
+      page: '1',
+      pageSize: '6',
+      featured: 'true',
+    });
+
+    expect(prisma.media.count).toHaveBeenCalledWith({
+      where: {
+        isFeatured: true,
+      },
+    });
+    expect(prisma.media.findMany).toHaveBeenCalledWith({
+      where: {
+        isFeatured: true,
+      },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        url: true,
+        thumbnailUrl: true,
+        provider: true,
+        isFeatured: true,
+        sortOrder: true,
+        createdAt: true,
+      },
+      orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }],
+      skip: 0,
+      take: 6,
+    });
+    expect(result.items[0]).not.toHaveProperty('uploader');
+    expect(result.totalPages).toBe(1);
+  });
+
   it('creates a media item with uploader context', async () => {
     prisma.media.create.mockResolvedValue({
       id: 'media-2',

@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 const footerLinks = [
   { href: '/resultados', label: 'Resultados ao vivo' },
+  { href: '/midia', label: 'Galeria de midia' },
   { href: '/inscricao', label: 'Inscricao de atleta' },
   { href: '/patrocinio', label: 'Quero patrocinar' },
   { href: '/atleta', label: 'Area do atleta' },

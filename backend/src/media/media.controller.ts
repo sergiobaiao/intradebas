@@ -32,6 +32,21 @@ import { MediaService } from './media.service';
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
+  @Get('public')
+  findPublic(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('provider') provider?: string,
+    @Query('featured') featured?: string,
+  ) {
+    return this.mediaService.findPublic({
+      page,
+      pageSize,
+      provider,
+      featured,
+    });
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   findAll(

@@ -363,6 +363,18 @@ export type MediaAdminSummary = {
   };
 };
 
+export type PublicMediaSummary = {
+  id: string;
+  type: 'photo' | 'video';
+  title?: string | null;
+  url: string;
+  thumbnailUrl?: string | null;
+  provider: 'local' | 'youtube' | 'vimeo';
+  isFeatured: boolean;
+  sortOrder: number;
+  createdAt: string;
+};
+
 export type CreateMediaInput = {
   type: 'photo' | 'video';
   title?: string;
@@ -555,6 +567,24 @@ export function getAldebarunResults() {
 
 export function getBackdropSponsors() {
   return fetchJson<BackdropSponsorSummary[]>('/backdrop', []);
+}
+
+export function getPublicMediaPage(input: {
+  page?: number;
+  pageSize?: number;
+  provider?: string;
+  featured?: string;
+}) {
+  return fetchJson<PaginatedResponse<PublicMediaSummary>>(
+    `/media/public${buildQuery(input)}`,
+    {
+      items: [],
+      total: 0,
+      page: input.page ?? 1,
+      pageSize: input.pageSize ?? 12,
+      totalPages: 1,
+    },
+  );
 }
 
 export function getAthlete(id: string) {

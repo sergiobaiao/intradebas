@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Medal, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { ArrowRight, ImageIcon, Medal, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { CountdownCard } from '@/components/public/countdown-card';
 import { PublicSection, PublicSectionShell } from '@/components/public/section-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import {
   getSports,
   getSponsorshipQuotas,
   getTeams,
+  getPublicMediaPage,
 } from './lib';
 
 const teamDescriptions: Record<string, string> = {
@@ -20,13 +22,14 @@ const teamDescriptions: Record<string, string> = {
 };
 
 export default async function HomePage() {
-  const [teams, athletes, ranking, sports, quotas, sponsors] = await Promise.all([
+  const [teams, athletes, ranking, sports, quotas, sponsors, media] = await Promise.all([
     getTeams(),
     getAthletes(),
     getRanking(),
     getSports(),
     getSponsorshipQuotas(),
     getBackdropSponsors(),
+    getPublicMediaPage({ page: 1, pageSize: 6, featured: 'true' }),
   ]);
 
   const activeTeams = teams.length;
@@ -34,6 +37,14 @@ export default async function HomePage() {
   const totalSports = sports.length;
   const openQuotaSlots = quotas.reduce((sum, quota) => sum + quota.remainingSlots, 0);
   const leadTeam = ranking[0];
+  const nextScheduledSport = [...sports]
+    .filter((sport) => sport.scheduleDate)
+    .filter((sport) => new Date(sport.scheduleDate as string).getTime() > Date.now())
+    .sort(
+      (left, right) =>
+        new Date(left.scheduleDate as string).getTime() -
+        new Date(right.scheduleDate as string).getTime(),
+    )[0];
 
   const highlights = [
     {
@@ -62,6 +73,15 @@ export default async function HomePage() {
           ? 'Disponibilidade real para patrocinio no portal.'
           : 'Tabela de patrocinio ainda nao carregada.',
       icon: ShieldCheck,
+    },
+    {
+      title: 'Midias em destaque',
+      value: media.items.length,
+      detail:
+        media.items.length > 0
+          ? 'Fotos e videos publicados para cobertura publica do evento.'
+          : 'Galeria publica ainda nao publicada.',
+      icon: ImageIcon,
     },
   ];
 
@@ -98,6 +118,9 @@ export default async function HomePage() {
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-full">
                   <Link href="/patrocinio">Quero patrocinar</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="rounded-full">
+                  <Link href="/midia">Ver galeria</Link>
                 </Button>
               </div>
             </div>
@@ -150,12 +173,17 @@ export default async function HomePage() {
                 </div>
               </CardContent>
             </Card>
+
+            <CountdownCard
+              title={nextScheduledSport?.name ?? 'Agenda a confirmar'}
+              targetIso={nextScheduledSport?.scheduleDate ?? null}
+            />
           </div>
         </PublicSectionShell>
       </PublicSection>
 
       <PublicSection className="py-4">
-        <PublicSectionShell className="grid gap-4 md:grid-cols-3">
+        <PublicSectionShell className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {highlights.map((item) => {
             const Icon = item.icon;
 
@@ -237,6 +265,11 @@ export default async function HomePage() {
                   href: '/patrocinio',
                   title: 'Patrocinio e cotas',
                   text: 'Consulta de disponibilidade real e envio de interesse comercial.',
+                },
+                {
+                  href: '/midia',
+                  title: 'Galeria publica',
+                  text: 'Fotos e videos publicados pela organizacao para cobertura aberta do evento.',
                 },
                 {
                   href: '/aldebarun',

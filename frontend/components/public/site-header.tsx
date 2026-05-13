@@ -17,6 +17,7 @@ const navigation = [
   { href: '/', label: 'Inicio' },
   { href: '/inscricao', label: 'Inscricoes' },
   { href: '/resultados', label: 'Resultados' },
+  { href: '/midia', label: 'Midia' },
   { href: '/aldebarun', label: 'ALDEBARUN' },
   { href: '/patrocinio', label: 'Patrocinio' },
   { href: '/atleta', label: 'Area do atleta' },

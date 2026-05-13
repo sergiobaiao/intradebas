@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Crown, ImageIcon, Layers3 } from 'lucide-react';
 import { PublicEmptyPanel } from '@/components/public/empty-panel';
 import { PublicPageHero } from '@/components/public/page-hero';
+import { RotatingBackdrop } from '@/components/public/rotating-backdrop';
 import { PublicSection, PublicSectionShell } from '@/components/public/section-shell';
 import { PublicStatCard } from '@/components/public/stat-card';
 import { Button } from '@/components/ui/button';
@@ -49,13 +50,15 @@ export default async function BackdropPage() {
       </PublicSection>
 
       <PublicSection className="pt-2">
-        <PublicSectionShell>
+        <PublicSectionShell className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           {sponsors.length === 0 ? (
             <PublicEmptyPanel
               title="Nenhum patrocinador ativo"
               description="Nenhum patrocinador ativo foi publicado no backdrop ainda."
             />
           ) : (
+            <>
+            <RotatingBackdrop sponsors={sponsors} />
             <Card className="rounded-[2rem] border-white/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
               <CardHeader>
                 <CardTitle className="text-3xl font-black tracking-tight text-slate-950">
@@ -90,6 +93,7 @@ export default async function BackdropPage() {
                 ))}
               </CardContent>
             </Card>
+            </>
           )}
         </PublicSectionShell>
       </PublicSection>

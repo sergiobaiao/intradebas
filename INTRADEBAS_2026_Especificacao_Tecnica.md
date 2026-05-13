@@ -171,15 +171,15 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 
 | Subcomponente | Descrição | Status Atual |
 |---|---|---|
-| Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | 🟡 Parcial; shell público e home institucional com dados reais implementados, countdown ainda pendente |
+| Home / Landing Page | Apresentação do evento, countdown, equipes, chamada para inscrição | ✅ Implementado |
 | Página de Inscrição de Atleta | Formulário completo com validação, seleção de equipe, modalidades, reCAPTCHA configurável e confirmação por e-mail | ✅ Implementado |
 | Área do Atleta | Acesso por link de confirmação de e-mail para ver cadastro, modalidades, resultados e LGPD | ✅ Implementado |
 | Página de Patrocínio | Cards de cotas com disponibilidade em tempo real e formulário de interesse | ✅ Implementado |
 | Portal do Patrocinador | Acesso por link de e-mail para status da cota e cupons | ✅ Implementado |
 | Central de Resultados | Placar ao vivo das equipes, ranking por modalidade | ✅ Implementado |
 | ALDEBARUN II | Página dedicada à corrida com inscrição, resultados e ranking de tempos | 🟡 Parcial (página dedicada redesenhada com dados reais; categorias/faixas ainda pendentes de regulamento) |
-| Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | 🟡 Parcial |
-| Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | 🟡 Parcial; vitrine pública redesenhada, rotação dinâmica ainda pendente |
+| Galeria de Mídia | Fotos e vídeos do evento (YouTube/Vimeo embed) | ✅ Implementado |
+| Backdrop Digital | Componente de exposição rotativa de logos de patrocinadores | ✅ Implementado |
 | Rodapé com WhatsApp | Link direto para suporte via WhatsApp (86-98826-5569) | ✅ Implementado |
 
 ## Módulo 2 — Painel Administrativo (Comissão Organizadora)
@@ -230,6 +230,13 @@ A Corrida da Família é tratada como modalidade individual separada, com rankin
 - As páginas migradas mantiveram dados reais e estados vazios explícitos, sem retorno a textos ou blocos mockados.
 - Foram criados componentes públicos reutilizáveis adicionais para hero, métricas e painéis vazios.
 - O frontend foi validado com `npm run build` e `npm run test:e2e`, incluindo ampliação da suíte Playwright para as páginas públicas secundárias.
+
+### Atualização de Progresso — Feature 058
+
+- A home passou a exibir countdown real baseado na próxima modalidade agendada no cadastro esportivo.
+- O backend passou a expor mídia pública em endpoint dedicado, e o frontend ganhou a rota `/midia` com fotos e vídeos reais.
+- O backdrop público deixou de ser apenas grade estática e passou a contar com rotação dinâmica de patrocinadores ativos.
+- Backend e frontend foram validados com `npm test`, `npm run build` e `npm run test:e2e`.
 
 ## Módulo 3 — Sistema de Autenticação
 
@@ -1505,7 +1512,7 @@ Duração estimada: 4 semanas
 
 ### Semana 2 — Auth + Estrutura Base
 - [x] Módulo de autenticação (login, JWT, refresh e recuperação de senha implementados)
-- [~] Layout público (shell compartilhado, navbar e páginas públicas principais redesenhadas; countdown e refinamentos secundários ainda pendentes)
+- [x] Layout público (shell compartilhado, navbar, countdown e páginas públicas principais redesenhadas)
 - [x] Sidebar do Admin adaptada
 - [x] Dashboard Admin com KPIs reais e padrão Studio Admin
 
